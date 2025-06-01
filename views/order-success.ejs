@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Order Placed - Zero Degree Café</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+      font-family: Arial, sans-serif;
+      color: #fff;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      color: #000;
+    }
+    h2 {
+      font-size: 2.5rem;
+    }
+    .lead {
+      font-size: 1.2rem;
+    }
+    .order-summary, .user-credentials {
+      background-color: #f1f1f1;
+      padding: 20px;
+      border-radius: 20px;
+      margin-top: 0;
+      margin-bottom: 0;
+      min-width: 300px;
+    }
+    .order-summary p, .user-credentials p {
+      font-size: 1.1rem;
+    }
+    .order-summary ul {
+      padding-left: 0;
+    }
+    .order-summary li {
+      list-style: none;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .btn-primary:hover {
+      background-color: #0056b3;
+      border-color: #004085;
+    }
+    @media (min-width: 768px) {
+      .side-by-side {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+        align-items: flex-start;
+        margin-top: 32px;
+        margin-bottom: 32px;
+      }
+      .order-summary, .user-credentials {
+        flex: 1 1 0;
+        margin-top: 0;
+        margin-bottom: 0;
+      }
+    }
+    @media (max-width: 767px) {
+      .side-by-side {
+        display: block;
+      }
+      .order-summary, .user-credentials {
+        margin-top: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container text-center">
+    <h2 class="text-success fw-bold">Order Successfully Placed!</h2>
+    <p class="text-muted mt-3">Thank you for your order, You will receive a confirmation shortly.</p>
+
+    <div class="side-by-side">
+<div class="order-summary text-start">
+  <!-- Logo icon on top, centered -->
+  <div class="text-center mb-4">
+    <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+      <i class="bi bi-receipt fs-1 text-primary"></i>
+    </div>
+  </div>
+
+  <h3 class="fw-bold text-center mb-4">Order Summary</h3>
+
+  <div class="row mb-3">
+    <div class="col-md-6 mb-2 d-flex align-items-center">
+      <i class="bi bi-card-list me-2 text-primary fs-5"></i>
+      <p class="mb-0"><strong>Order ID:</strong> <%= order._id %></p>
+    </div>
+    <div class="col-md-6 mb-2 d-flex align-items-center">
+      <i class="bi bi-credit-card me-2 text-primary fs-5"></i>
+      <p class="mb-0"><strong>Payment Mode:</strong> <%= order.paymentMode %></p>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-6 d-flex align-items-center">
+      <i class="bi bi-info-circle me-2 text-primary fs-5"></i>
+      <p class="mb-0"><strong>Status:</strong> <%= order.status %></p>
+    </div>
+  </div>
+
+  <h4 class="mb-3">Items Ordered:</h4>
+  <ul class="list-unstyled">
+    <% order.items.forEach(item => { %>
+    <li class="d-flex align-items-center mb-3 border-bottom pb-2">
+      <% if(item.productImage) { %>
+        <img src="/<%= item.productImage %>" alt="<%= item.productName %>" class="me-3" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;">
+      <% } else { %>
+        <div class="bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; border-radius:5px;">
+          <i class="bi bi-box-seam fs-4"></i>
+        </div>
+      <% } %>
+      <div>
+        <strong><%= item.productName %></strong><br>
+        Quantity: <%= item.quantity %>
+      </div>
+    </li>
+    <% }); %>
+  </ul>
+
+  <div class="mt-3 d-flex align-items-center">
+    <i class="bi bi-currency-dollar me-2 text-primary fs-5"></i>
+    <p class="fs-5 mb-0"><strong>Total Amount:</strong> ₱<%= order.totalAmount %></p>
+  </div>
+</div>
+
+<div class="user-credentials text-start">
+  <div class="img-logo text-center mb-3">
+    <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+      <i class="bi bi-person-circle fs-1 text-primary"></i>
+    </div>
+  </div>
+
+  <h4 class="fw-bold text-center mb-4">User Credentials</h4>
+
+  <div class="row">
+    <div class="col-md-6 mb-3 d-flex align-items-start">
+      <i class="bi bi-person-fill me-2 text-primary"></i>
+      <p class="mb-0"><strong>Full Name:</strong> <%= order.userInfoSnapshot.firstName %> <%= order.userInfoSnapshot.lastName %></p>
+    </div>
+    <div class="col-md-6 mb-3 d-flex align-items-start">
+      <i class="bi bi-person-badge-fill me-2 text-primary"></i>
+      <p class="mb-0"><strong>Username:</strong> <%= order.userInfoSnapshot.username %></p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-3 d-flex align-items-start">
+      <i class="bi bi-telephone-fill me-2 text-primary"></i>
+      <p class="mb-0"><strong>Phone:</strong> <%= order.userInfoSnapshot.phone %></p>
+    </div>
+    <div class="col-md-6 mb-3 d-flex align-items-start">
+      <i class="bi bi-house-fill me-2 text-primary"></i>
+      <p class="mb-0"><strong>Address:</strong> <%= order.userInfoSnapshot.address %></p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-3 d-flex align-items-start">
+      <i class="bi bi-envelope-fill me-2 text-primary"></i>
+      <p class="mb-0"><strong>Email:</strong> <%= order.userInfoSnapshot.email %></p>
+    </div>
+  </div>
+</div>
+
+
+    </div>
+    
+    <a href="/dashboard" class="btn btn-primary mt-4">Go Back to Dashboard</a>
+  </div>
+</body>
+</html>

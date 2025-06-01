@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sales Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    .sidebar {
+      height: 100vh;
+      position: fixed;
+      top: 0; left: 0;
+      width: 250px;
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+      color: white;
+      padding-top: 30px;
+      overflow-y: auto;
+      box-shadow: 4px 0px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+    .sidebar h3 {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      padding: 12px 18px;
+      display: block;
+      border-radius: 25px;
+      font-size: 16px;
+      margin: 10px 15px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+    .sidebar a:hover {
+      background-color: #f1f1f1;
+      color: #1d3c5a;
+      transform: translateX(10px);
+    }
+    .sidebar a.active {
+      background-color: #3a5f7d;
+      color: white;
+    }
+    .sidebar .logout {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+      padding: 0 15px;
+    }
+
+    .content {
+      margin-left: 270px;
+      padding: 20px 30px;
+      min-height: 100vh;
+      background-color: #f9fafb;
+    }
+
+    #downloadCsvBtn {
+      margin-bottom: 20px;
+    }
+
+    .card {
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      border: none;
+      margin-bottom: 30px;
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 1.25rem;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 60px;
+        padding-top: 20px;
+      }
+      .sidebar h3,
+      .sidebar a span {
+        display: none;
+      }
+      .sidebar a {
+        margin: 10px 5px;
+        padding: 12px 8px;
+        text-align: center;
+      }
+      .content {
+        margin-left: 60px;
+        padding: 15px 20px;
+      }
+    }
+    h2 {
+      margin-bottom: 30px;
+      color: #1d3c5a;
+      margin-bottom: 25px;
+      border-bottom: 2px solid #3a5f7d;
+      padding-bottom: 8px;
+    }
+
+    .csv-tab-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: nowrap;
+      user-select: none;
+      background-color: white;       
+      padding: 0.3rem;         
+      border-radius: 30px;      
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); 
+    }
+
+    .csv-tab-pill .nav-pills {
+      margin-bottom: 0;
+    }
+
+    .csv-tab-pill .nav-link {
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 50px;
+      transition: background-color 0.2s ease;
+    }
+
+    .csv-tab-pill .nav-link.active {
+      background-color: #198754; 
+      color: white;
+      font-weight: 600;
+    }
+
+    .csv-tab-pill .nav-link:not(.active):hover {
+      background-color: rgba(25, 135, 84, 0.1);
+      color: #198754;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="d-flex justify-content-center mb-3">
+      <img src="/images/zicon.jpg" style="width: 75px;" class="rounded-circle" alt="Logo" />
+    </div>
+    <h3 class="text-center text-white mb-4 fw-bold">Admin Panel</h3>
+    <a href="/admin/index"><i class="bi bi-house-door"></i> Dashboard</a>
+    <a href="/admin/productMonitoring"><i class="bi bi-bar-chart-fill"></i> Product Monitoring</a>
+    <a href="/admin/sales" class="active"><i class="bi bi-graph-up"></i> Sales Overview</a>
+    <a href="/admin/users"><i class="bi bi-person"></i> Users</a>
+    <a href="/admin/products"><i class="bi bi-box"></i> Inventory</a>
+    <a href="/admin/orders"><i class="bi bi-file-earmark-text"></i> Orders</a>
+    <a href="/admin/staff"><i class="bi bi-person-badge"></i> Staff</a>
+    <a href="/admin/reviews"><i class="bi bi-star"></i> Reviews</a>
+    <div class="logout">
+      <a href="/logout" style="width: 150px;" class="btn btn-danger btn-sm mx-auto"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+  </div>
+
+  <div class="content">
+    <h2 class="mb-3 fw-bold">Sales Dashboard</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <h4 class="mb-0">Total Sales: <span class="text-success fw-bold">₱<%= totalSales.toFixed(2) %></span></h4>
+      
+      <div class="csv-tab-pill">
+        <ul class="nav nav-pills">
+          <li class="nav-item">
+            <a class="nav-link active" href="#" data-mode="daily">Daily</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-mode="weekly">Weekly</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-mode="monthly">Monthly</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" data-mode="yearly">Yearly</a>
+          </li>
+        </ul>
+        <button id="downloadCsvBtn" class="btn btn-success btn-sm ms-2 mt-3">
+          <i class="bi bi-download"></i> Download Weekly CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="salesTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button" role="tab" aria-controls="daily" aria-selected="true">Daily</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button" role="tab" aria-controls="weekly" aria-selected="false">Weekly</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly" type="button" role="tab" aria-controls="monthly" aria-selected="false">Monthly</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="yearly-tab" data-bs-toggle="tab" data-bs-target="#yearly" type="button" role="tab" aria-controls="yearly" aria-selected="false">Yearly</button>
+      </li>
+    </ul>
+
+    <div class="tab-content mt-3" id="salesTabContent">
+      <div class="tab-pane fade show active" id="daily" role="tabpanel" aria-labelledby="daily-tab">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title mb-4 text-center fw-bold">Daily Sales</h5>
+            <canvas id="dailySalesWaveChart" height="100"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade show active" id="weekly" role="tabpanel" aria-labelledby="weekly-tab">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title mb-4 text-center fw-bold">Weekly Sales</h5>
+            <canvas id="weeklySalesChart" height="100"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="monthly" role="tabpanel" aria-labelledby="monthly-tab">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title mb-4 text-center fw-bold">Monthly Sales</h5>
+            <canvas id="monthlySalesChart" height="100"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="yearly" role="tabpanel" aria-labelledby="yearly-tab">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title mb-4 text-center fw-bold">Yearly Sales</h5>
+            <canvas id="yearlySalesChart" height="100"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Helper function to map sales data ensuring zero when no data
+    function mapSalesData(labels, salesObj) {
+      return labels.map(label => (salesObj[label] ? parseFloat(salesObj[label].toFixed(2)) : 0));
+    }
+
+    // Data passed from server-side rendering
+    const weeklyLabels = <%- JSON.stringify(weeklyLabels) %>;
+    const weeklySalesData = <%- JSON.stringify(weeklySales) %>;
+
+    const monthlyLabels = <%- JSON.stringify(monthlyLabels) %>;
+    const monthlySalesData = <%- JSON.stringify(monthlySales) %>;
+
+    const yearlyLabels = <%- JSON.stringify(yearlyLabels) %>;
+    const yearlySalesData = <%- JSON.stringify(yearlySales) %>;
+
+    // Prepare datasets for charts
+    const weeklyData = mapSalesData(weeklyLabels, weeklySalesData);
+    const monthlyData = mapSalesData(monthlyLabels, monthlySalesData);
+    const yearlyData = mapSalesData(yearlyLabels, yearlySalesData);
+
+    // Common chart options for all charts
+    const commonOptions = {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: value => '₱' + value.toLocaleString()
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => '₱' + ctx.parsed.y.toLocaleString()
+          }
+        }
+      }
+    };
+
+    // Weekly sales chart
+    const weeklyCtx = document.getElementById('weeklySalesChart').getContext('2d');
+    new Chart(weeklyCtx, {
+      type: 'bar',
+      data: {
+        labels: weeklyLabels,
+        datasets: [{
+          label: 'Weekly Sales (₱)',
+          data: weeklyData,
+          backgroundColor: 'rgba(0, 123, 255, 0.7)'
+        }]
+      },
+      options: commonOptions
+    });
+
+    // Monthly sales chart
+    const monthlyCtx = document.getElementById('monthlySalesChart').getContext('2d');
+    new Chart(monthlyCtx, {
+      type: 'bar',
+      data: {
+        labels: monthlyLabels,
+        datasets: [{
+          label: 'Monthly Sales (₱)',
+          data: monthlyData,
+          backgroundColor: 'rgba(40, 167, 69, 0.7)'
+        }]
+      },
+      options: commonOptions
+    });
+
+    // Yearly sales chart
+    const yearlyCtx = document.getElementById('yearlySalesChart').getContext('2d');
+    new Chart(yearlyCtx, {
+      type: 'bar',
+      data: {
+        labels: yearlyLabels,
+        datasets: [{
+          label: 'Yearly Sales (₱)',
+          data: yearlyData,
+          backgroundColor: 'rgba(255, 193, 7, 0.7)'
+        }]
+      },
+      options: commonOptions
+    });
+
+    // CSV Download feature
+
+    // Create CSV content from labels and sales data arrays
+    function createCSV(labels, data) {
+      const rows = [['Period', 'Sales']];
+      for (let i = 0; i < labels.length; i++) {
+        rows.push([labels[i], data[i].toFixed(2)]);
+      }
+      return rows.map(row => row.join(',')).join('\n');
+    }
+
+    // Download CSV file helper
+    function downloadCSV(filename, csvContent) {
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Handle tab and download CSV button interactions
+    const downloadBtn = document.getElementById('downloadCsvBtn');
+    const navLinks = document.querySelectorAll('.csv-tab-pill .nav-link');
+
+    let currentMode = 'daily';
+
+    function updateDownloadButton() {
+      downloadBtn.innerHTML = `<i class="bi bi-download"></i> Download ${currentMode.charAt(0).toUpperCase() + currentMode.slice(1)} CSV`;
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      let labels, data, filename;
+
+      if (currentMode === 'weekly') {
+        labels = weeklyLabels;
+        data = weeklyData;
+        filename = 'weekly_sales.csv';
+      } else if (currentMode === 'monthly') {
+        labels = monthlyLabels;
+        data = monthlyData;
+        filename = 'monthly_sales.csv';
+      } else if (currentMode === 'yearly') {
+        labels = yearlyLabels;
+        data = yearlyData;
+        filename = 'yearly_sales.csv';
+      } else if (currentMode === 'daily') {
+        labels = dailyLabels;
+        data = dailyData;
+        filename = 'daily_sales.csv';
+      }
+
+
+      const csvContent = createCSV(labels, data);
+      downloadCSV(filename, csvContent);
+    });
+
+    navLinks.forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+
+        navLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+
+        currentMode = link.getAttribute('data-mode');
+        updateDownloadButton();
+      });
+    });
+
+    updateDownloadButton();
+    const dailySales = <%- JSON.stringify(dailySales) %> || {};
+
+    const dailyLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    const dailyData = dailyLabels.map((_, i) => (dailySales[i] ? parseFloat(dailySales[i].toFixed(2)) : 0));
+
+    const dailyCtx = document.getElementById('dailySalesWaveChart').getContext('2d');
+
+    const dailySalesWaveChart = new Chart(dailyCtx, {
+      type: 'line',
+      data: {
+        labels: dailyLabels,
+        datasets: [{
+          label: 'Sales (₱)',
+          data: dailyData,
+          borderColor: '#003366', // Darker blue line
+          backgroundColor: 'rgba(0, 51, 102, 0.3)', // Darker blue fill with transparency
+          fill: true,
+          tension: 0.4, // smooth curves
+          pointRadius: 3,
+          pointBackgroundColor: '#003366'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            title: {
+              display: true,
+            },
+            ticks: {
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 24
+            }
+          },
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Sales (₱)'
+            },
+            ticks: {
+              callback: value => '₱' + value.toLocaleString()
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: true,
+            labels: {
+              color: '#003366',
+              font: {
+                weight: 'bold'
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => '₱' + ctx.parsed.y.toLocaleString()
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reviews for <%= product.productName %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background-color: white;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .error-message {
+      color: red;
+      font-weight: bold;
+    }
+    .success-message {
+      color: green;
+      font-weight: bold;
+    }
+    .review-list {
+      list-style: none;
+      padding: 0;
+    }
+    .review-item {
+      border-bottom: 1px solid #ddd;
+      padding: 15px 0;
+    }
+    .review-item:last-child {
+      border-bottom: none;
+    }
+    .review-item strong {
+      font-size: 1.1em;
+    }
+    .review-form {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .review-form label {
+      font-weight: bold;
+    }
+    .review-form button {
+      width: 100%;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .review-form button:hover {
+      background-color: #0056b3;
+    }
+    a.btn-back {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 16px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    a.btn-back:hover {
+      text-decoration: underline;
+    }
+        .navbar{
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+    }
+    .navbar a{
+      color: #fff;
+    }
+    .navbar .nav-link.active {
+      color: #fff;
+      font-weight: 700;
+    }
+      .navbar .nav-link {
+      transition: all 0.3s ease;
+      padding: 8px 15px;
+      border-radius: 5px;
+    }
+    .navbar .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #67c3f5 !important;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <img src="/images/logo.webp" alt="Logo" class="rounded-circle" style="width: 40px; height: 40px; margin-right: 10px;">
+        Zero Degree Café
+      </a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav mx-auto">
+          <li class="nav-item"><a class="nav-link" href="/dashboard">Menu</a></li>
+          <li class="nav-item"><a class="nav-link" href="/profile">Profile</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/reviews">Reviews</a></li>
+        </ul>
+        <a href="/logout" class="btn btn-danger ms-5 me-3"><i class="bi bi-box-arrow-right"></i> Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1 class="fw-bold">Reviews for <%= product.productName %></h1>
+
+    <% if (error) { %>
+      <div class="error-message"><%= error %></div>
+    <% } %>
+    <% if (success) { %>
+      <div class="success-message"><%= success %></div>
+    <% } %>
+
+    <% if (reviews.length > 0) { %>
+      <ul class="review-list">
+        <% reviews.forEach(review => { %>
+          <li class="review-item">
+            <strong><%= review.userId.name %></strong> - <%= review.rating %> stars
+            <p><%= review.comment %></p>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p class="text-center lead">No reviews yet for this product.</p>
+    <% } %>
+
+    <% if (userHasPurchased) { %>
+      <div class="review-form">
+        <h3>Submit Your Review</h3>
+        <form action="/product/<%= product._id %>/reviews" method="POST">
+          <div class="mb-3">
+            <label for="rating" class="form-label">Rating (1-5):</label>
+            <input type="number" class="form-control" name="rating" min="1" max="5" required>
+          </div>
+          <div class="mb-3">
+            <label for="comment" class="form-label">Comment:</label>
+            <textarea class="form-control" name="comment" rows="4" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit Review</button>
+        </form>
+      </div>
+    <% } else { %>
+      <p class="text-center text-muted">You must complete an order for this product to leave a review.</p>
+    <% } %>
+
+    <div class="d-flex justify-content-center mt-4">
+      <a href="/dashboard" class="btn btn-success">Back to Products</a>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

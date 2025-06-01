@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | Zero Degree Café</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    body {
+      /* Background gradient as requested */
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .page-container {
+      max-width: 500px;
+      width: 100%;
+      margin: 20px;
+      background-color: #ffffff;
+      padding: 40px;
+      border-radius: 30px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    }
+
+    .link a {
+      text-decoration: none;
+      color: #000;
+    }
+
+    .link a:hover {
+      text-decoration: underline;
+      color: rgb(89, 78, 78);
+    }
+
+    .btn-login {
+      width: 150px;
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      transition: background 0.3s ease;
+    }
+
+    .btn-login:hover,
+    .btn-login:focus {
+      background: linear-gradient(145deg, #3a5f7d, #1d3c5a);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+    }
+  </style>
+
+  <!-- Add Google reCAPTCHA API script -->
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+  <div class="container d-flex justify-content-center align-items-center">
+    <div class="page-container">
+      <div class="text-center mb-4">
+        <img src="/images/zicon.jpg" alt="Logo" class="img-fluid mb-3" style="width: 120px; border-radius: 50%; height: 120px;">
+        <h2 class="fw-bold">Login</h2>
+        <p class="lead">Welcome back! Please sign in to continue.</p>
+        <% if (error) { %>
+          <div class="alert alert-danger text-center" role="alert">
+            <%= error %>
+          </div>
+        <% } %>
+      </div>
+
+      <form action="/login" method="post" id="loginForm">
+        <div class="mb-3">
+          <label for="email" class="form-label"><i class="bi bi-envelope-fill"></i> Email</label>
+          <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label"><i class="bi bi-lock-fill"></i> Password</label>
+          <div class="input-group">
+            <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+            <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
+              <i class="bi bi-eye-slash" id="eyeIcon"></i>
+            </span>
+          </div>
+        </div>
+
+        <!-- Google reCAPTCHA widget -->
+        <div class="mb-3 d-flex justify-content-center align-items-center">
+          <div class="g-recaptcha" data-sitekey="6LfEI0krAAAAAEVaqe8Uwd7cNvUOxQATbOVXXvkS" required></div>
+        </div>
+
+        <div class="d-flex justify-content-center align-items-center mt-4">
+          <button type="submit" class="btn btn-login"><i class="bi bi-box-arrow-in-right"></i> Login</button>
+        </div>
+        <div class="mt-3 text-center link">
+          <p>Don't have an account? <a href="/register" class="fw-semibold">Register here</a></p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("password");
+    const eyeIcon = document.getElementById("eyeIcon");
+
+    togglePassword.addEventListener("click", function () {
+      const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+      passwordInput.setAttribute("type", type);
+      eyeIcon.classList.toggle("bi-eye");
+      eyeIcon.classList.toggle("bi-eye-slash");
+    });
+
+    // Optional: prevent submit if reCAPTCHA not checked
+    const form = document.getElementById('loginForm');
+    form.addEventListener('submit', function(e) {
+      if (grecaptcha.getResponse() === "") {
+        e.preventDefault();
+        Swal.fire({
+          icon: 'error',
+          title: 'Verification required',
+          text: 'Please verify you are not a robot.',
+          confirmButtonColor: '#dc3545'
+        });
+      }
+    });
+  </script>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+
+if (success) {
+  let role = success.charAt(0).toUpperCase() + success.slice(1);
+  Swal.fire({
+    icon: 'success',
+    title: `${role} login successful!`,
+    text: `Welcome back, ${role}.`,
+    showConfirmButton: false,
+    timer: 1500
+  }).then(() => {
+    if (success === 'admin') {
+      window.location.href = '/admin/index';
+    } else if (success === 'staff') {
+      window.location.href = '/staff/index';
+    } else if (success === 'kitchen') {
+      window.location.href = '/kitchen/index';
+    } else {
+      window.location.href = '/dashboard';
+    }
+  });
+}
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Product Monitoring - Most Bought in <%= month %> <%= year %></title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+
+  <style>
+    .sidebar {
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 250px;
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+      color: white;
+      padding-top: 30px;
+      overflow-y: auto;
+      box-shadow: 4px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    .sidebar h3 {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      padding: 12px 18px;
+      display: block;
+      border-radius: 25px;
+      font-size: 16px;
+      margin: 10px 0;
+      transition: all 0.3s ease;
+    }
+    .sidebar a:hover {
+      background-color: #f1f1f1;
+      color: #1d3c5a;
+      transform: translateX(10px);
+    }
+    .sidebar a.active {
+      background-color: #3a5f7d;
+      color: white;
+    }
+    .sidebar .logout {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+    }
+    .content {
+      margin-left: 270px;
+      padding: 20px;
+    }
+
+    h2 {
+        margin-bottom: 30px;
+        color: #1d3c5a;
+        margin-bottom: 25px;
+        border-bottom: 2px solid #3a5f7d;
+        padding-bottom: 8px;
+    }
+
+    #chartContainer {
+      width: 100%;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      margin-bottom: 40px;
+    }
+
+    #salesChart {
+      width: 100% !important;
+      height: 450px !important;
+    }
+
+    .most-bought-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 25px;
+    }
+
+    .most-bought-card {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 15px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .most-bought-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    .most-bought-card img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+
+    .product-info {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .sold-badge {
+      background-color: #198754;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+
+    .most-bought-card .text-success {
+      font-size: 1rem;
+    }
+
+    .most-bought-card .text-muted {
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="d-flex justify-content-center mb-3">
+      <img src="/images/zicon.jpg" style="width: 75px;" class="rounded-circle" alt="" />
+    </div>
+    <h3 class="text-center text-white mb-4 fw-bold">Admin Panel</h3>
+    <a href="/admin/index"><i class="bi bi-house-door"></i> Dashboard</a>
+    <a href="/admin/productMonitoring" class="active"><i class="bi bi-bar-chart-fill"></i> Product Monitoring</a>
+    <a href="/admin/sales"><i class="bi bi-graph-up"></i> Sales Overview</a>
+    <a href="/admin/users"><i class="bi bi-person"></i> Users</a>
+    <a href="/admin/products"><i class="bi bi-box"></i> Inventory</a>
+    <a href="/admin/orders"><i class="bi bi-file-earmark-text"></i> Orders</a>
+    <a href="/admin/staff"><i class="bi bi-person-badge"></i> Staff</a>
+    <a href="/admin/reviews"><i class="bi bi-star"></i> Reviews</a>
+    <div class="logout">
+      <a href="/logout" style="width: 150px;" class="btn btn-danger btn-sm mx-auto"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+  </div>
+
+  <div class="content">
+    <h2 class="fw-bold">Product Monitoring - <%= month %> <%= year %></h2>
+
+    <div class="row g-4">
+      <!-- Left: Product Cards -->
+      <div class="col-lg-6">
+        <div class="row">
+        <% if (!mostBoughtProducts || mostBoughtProducts.length === 0) { %>
+            <p class="text-center">No sales data available.</p>
+        <% } else { %>
+            <% mostBoughtProducts.forEach(product => { %>
+            <div class="col-md-4 mb-4">
+              <div class="most-bought-card">
+                <img src="<%= product.productImage %>" alt="<%= product.productName %>" />
+                <div class="product-info"><%= product.productName %></div>
+                <div class="badge bg-info text-dark mb-1"><%= product.category %></div>
+                <div class="text-success fw-bold mb-2">₱<%= product.price %></div>
+                <div class="sold-badge fw-semibold" style="background: linear-gradient(145deg, #1d3c5a, #3a5f7d); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem;"> Sold: <%= product.totalQuantity %></div>
+              </div>
+            </div>
+            <% }) %>
+        <% } %>
+        </div>
+      </div>
+
+      <!-- Right: Chart -->
+    <div class="col-lg-6">
+    <div id="chartContainer">
+        <!-- Dropdown for selecting month -->
+        <form id="monthForm" class="mb-3 d-flex align-items-center justify-content-between" method="GET" action="/admin/productMonitoring">
+        <div>
+            <label for="monthSelect" class="form-label fw-semibold">Select Month:</label>
+            <select name="month" id="monthSelect" class="form-select" onchange="document.getElementById('monthForm').submit()">
+            <% const months = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ]; %>
+            <% months.forEach((m, index) => { %>
+                <option value="<%= index + 1 %>" <%= m === month ? 'selected' : '' %>><%= m %></option>
+            <% }); %>
+            </select>
+        </div>
+
+        <div>
+            <label for="yearInput" class="form-label fw-semibold">Year:</label>
+            <input type="number" name="year" id="yearInput" class="form-control" value="<%= year %>" onchange="document.getElementById('monthForm').submit()" />
+        </div>
+        </form>
+
+        <canvas id="salesChart" height="450"></canvas>
+
+        <!-- Display selected month and year below the chart -->
+        <p class="text-center mt-3 fw-bold text-secondary">
+        Showing data for <%= month %> <%= year %>
+        </p>
+    </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <% if (mostBoughtProducts && mostBoughtProducts.length > 0) { %>
+  <script>
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const productNames = <%- JSON.stringify(mostBoughtProducts.map(p => p.productName)) %>;
+    const totalSoldPrices = <%- JSON.stringify(
+      mostBoughtProducts.map(p => parseFloat((p.price * p.totalQuantity).toFixed(2)))
+    ) %>;
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: productNames,
+        datasets: [{
+          label: 'Total Sold Price (₱)',
+          data: totalSoldPrices,
+        backgroundColor: 'rgba(29, 60, 90, 0.7)',
+        borderColor: 'rgba(29, 60, 90, 1)',
+        borderWidth: 1,
+        borderRadius: 6,
+        maxBarThickness: 60
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `₱${context.raw.toFixed(2)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return `₱${value}`;
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+  <% } %>
+</body>
+</html>
