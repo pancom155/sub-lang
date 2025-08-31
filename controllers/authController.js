@@ -4,8 +4,13 @@ const Order = require('../models/Order');
 const Staff = require('../models/Staff');
 const KitchenStaff = require('../models/KitchenStaff');
 const CartItem = require('../models/cartItem');
+const bcrypt = require("bcrypt");
 const axios = require('axios');
-const RECAPTCHA_SECRET_KEY = '6LfEI0krAAAAAP7nR6WC35kSkQMUiSpS5QByt8mG';
+const { sendEmail, otpTemplate } = require("../utils/emailService");
+const RECAPTCHA_SECRET_KEY = '6LdykLQrAAAAAONL72QLlYPN_7zc6tx5j0q_V1zY';
+
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+let otpStore = {};
 
 exports.showLogin = (req, res) => {
   res.render('login', { error: null });
@@ -114,33 +119,25 @@ exports.checkout = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).send('User not found');
 
-    // Destructure paymentMode and pickup details from req.body
     const { paymentMode, pickupSenderName, pickupReferenceNumber } = req.body;
 
     let pickupPaymentInfo = null;
 
     if (paymentMode === 'Pickup') {
-      // Check all pickup details are present, including uploaded file in req.file
       if (!pickupSenderName || !pickupReferenceNumber || !req.file) {
         return res.status(400).send('Missing pickup payment details.');
       }
 
-      // Build pickup payment info object
       pickupPaymentInfo = {
         senderName: pickupSenderName,
         referenceNumber: pickupReferenceNumber,
-        // multer stores file in 'uploads/proofs/' as per your setup, filename is randomized
         proofImagePath: `/uploads/proofs/${req.file.filename}`
       };
     }
 
-    // Process order using helper function
     const order = await processOrder(cartItems, user, paymentMode, pickupPaymentInfo);
 
-    // Clear cart after successful order
     await CartItem.deleteMany({ user_id: userId });
-
-    // Render order success page with order and user info
     res.render('order-success', { order, user });
 
   } catch (err) {
@@ -149,7 +146,6 @@ exports.checkout = async (req, res) => {
   }
 };
 
-// Helper to process order and check stock/amounts
 async function processOrder(cartItems, user, paymentMode = 'COD', pickupPaymentInfo = null) {
   for (let item of cartItems) {
     const product = await Product.findById(item.product_id._id);
@@ -188,7 +184,6 @@ async function processOrder(cartItems, user, paymentMode = 'COD', pickupPaymentI
   const order = new Order(orderData);
   return await order.save();
 }
-
 
 exports.showOrderSuccess = (req, res) => {
   res.render('order-success', { order: req.session.order, user: req.session.user });
@@ -266,106 +261,171 @@ exports.showRegister = (req, res) => {
 };
 
 exports.register = async (req, res) => {
-  const { firstName, lastName, phone, address, email, username, password, confirm_password } = req.body;
-
-  if (password !== confirm_password) {
-    return res.redirect('/register?error=Passwords do not match');
-  }
-
   try {
-    const existingUser = await User.findOne({ $or: [{ email }, { phone }, { username }] });
+    const { firstName, lastName, phone, address, email, username, password } = req.body;
 
-    if (existingUser) {
-      return res.redirect('/register?error=User with this email, phone, or username already exists.');
+    const existingUser = await User.findOne({ $or: [{ email }, { username }, { phone }] });
+    if (existingUser) return res.status(400).json({ message: "Email, username, or phone already in use" });
+
+    const otp = generateOTP();
+    otpStore[email] = {
+      otp,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+      userData: { firstName, lastName, phone, address, email, username, password },
+      type: 'register'
+    };
+
+    await sendEmail(email, "ZeroDegree OTP Verification", otpTemplate(otp, 'register'));
+    res.status(201).json({ message: "OTP sent to email. Please verify." });
+  } catch (error) {
+    console.error("Register Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const record = otpStore[email];
+
+    if (!record || record.type !== 'register')
+      return res.status(400).json({ message: "No OTP found, please register again" });
+
+    if (record.otp !== otp)
+      return res.status(400).json({ message: "Invalid OTP" });
+
+    if (record.expiresAt < Date.now()) {
+      delete otpStore[email];
+      return res.status(400).json({ message: "OTP expired, please register again" });
     }
 
-    const user = new User({ firstName, lastName, phone, address, email, username, password });
-    await user.save();
+    await User.create({ ...record.userData, isVerified: true });
+    delete otpStore[email];
 
-    return res.redirect('/login?success=Registration successful! Please log in.');
+    res.json({ message: "Account verified & user registered" });
   } catch (error) {
-    return res.redirect('/register?error=Registration error: ' + encodeURIComponent(error.message));
+    console.error("OTP Verify Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
+};
+
+exports.resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const record = otpStore[email];
+    if (!record) return res.status(400).json({ message: "No OTP request found for this email" });
+
+    const otp = generateOTP();
+    record.otp = otp;
+    record.expiresAt = Date.now() + 5 * 60 * 1000;
+
+    const subject = record.type === 'register' ? "ZeroDegree Registration OTP" : "ZeroDegree Password Reset OTP";
+    await sendEmail(email, subject, otpTemplate(otp, record.type));
+
+    res.json({ message: "New OTP sent to email" });
+  } catch (error) {
+    console.error("Resend OTP Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.requestPasswordReset = async (req,res)=>{
+  const {email} = req.body;
+  const user = await User.findOne({email});
+  if(!user) return res.status(404).json({message:"No account with this email"});
+
+  const otp = generateOTP();
+  otpStore[email] = {otp,expiresAt:Date.now()+5*60*1000,verified:false,type:'reset'};
+  await sendEmail(email,"ZeroDegree Password Reset OTP",otpTemplate(otp,'reset'));
+
+  res.json({message:"Password reset OTP sent to email"});
+};
+
+exports.verifyResetOtp = async (req,res)=>{
+  const {email,otp} = req.body;
+  const record = otpStore[email];
+  if(!record || record.type!=='reset') return res.status(400).json({message:"No reset request found"});
+  if(record.otp!==otp) return res.status(400).json({message:"Invalid OTP"});
+  if(record.expiresAt<Date.now()){ delete otpStore[email]; return res.status(400).json({message:"OTP expired"}); }
+
+  record.verified = true;
+  res.json({message:"OTP verified. You can reset your password."});
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+  const record = otpStore[email];
+
+  if (!record?.verified) 
+    return res.status(400).json({ message: "OTP verification required" });
+
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  user.password = newPassword; 
+  user.isVerified = true;
+  await user.save();
+
+  delete otpStore[email];
+  res.json({ message: "Password reset successful. Please login." });
 };
 
 exports.login = async (req, res) => {
   const { email, password, 'g-recaptcha-response': recaptchaResponse } = req.body;
 
   if (!recaptchaResponse) {
-    return res.render('login', { error: 'Please complete the reCAPTCHA verification.' });
+    return res.render('login', { error: 'Please complete reCAPTCHA' });
   }
 
   try {
     const verificationUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET_KEY}&response=${recaptchaResponse}`;
     const response = await axios.post(verificationUrl);
-    const { success } = response.data;
-
-    if (!success) {
-      return res.render('login', { error: 'Failed reCAPTCHA verification. Please try again.' });
+    if (!response.data.success) {
+      return res.render('login', { error: 'Failed reCAPTCHA verification' });
     }
 
     if (email === 'zerodegreecafe@gmail.com' && password === 'admin12345') {
       req.session.user = { email, role: 'admin' };
-      console.log('Admin logged in:', email);
-      return res.redirect('/login?success=admin');
+      return res.redirect('/dashboard');
     }
 
-    if (email.endsWith('@staff.com')) {
-      const staff = await Staff.findOne({ email });
-      if (!staff) {
-        return res.render('login', { error: 'Invalid staff email or password.' });
+    const staffDomains = [
+      { domain: '@staff.com', model: Staff, role: 'staff' },
+      { domain: '@kitchen.com', model: KitchenStaff, role: 'kitchen' }
+    ];
+
+    for (const { domain, model, role } of staffDomains) {
+      if (email.endsWith(domain)) {
+        const staff = await model.findOne({ email });
+        if (!staff) {
+          return res.render('login', { error: 'Invalid email or password.' });
+        }
+        const match = await bcrypt.compare(password, staff.password);
+        if (!match) return res.render('login', { error: 'Invalid email or password.' });
+
+        req.session.user = {
+          id: staff._id,
+          role,
+          name: `${staff[`${role[0]}_fname`]} ${staff[`${role[0]}_lname`]}`,
+          email
+        };
+        return res.redirect('/dashboard');
       }
-
-      const isMatch = await staff.comparePassword(password);
-      if (!isMatch) {
-        return res.render('login', { error: 'Invalid staff email or password.' });
-      }
-
-      req.session.user = {
-        id: staff._id,
-        role: 'staff',
-        name: `${staff.s_fname} ${staff.s_lname}`,
-        email: staff.email
-      };
-      console.log('Staff logged in:', email);
-      return res.redirect('/login?success=staff');
-    }
-
-    if (email.endsWith('@kitchen.com')) {
-      const kitchenStaff = await KitchenStaff.findOne({ email });
-      if (!kitchenStaff) {
-        return res.render('login', { error: 'Invalid kitchen staff email or password.' });
-      }
-
-      const isMatch = await kitchenStaff.comparePassword(password);
-      if (!isMatch) {
-        return res.render('login', { error: 'Invalid kitchen staff email or password.' });
-      }
-
-      req.session.user = {
-        id: kitchenStaff._id,
-        role: 'kitchen',
-        name: `${kitchenStaff.k_fname} ${kitchenStaff.k_lname}`,
-        email: kitchenStaff.email
-      };
-      console.log('Kitchen staff logged in:', email);
-      return res.redirect('/login?success=kitchen');
     }
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.render('login', { error: 'Invalid email or password.' });
+    if (!user) return res.render('login', { error: 'Invalid email or password.' });
+
+    if (!user.isVerified) {
+      return res.render('login', { error: 'Please verify your email before logging in.' });
     }
 
-    const isUserMatch = await user.comparePassword(password);
-    if (!isUserMatch) {
-      return res.render('login', { error: 'Invalid email or password.' });
-    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.render('login', { error: 'Invalid email or password.' });
 
     req.session.userId = user._id;
     req.session.user = user;
-    console.log('User logged in:', email);
-    res.redirect('/login?success=user');
+    res.redirect('/dashboard');
 
   } catch (error) {
     console.error('Login error:', error);

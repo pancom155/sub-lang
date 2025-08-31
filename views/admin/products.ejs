@@ -94,8 +94,6 @@
     </div>
     <h3 class="text-center text-white mb-4 fw-bold">Admin Panel</h3>
     <a href="/admin/index"><i class="bi bi-house-door"></i> Dashboard</a>
-    <a href="/admin/productMonitoring"><i class="bi bi-bar-chart-fill"></i> Product Monitoring</a>
-    <a href="/admin/sales"><i class="bi bi-graph-up"></i> Sales Overview</a>
     <a href="/admin/users"><i class="bi bi-person"></i> Users</a>
     <a href="/admin/products" class="active"><i class="bi bi-box"></i> Inventory</a>
     <a href="/admin/orders"><i class="bi bi-file-earmark-text"></i> Orders</a>
@@ -144,6 +142,10 @@
                     <i class="bi bi-trash3"></i> Delete
                   </button>
                 </form>
+                <button class="btn btn-outline-danger mt-3 btn-sm" data-bs-toggle="modal"
+                  data-bs-target="#reportDamageModal<%= product._id %>">
+                  <i class="bi bi-exclamation-triangle"></i> Report Damage
+                </button>
               </div>
             </div>
           </div>
@@ -151,6 +153,37 @@
       </div>
     <% } %>    
   </div>
+
+<% products.forEach(product => { %>
+  <div class="modal fade" id="reportDamageModal<%= product._id %>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="report-damage-form" data-product-name="<%= product.productName %>" data-product-id="<%= product._id %>" method="POST" action="/admin/products/report-damage">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Report Damaged Stock for <%= product.productName %></h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" name="productId" value="<%= product._id %>">
+
+            <div class="alert alert-info">
+              <strong>Current Total Stock:</strong> <%= product.stock %>
+            </div>
+
+            <div class="mb-3">
+              <label for="damagedQuantity<%= product._id %>" class="form-label">Damaged Quantity</label>
+              <input type="number" min="1" max="<%= product.stock %>" class="form-control" name="damaged" id="damagedQuantity<%= product._id %>" placeholder="Enter damaged quantity" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger w-100">Report Damage</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+<% }) %>
+
 
 
   <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
@@ -324,5 +357,39 @@
     document.getElementById('editProductForm').action = `/admin/products/edit/${product._id}`;
   }
   </script>
+  <script>
+  document.querySelectorAll('.report-damage-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const damagedInput = this.querySelector('input[name="damaged"]');
+      const damagedQty = parseInt(damagedInput.value);
+      const maxStock = parseInt(damagedInput.max);
+      const productName = this.dataset.productName;
+
+      if (damagedQty <= 0 || damagedQty > maxStock) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Invalid Quantity',
+          text: `Please enter a damaged quantity between 1 and ${maxStock}.`
+        });
+        return;
+      }
+
+      Swal.fire({
+        title: `Report ${damagedQty} damaged item(s) for "${productName}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, report it!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Submit the form after confirmation
+          this.submit();
+        }
+      });
+    });
+  });
+</script>
 </body>
 </html>

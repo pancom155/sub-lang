@@ -1,161 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login | Zero Degree Café</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <style>
-    body {
-      /* Background gradient as requested */
-      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .page-container {
-      max-width: 500px;
-      width: 100%;
-      margin: 20px;
-      background-color: #ffffff;
-      padding: 40px;
-      border-radius: 30px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
-    }
-
-    .link a {
-      text-decoration: none;
-      color: #000;
-    }
-
-    .link a:hover {
-      text-decoration: underline;
-      color: rgb(89, 78, 78);
-    }
-
-    .btn-login {
-      width: 150px;
-      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
-      border: none;
-      color: #fff;
-      font-weight: 600;
-      transition: background 0.3s ease;
-    }
-
-    .btn-login:hover,
-    .btn-login:focus {
-      background: linear-gradient(145deg, #3a5f7d, #1d3c5a);
-      color: #fff;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
-    }
-  </style>
-
-  <!-- Add Google reCAPTCHA API script -->
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Login | Zero Degree Café</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+body {
+  background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.page-container {
+  max-width: 500px;
+  width: 100%;
+  margin: 20px;
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 30px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+.btn-login { width: 150px; background: linear-gradient(145deg, #1d3c5a, #3a5f7d); border: none; color: #fff; font-weight: 600; }
+.btn-login:hover { background: linear-gradient(145deg, #3a5f7d, #1d3c5a); color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.6);}
+.otp-input { width: 40px; height: 50px; text-align: center; font-size: 20px; margin: 0 5px; }
+.password-helper { display: none; text-align: left; margin-top: 5px; }
+.password-helper li { font-size: 0.9em; margin-bottom: 3px; }
+.invalid { color: red; }
+.valid { color: green; }
+</style>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
-  <div class="container d-flex justify-content-center align-items-center">
-    <div class="page-container">
-      <div class="text-center mb-4">
-        <img src="/images/zicon.jpg" alt="Logo" class="img-fluid mb-3" style="width: 120px; border-radius: 50%; height: 120px;">
-        <h2 class="fw-bold">Login</h2>
-        <p class="lead">Welcome back! Please sign in to continue.</p>
-        <% if (error) { %>
-          <div class="alert alert-danger text-center" role="alert">
-            <%= error %>
-          </div>
-        <% } %>
+
+<div class="container d-flex justify-content-center align-items-center">
+  <div class="page-container">
+    <div class="text-center mb-4">
+      <img src="/images/zicon.jpg" alt="Logo" class="img-fluid mb-3" style="width: 120px; border-radius: 50%; height: 120px;">
+      <h2 class="fw-bold">Login</h2>
+      <% if (error) { %>
+        <div class="alert alert-danger text-center"><%= error %></div>
+      <% } %>
+    </div>
+
+    <form action="/login" method="post" id="loginForm">
+      <div class="mb-3">
+        <label for="email" class="form-label"><i class="bi bi-envelope-fill"></i> Email</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
       </div>
+      <div class="mb-3">
+        <label for="password" class="form-label"><i class="bi bi-lock-fill"></i> Password</label>
+        <div class="input-group">
+          <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+          <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
+            <i class="bi bi-eye-slash" id="eyeIcon"></i>
+          </span>
+        </div>
+      </div>
+      <div class="text-center mb-3">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#forgotModal" style="text-decoration: none;">Forgot password?</a>
+      </div>
+      <div class="mb-3 d-flex justify-content-center align-items-center">
+        <div class="g-recaptcha" data-sitekey="6LdykLQrAAAAAGwFBRWHw5nwfwohCN7J0a-7bEHn" required></div>
+      </div>
+      <div class="d-flex justify-content-center align-items-center mt-4">
+        <button type="submit" class="btn btn-login"><i class="bi bi-box-arrow-in-right"></i> Login</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-      <form action="/login" method="post" id="loginForm">
-        <div class="mb-3">
-          <label for="email" class="form-label"><i class="bi bi-envelope-fill"></i> Email</label>
-          <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
+<div class="modal fade" id="forgotModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-4 text-center">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="text-primary"><i class="bi bi-shield-lock-fill me-2"></i> Forgot Password</h5>
+        <button type="button" class="btn-close" id="modalCloseBtn"></button>
+      </div>
+      <p class="text-muted mb-3"><i class="bi bi-info-circle-fill me-1"></i> Follow the steps below to reset your password securely.</p>
+      <div id="step1">
+        <p class="text-start mb-2"><i class="bi bi-envelope-fill text-primary me-1"></i> Enter your registered email address:</p>
+        <input type="email" id="resetEmail" class="form-control mb-3" placeholder="Enter your email">
+        <button class="btn btn-primary w-100" id="sendOtpBtn"><i class="bi bi-send-fill me-1"></i> Send OTP</button>
+      </div>
+      <div id="step2" class="d-none">
+        <p class="text-start mb-2"><i class="bi bi-key-fill text-warning me-1"></i> Enter the 6-digit OTP sent to your email:</p>
+        <div class="d-flex justify-content-center mb-3">
+          <input type="text" maxlength="1" class="otp-input form-control" />
+          <input type="text" maxlength="1" class="otp-input form-control" />
+          <input type="text" maxlength="1" class="otp-input form-control" />
+          <input type="text" maxlength="1" class="otp-input form-control" />
+          <input type="text" maxlength="1" class="otp-input form-control" />
+          <input type="text" maxlength="1" class="otp-input form-control" />
         </div>
-        <div class="mb-3">
-          <label for="password" class="form-label"><i class="bi bi-lock-fill"></i> Password</label>
-          <div class="input-group">
-            <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
-            <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
-              <i class="bi bi-eye-slash" id="eyeIcon"></i>
-            </span>
-          </div>
+        <button class="btn btn-success w-100" id="verifyOtpBtn"><i class="bi bi-check-circle-fill me-1"></i> Verify OTP</button>
+      </div>
+      <div id="step3" class="d-none">
+        <p class="text-start mb-2"><i class="bi bi-lock-fill text-success me-1"></i> Enter your new password:</p>
+        <div class="input-group mb-2">
+          <input type="password" id="newPassword" class="form-control" placeholder="New password">
+          <span class="input-group-text" id="toggleNewPassword" style="cursor: pointer;">
+            <i class="bi bi-eye-slash" id="newEyeIcon"></i>
+          </span>
         </div>
-
-        <!-- Google reCAPTCHA widget -->
-        <div class="mb-3 d-flex justify-content-center align-items-center">
-          <div class="g-recaptcha" data-sitekey="6LfEI0krAAAAAEVaqe8Uwd7cNvUOxQATbOVXXvkS" required></div>
-        </div>
-
-        <div class="d-flex justify-content-center align-items-center mt-4">
-          <button type="submit" class="btn btn-login"><i class="bi bi-box-arrow-in-right"></i> Login</button>
-        </div>
-        <div class="mt-3 text-center link">
-          <p>Don't have an account? <a href="/register" class="fw-semibold">Register here</a></p>
-        </div>
-      </form>
+        <p class="text-muted mb-1 text-start"><i class="bi bi-list-check me-1"></i> Your password must meet the following rules:</p>
+        <ul id="passwordHelper" class="password-helper">
+          <li id="ruleLength" class="invalid"><i class="bi bi-x-circle-fill me-1"></i> At least 8 characters</li>
+          <li id="ruleUpper" class="invalid"><i class="bi bi-x-circle-fill me-1"></i> At least 1 uppercase letter</li>
+          <li id="ruleNumber" class="invalid"><i class="bi bi-x-circle-fill me-1"></i> At least 1 number</li>
+          <li id="ruleSymbol" class="invalid"><i class="bi bi-x-circle-fill me-1"></i> At least 1 special symbol (_!@#$%^&*)</li>
+        </ul>
+        <button class="btn btn-primary w-100 mt-3" id="resetPasswordBtn"><i class="bi bi-arrow-repeat me-1"></i> Reset Password</button>
+      </div>
     </div>
   </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const togglePassword = document.getElementById("togglePassword");
+const passwordInput = document.getElementById("password");
+togglePassword.addEventListener("click", () => {
+  const type = passwordInput.type === "password" ? "text" : "password";
+  passwordInput.type = type;
+  document.getElementById("eyeIcon").classList.toggle("bi-eye");
+  document.getElementById("eyeIcon").classList.toggle("bi-eye-slash");
+});
 
-  <script>
-    const togglePassword = document.getElementById("togglePassword");
-    const passwordInput = document.getElementById("password");
-    const eyeIcon = document.getElementById("eyeIcon");
+const toggleNewPassword = document.getElementById("toggleNewPassword");
+const newPasswordInput = document.getElementById("newPassword");
+toggleNewPassword.addEventListener("click", () => {
+  const type = newPasswordInput.type === "password" ? "text" : "password";
+  newPasswordInput.type = type;
+  document.getElementById("newEyeIcon").classList.toggle("bi-eye");
+  document.getElementById("newEyeIcon").classList.toggle("bi-eye-slash");
+});
 
-    togglePassword.addEventListener("click", function () {
-      const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
-      passwordInput.setAttribute("type", type);
-      eyeIcon.classList.toggle("bi-eye");
-      eyeIcon.classList.toggle("bi-eye-slash");
-    });
+const step1 = document.getElementById("step1");
+const step2 = document.getElementById("step2");
+const step3 = document.getElementById("step3");
+const sendOtpBtn = document.getElementById("sendOtpBtn");
+const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+const resetPasswordBtn = document.getElementById("resetPasswordBtn");
+const resetEmailInput = document.getElementById("resetEmail");
+const otpInputs = document.querySelectorAll(".otp-input");
+const forgotModalEl = document.getElementById('forgotModal');
+const forgotModal = new bootstrap.Modal(forgotModalEl, { backdrop: 'static', keyboard: false });
+const modalCloseBtn = document.getElementById('modalCloseBtn');
 
-    // Optional: prevent submit if reCAPTCHA not checked
-    const form = document.getElementById('loginForm');
-    form.addEventListener('submit', function(e) {
-      if (grecaptcha.getResponse() === "") {
-        e.preventDefault();
-        Swal.fire({
-          icon: 'error',
-          title: 'Verification required',
-          text: 'Please verify you are not a robot.',
-          confirmButtonColor: '#dc3545'
-        });
-      }
-    });
-  </script>
+modalCloseBtn.addEventListener('click', () => forgotModal.hide());
 
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const success = urlParams.get('success');
-
-if (success) {
-  let role = success.charAt(0).toUpperCase() + success.slice(1);
-  Swal.fire({
-    icon: 'success',
-    title: `${role} login successful!`,
-    text: `Welcome back, ${role}.`,
-    showConfirmButton: false,
-    timer: 1500
-  }).then(() => {
-    if (success === 'admin') {
-      window.location.href = '/admin/index';
-    } else if (success === 'staff') {
-      window.location.href = '/staff/index';
-    } else if (success === 'kitchen') {
-      window.location.href = '/kitchen/index';
-    } else {
-      window.location.href = '/dashboard';
-    }
-  });
+function updateModalClose() {
+  if(!step2.classList.contains('d-none') || !step3.classList.contains('d-none')){
+    modalCloseBtn.style.display='none';
+  } else {
+    modalCloseBtn.style.display='inline-block';
+  }
 }
 
-  </script>
+const rules = {
+  length: document.getElementById("ruleLength"),
+  upper: document.getElementById("ruleUpper"),
+  number: document.getElementById("ruleNumber"),
+  symbol: document.getElementById("ruleSymbol")
+};
+
+newPasswordInput.addEventListener("input", () => {
+  const val = newPasswordInput.value;
+  rules.length.className = val.length>=8 ? "valid" : "invalid";
+  rules.upper.className = /[A-Z]/.test(val) ? "valid" : "invalid";
+  rules.number.className = /\d/.test(val) ? "valid" : "invalid";
+  rules.symbol.className = /[!@#$%^&*?_]/.test(val) ? "valid" : "invalid";
+});
+
+function showStep(step){
+  step1.classList.add("d-none");
+  step2.classList.add("d-none");
+  step3.classList.add("d-none");
+  step.classList.remove("d-none");
+  passwordHelper.style.display = step===step3?"block":"none";
+  updateModalClose();
+}
+
+sendOtpBtn.addEventListener("click", async e=>{
+  e.preventDefault();
+  const email = resetEmailInput.value;
+  if(!email) return Swal.fire("Error","Enter email","error");
+  const res = await fetch("/forgot-password/request",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email})});
+  const data = await res.json();
+  Swal.fire(data.message,"",res.ok?"success":"error");
+  if(res.ok) showStep(step2);
+});
+
+verifyOtpBtn.addEventListener("click", async ()=>{
+  const email = resetEmailInput.value;
+  let otp=""; otpInputs.forEach(i=>otp+=i.value);
+  if(otp.length!==6) return Swal.fire("Error","Enter 6-digit OTP","error");
+  const res = await fetch("/forgot-password/verify",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,otp})});
+  const data = await res.json();
+  Swal.fire(data.message,"",res.ok?"success":"error");
+  if(res.ok) showStep(step3);
+});
+
+resetPasswordBtn.addEventListener("click", async ()=>{
+  const val = newPasswordInput.value;
+  const valid = val.length>=8 && /[A-Z]/.test(val) && /\d/.test(val) && /[!@#$%^&*?_]/.test(val);
+  if(!valid) return Swal.fire("Error","Password does not meet all requirements","error");
+  const email = resetEmailInput.value;
+  const res = await fetch("/forgot-password/reset",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,newPassword:val})});
+  const data = await res.json();
+  Swal.fire(data.message,"",res.ok?"success":"error").then(()=>{
+    if(res.ok){
+      showStep(step1);
+      resetEmailInput.value="";
+      otpInputs.forEach(i=>i.value="");
+      newPasswordInput.value="";
+      Object.values(rules).forEach(r=>r.className="invalid");
+      forgotModal.hide();
+    }
+  });
+});
+</script>
 </body>
 </html>

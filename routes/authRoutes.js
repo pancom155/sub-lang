@@ -11,8 +11,15 @@ router.post('/profile/edit', authController.editProfile);
 router.get('/login', authController.showLogin);
 router.post('/login', authController.login);
 router.get('/register', authController.showRegister);
-router.post('/register', authController.register);
 router.get('/logout', authController.logout);
+
+router.post('/forgot-password/request', authController.requestPasswordReset);
+router.post('/forgot-password/verify', authController.verifyResetOtp);
+router.post('/forgot-password/reset', authController.resetPassword);
+
+router.post('/verify-otp', authController.verifyOtp);
+router.post('/register', authController.register);
+router.post('/resend-otp', authController.resendOtp);
 
 router.get('/cart', authController.showCart);
 router.post('/cart/add', authController.addToCart);

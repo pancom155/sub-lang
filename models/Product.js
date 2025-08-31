@@ -32,7 +32,10 @@ const productSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now }
     }
   ],
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  damagedStock: { type: Number, default: 0 },
+  lostIncome: {type: Number,default: 0}
 });
+
 
 module.exports = mongoose.model('Product', productSchema);

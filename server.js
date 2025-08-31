@@ -1,49 +1,46 @@
+require("dotenv").config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
+const methodOverride = require('method-override');
+const flash = require('connect-flash');
+const multer = require('multer');
+
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const profileRoutes = require('./routes/profile');
 const orderRoutes = require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
-const methodOverride = require('method-override');
 const staffRoutes = require('./routes/staffRoutes');
 const indexRoutes = require('./routes/indexRoutes');
 const staffProcessRoutes = require('./routes/staffProcessRoutes');
-const salesRoutes = require('./routes/salesRoutes');
-const flash = require('connect-flash');
 const kitchenRoutes = require('./routes/KitchenRoutes');
-const multer = require('multer');
-require('./passportConfig'); 
+
+require('./passportConfig');
 
 const app = express();
 
-const mongoURI = 'mongodb+srv://aguilarcyruzjaeg:qwaswex12@cluster0.0onfw.mongodb.net/coffee';
-
-mongoose.connect(mongoURI, {
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-}).then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+}).then(() => console.log(' MongoDB connected'))
+  .catch((err) => console.error(' MongoDB error:', err));
 
 app.use(express.urlencoded({ extended: true }));
-
 app.use(session({
-  secret: 'secretkey',
+  secret: process.env.SESSION_SECRET || "fallbacksecret",
   resave: false,
   saveUninitialized: false
 }));
-
 app.use(flash());
-
 app.use((req, res, next) => {
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
   next();
 });
-
 app.use(cookieParser());
 app.use(methodOverride('_method'));
 app.use(express.json());
@@ -61,21 +58,16 @@ app.use('/', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/', reviewRoutes);
 app.use('/admin/staff', staffRoutes);
-app.use('/admin/sales', salesRoutes);
 app.use('/', indexRoutes);
 app.use('/kitchen', kitchenRoutes);
 
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    cb(null, './uploads'); 
-  },
-  filename: function(req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+  destination: (req, file, cb) => cb(null, './uploads'),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
-
 const upload = multer({ storage });
 
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });

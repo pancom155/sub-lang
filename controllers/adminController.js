@@ -24,8 +24,205 @@ const calculateTotalSales = async () => {
   }
 };
 
-exports.getProductMonitoring = async (req, res) => {
+const getMostBoughtProducts = async (limit = 5) => {
   try {
+    const result = await CompletedOrder.aggregate([
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.productId',
+          totalQuantity: { $sum: '$items.quantity' },
+        }
+      },
+      {
+        $sort: { totalQuantity: -1 } 
+      },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'product'
+        }
+      },
+      { $unwind: '$product' },
+      {
+        $project: {
+          _id: 0,
+          productId: '$_id',
+          productName: '$product.productName',
+          totalQuantity: 1,
+          price: '$product.price',
+          productImage: '$product.productImage',
+          category: '$product.category',
+        }
+      }
+    ]);
+    return result;
+  } catch (error) {
+    console.error('Error fetching most bought products:', error);
+    return [];
+  }
+};
+
+exports.dashboard = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 3;
+    const skip = (page - 1) * limit;
+
+    const totalUsers = await User.countDocuments();
+    const totalOrders = await Order.countDocuments();
+    const totalProducts = await Product.countDocuments();
+    const totalStaff = await Staff.countDocuments();
+    const totalKitchenStaff = await KitchenStaff.countDocuments();
+
+    const weeklyTrends = await fetchWeeklyProductSalesTrends();
+    const monthlyProductTrends = await fetchMonthlyProductSalesTrends();
+    const dailyProductSales = await fetchDailyProductSales();
+
+    const pendingOrdersCount = await Order.countDocuments({ status: 'Pending' });
+    const completedOrdersCount = await Order.countDocuments({ status: 'Completed' });
+    const cancelledOrdersCount = await Order.countDocuments({ status: 'Cancelled' });
+
+    const orders = await Order.find({});
+    const completedOrders = await Order.find({ status: 'Completed' });
+    const totalSales = completedOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+    const products = await Product.find();
+    const productStockChartData = products.map(product => ({
+      name: product.productName,
+      stock: product.stock
+    }));
+
+    let totalStocks = 0;
+    let lowStockWarning = [];
+    products.forEach(product => {
+      totalStocks += product.stock;
+      if (product.stock < 20) lowStockWarning.push(product.productName || product.name);
+    });
+
+    const productSalesMap = {};
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        const pid = item.productId.toString();
+        productSalesMap[pid] = (productSalesMap[pid] || 0) + item.quantity;
+      });
+    });
+
+    const topProductIds = Object.entries(productSalesMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([id]) => id);
+
+    const mostBoughtProducts = await Product.find({ _id: { $in: topProductIds } });
+    const mostBoughtProductsWithQty = mostBoughtProducts.map(product => ({
+      productName: product.productName || product.name,
+      productImage: product.productImage || '/images/default.jpg',
+      totalQuantity: productSalesMap[product._id.toString()] || 0
+    }));
+
+    const startOfDay = moment().startOf('day').toDate();
+    const endOfDay = moment().endOf('day').toDate();
+
+    const todaysOrders = await Order.find({
+      createdAt: { $gte: startOfDay, $lte: endOfDay }
+    }).populate('items.productId');
+
+    const kitchenCompletedOrders = await CompletedOrder.find({
+      createdAt: { $gte: startOfDay, $lte: endOfDay }
+    }).populate('items.productId');
+
+    const combinedOrders = [...todaysOrders, ...kitchenCompletedOrders];
+    const allDailyOrders = combinedOrders.map(order => {
+      const productMap = {};
+      order.items.forEach(item => {
+        const productName = item.productId?.productName || item.productId?.name || "Unknown Product";
+        productMap[productName] = (productMap[productName] || 0) + item.quantity;
+      });
+      const productList = Object.entries(productMap)
+        .map(([name, qty]) => `${name} (x${qty})`)
+        .join(', ');
+
+      return {
+        orderId: order._id.toString(),
+        status: order.status || 'Completed',
+        productList,
+        totalAmount: order.totalAmount || 0,
+        image: order.items[0]?.productId?.productImage || '/images/default.jpg'
+      };
+    });
+
+    const paginatedDailyOrders = allDailyOrders.slice(skip, skip + limit);
+    const totalDailyOrders = allDailyOrders.length;
+    const totalPages = Math.ceil(totalDailyOrders / limit);
+
+    const completedKitchenOrders = await CompletedOrder.find().populate('items.productId').sort({ createdAt: -1 });
+
+    let salesData = [];
+    const startOfWeek = moment().startOf('isoWeek');
+    const endOfWeek = moment().endOf('isoWeek');
+
+    const dailySales = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+
+    completedKitchenOrders.forEach(order => {
+      order.items.forEach(item => {
+        const product = item.productId;
+        const itemTotal = item.quantity * (product?.price || 0);
+
+        salesData.push({
+          date: order.createdAt,
+          product: product?.productName || 'Unknown',
+          quantity: item.quantity,
+          total: itemTotal
+        });
+      });
+
+      const orderDate = moment(order.createdAt);
+      if (orderDate.isBetween(startOfWeek, endOfWeek, null, '[]')) {
+        const dayIndex = orderDate.isoWeekday() - 1;
+        dailySales[dayIndex] += order.totalAmount || 0;
+      }
+    });
+
+    const groupSales = (format) => {
+      const grouped = {};
+      salesData.forEach(sale => {
+        const key = moment(sale.date).format(format);
+        if (!grouped[key]) grouped[key] = 0;
+        grouped[key] += sale.total;
+      });
+      return grouped;
+    };
+
+    const currentYear = moment().year();
+    const currentMonth = moment().month();
+
+    const getWeeksInMonth = (year, month) => {
+      let weeks = [];
+      const startDate = moment([year, month, 1]).startOf('isoWeek');
+      const endDate = moment([year, month]).endOf('month');
+      let current = startDate.clone();
+      while (current.isBefore(endDate) || current.isSame(endDate, 'week')) {
+        weeks.push(current.format('GGGG-[W]WW'));
+        current.add(1, 'week');
+      }
+      return weeks;
+    };
+
+    const weeklyLabels = getWeeksInMonth(currentYear, currentMonth);
+    const weeklySales = groupSales('GGGG-[W]WW');
+
+    const monthlyLabels = [];
+    for (let m = 0; m < 12; m++) {
+      monthlyLabels.push(moment([currentYear, m]).format('YYYY-MM'));
+    }
+    const monthlySales = groupSales('YYYY-MM');
+
+    const yearlyLabels = [currentYear.toString()];
+    const yearlySales = groupSales('YYYY');
+
     const now = new Date();
     const selectedMonth = parseInt(req.query.month) || (now.getMonth() + 1);
     const selectedYear = parseInt(req.query.year) || now.getFullYear();
@@ -78,173 +275,122 @@ exports.getProductMonitoring = async (req, res) => {
       { $sort: { totalQuantity: -1 } }
     ]);
 
-    res.render('admin/productMonitoring', {
-      mostBoughtProducts: allProductSales,
-      month,
-      year,
-      successMessage: res.locals.successMessage || null
-    });
+async function fetchDailyProductSales() {
+  const start = moment().startOf('day').hour(7).minute(0).second(0).toDate();
+  const end = moment().startOf('day').hour(17).minute(0).second(0).toDate();
 
-  } catch (error) {
-    console.error('Error loading product monitoring:', error);
-    res.status(500).send('Server error');
+  const orders = await CompletedOrder.find({
+    createdAt: { $gte: start, $lte: end }
+  }).populate('items.productId');
+  const salesMap = {};
+  const hours = [];
+  for (let h = 7; h <= 17; h++) {
+    hours.push(moment().startOf('day').hour(h).minute(0).second(0));
   }
-};
 
+  orders.forEach(order => {
+    order.items.forEach(item => {
+      const product = item.productId;
+      if (!product) return;
 
-const getMostBoughtProducts = async (limit = 5) => {
-  try {
-    const result = await CompletedOrder.aggregate([
-      { $unwind: '$items' },
-      {
-        $group: {
-          _id: '$items.productId',
-          totalQuantity: { $sum: '$items.quantity' },
-        }
-      },
-      {
-        $sort: { totalQuantity: -1 } 
-      },
-      { $limit: limit },
-      {
-        $lookup: {
-          from: 'products',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'product'
-        }
-      },
-      { $unwind: '$product' },
-      {
-        $project: {
-          _id: 0,
-          productId: '$_id',
-          productName: '$product.productName',
-          totalQuantity: 1,
-          price: '$product.price',
-          productImage: '$product.productImage',
-          category: '$product.category',
-        }
+      const productName = product.productName || 'Unknown Product';
+      const productImage = product.productImage || ''; 
+
+      if (!salesMap[productName]) {
+        salesMap[productName] = {
+          productName,
+          productImage,
+          salesByTime: {}
+        };
+        hours.forEach(hour => {
+          salesMap[productName].salesByTime[hour.format('h:mm A')] = 0;
+        });
       }
-    ]);
-    return result;
-  } catch (error) {
-    console.error('Error fetching most bought products:', error);
-    return [];
-  }
-};
 
-exports.dashboard = async (req, res) => {
-  try {
-    // Pagination params with defaults
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 3; 
-    const skip = (page - 1) * limit;
+      const orderHour = moment(order.createdAt).startOf('hour');
+      const hourStr = orderHour.format('h:mm A');
 
-    // Other stats
-    const totalUsers = await User.countDocuments();
-    const totalOrders = await Order.countDocuments();
-    const totalProducts = await Product.countDocuments();
-    const totalStaff = await Staff.countDocuments();
-    const totalKitchenStaff = await KitchenStaff.countDocuments();
-
-    const pendingOrdersCount = await Order.countDocuments({ status: 'Pending' });
-    const completedOrdersCount = await Order.countDocuments({ status: 'Completed' });
-    const cancelledOrdersCount = await Order.countDocuments({ status: 'Cancelled' });
-
-    const orders = await Order.find({});
-
-    const completedOrders = await Order.find({ status: 'Completed' });
-    const totalSales = completedOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-
-    const products = await Product.find();
-
-    const productStockChartData = products.map(product => ({
-      name: product.productName,
-      stock: product.stock
-    }));
-
-    let totalStocks = 0;
-    let lowStockWarning = [];
-
-    products.forEach(product => {
-      totalStocks += product.stock;
-      if (product.stock < 20) {
-        lowStockWarning.push(product.productName || product.name);
+      if (salesMap[productName].salesByTime.hasOwnProperty(hourStr)) {
+        salesMap[productName].salesByTime[hourStr] += item.quantity;
       }
     });
+  });
 
-    // Track sales per product
-    const productSalesMap = {};
-    orders.forEach(order => {
-      order.items.forEach(item => {
-        const pid = item.productId.toString();
-        productSalesMap[pid] = (productSalesMap[pid] || 0) + item.quantity;
-      });
+  // Transform salesMap to array and convert salesByTime object to array
+  const result = Object.values(salesMap).map(product => ({
+    productName: product.productName,
+    productImage: product.productImage,
+    salesByTime: Object.entries(product.salesByTime).map(([time, quantity]) => ({
+      time,
+      quantity
+    }))
+  }));
+
+  return result;
+}
+
+async function fetchMonthlyProductSalesTrends() {
+  const start = moment().startOf('month').toDate();
+  const end = moment().endOf('month').toDate();
+
+  const orders = await CompletedOrder.find({
+    createdAt: { $gte: start, $lte: end }
+  }).populate('items.productId');
+
+  const trendsMap = {};
+
+  orders.forEach(order => {
+    const day = moment(order.createdAt).format('YYYY-MM-DD');
+
+    order.items.forEach(item => {
+      const name = item.productId?.productName || 'Unknown Product';
+
+      if (!trendsMap[name]) trendsMap[name] = {};
+      if (!trendsMap[name][day]) trendsMap[name][day] = 0;
+
+      trendsMap[name][day] += item.quantity;
     });
+  });
 
-    const topProductIds = Object.entries(productSalesMap)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
-      .map(([id]) => id);
+  return Object.entries(trendsMap).map(([productName, dailyData]) => ({
+    productName,
+    dailySales: Object.entries(dailyData).map(([date, quantity]) => ({
+      date,
+      quantity
+    }))
+  }));
+}
 
-    const mostBoughtProducts = await Product.find({ _id: { $in: topProductIds } });
+async function fetchWeeklyProductSalesTrends() {
+  const start = moment().startOf('isoWeek').toDate(); // Monday
+  const end = moment().endOf('isoWeek').toDate();     // Sunday
 
-    const mostBoughtProductsWithQty = mostBoughtProducts.map(product => ({
-      productName: product.productName || product.name,
-      productImage: product.productImage || '/images/default.jpg',
-      totalQuantity: productSalesMap[product._id.toString()] || 0
-    }));
+  const orders = await CompletedOrder.find({
+    createdAt: { $gte: start, $lte: end }
+  }).populate('items.productId');
 
-    // Get today's date boundaries
-    const startOfDay = moment().startOf('day').toDate();
-    const endOfDay = moment().endOf('day').toDate();
+  const trendsMap = {};
 
-    // Fetch orders created today from main Order collection
-    const todaysOrders = await Order.find({
-      createdAt: { $gte: startOfDay, $lte: endOfDay }
-    }).populate('items.productId');
+  orders.forEach(order => {
+    const day = moment(order.createdAt).format('dddd');
 
-    // Fetch kitchen completed orders created today
-    const kitchenCompletedOrders = await CompletedOrder.find({
-      createdAt: { $gte: startOfDay, $lte: endOfDay }
-    }).populate('items.productId');
+    order.items.forEach(item => {
+      const name = item.productId?.productName || 'Unknown Product';
+      if (!trendsMap[name]) trendsMap[name] = {};
+      if (!trendsMap[name][day]) trendsMap[name][day] = 0;
 
-    // Combine both order lists
-    const combinedOrders = [...todaysOrders, ...kitchenCompletedOrders];
-
-    // Map combined orders into dailyOrders format
-    const allDailyOrders = combinedOrders.map(order => {
-      const productMap = {};
-
-      order.items.forEach(item => {
-        const productName = item.productId?.productName || item.productId?.name || "Unknown Product";
-        if (productMap[productName]) {
-          productMap[productName] += item.quantity;
-        } else {
-          productMap[productName] = item.quantity;
-        }
-      });
-
-      const productList = Object.entries(productMap)
-        .map(([name, qty]) => `${name} (x${qty})`)
-        .join(', ');
-
-      return {
-        orderId: order._id.toString(),
-        status: order.status || 'Completed',  // assume Completed if from kitchen orders
-        productList,
-        totalAmount: order.totalAmount || 0,
-        image: order.items[0]?.productId?.productImage || '/images/default.jpg'
-      };
+      trendsMap[name][day] += item.quantity;
     });
+  });
 
-    // Pagination on dailyOrders
-    const paginatedDailyOrders = allDailyOrders.slice(skip, skip + limit);
-
-    // Total pages for frontend display
-    const totalDailyOrders = allDailyOrders.length;
-    const totalPages = Math.ceil(totalDailyOrders / limit);
+  return Object.entries(trendsMap).map(([productName, dailyData]) => ({
+    productName,
+    dailySales: Object.entries(dailyData).map(([date, quantity]) => ({
+      date,
+      quantity
+    }))
+  }));
+}
 
     res.render('admin/index', {
       totalUsers,
@@ -261,29 +407,44 @@ exports.dashboard = async (req, res) => {
       completedOrdersCount,
       cancelledOrdersCount,
       productStockChartData,
+      products,
       currentPage: page,
       totalPages,
-      limit
+      limit,
+
+      weeklyLabels,
+      weeklySales,
+      monthlyLabels,
+      monthlySales,
+      yearlyLabels,
+      yearlySales,
+      dailySales,
+      dailyProductSales,
+      weeklyTrends,
+      monthlyProductTrends,
+      mostBoughtProducts: allProductSales,
+      month,
+      year,
+      successMessage: res.locals.successMessage || null
     });
+
   } catch (error) {
     console.error(error);
     res.status(500).send('Server error');
   }
 };
-// Function to get all orders
+
+
 exports.getOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; 
     const limit = 5;
     const skip = (page - 1) * limit;
 
-    // Count total completed orders
     const totalOrders = await CompletedOrder.countDocuments();
 
-    // Calculate total pages
     const totalPages = Math.ceil(totalOrders / limit);
 
-    // Fetch orders with pagination
     const completedOrders = await CompletedOrder.find()
       .populate('items.productId')
       .sort({ createdAt: -1 })
@@ -300,7 +461,6 @@ exports.getOrders = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
-
 
 exports.getStaff = async (req, res) => {
   try {
@@ -319,12 +479,10 @@ exports.getStaff = async (req, res) => {
   }
 };
 
-// Function to get all reviews
 exports.getReviews = (req, res) => {
   res.render('admin/reviews');
 };
 
-// Function to get all users
 exports.getUsers = async (req, res) => {
   try {
     const users = await User.find();
@@ -335,7 +493,6 @@ exports.getUsers = async (req, res) => {
   }
 };
 
-// Function to get all products
 exports.getProducts = async (req, res) => {
   try {
     const products = await Product.find();
@@ -349,7 +506,6 @@ exports.getProducts = async (req, res) => {
   }
 };
 
-// Function to create a new product
 exports.createProduct = async (req, res) => {
   const { productName, price, stock, productImage, category } = req.body;
 
@@ -373,7 +529,6 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-// Function to render the edit product form
 exports.editProductForm = async (req, res) => {
   const { id } = req.params;
   try {
@@ -544,7 +699,6 @@ exports.addKitchenStaff = async (req, res) => {
   }
 };
 
-// Function to delete a regular staff member
 exports.deleteStaff = async (req, res) => {
   try {
     const staffId = req.params.id;
@@ -573,3 +727,35 @@ exports.deleteKitchenStaff = async (req, res) => {
   }
 };
 
+exports.reportDamage = async (req, res) => {
+  // Destructure 'damaged' since that is the input name in your form
+  const { productId, damaged } = req.body;
+
+  // Parse damaged quantity to integer
+  const damagedQty = parseInt(damaged, 10);
+
+  // Validate damagedQty
+  if (isNaN(damagedQty) || damagedQty <= 0) {
+    return res.status(400).send('Invalid damaged quantity');
+  }
+
+  try {
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).send('Product not found');
+
+    // Calculate lost income
+    const incomeLoss = damagedQty * product.price;
+
+    // Safely update product fields, handle undefined fields
+    product.stock = (product.stock || 0) - damagedQty;
+    product.damaged = (product.damaged || 0) + damagedQty;
+    product.lostIncome = (product.lostIncome || 0) + incomeLoss;
+
+    await product.save();
+
+    res.redirect('/admin/index');
+  } catch (error) {
+    console.error('Error reporting damage:', error);
+    res.status(500).send('Internal Server Error');
+  }
+};
