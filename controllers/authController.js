@@ -7,8 +7,8 @@ const CartItem = require('../models/cartItem');
 const bcrypt = require("bcrypt");
 const axios = require('axios');
 const { sendEmail, otpTemplate } = require("../utils/emailService");
-const RECAPTCHA_SECRET_KEY = '6Ldb-bgrAAAAAOGcqoYtm7dlbuLHHwjR5s707UXh';
-// domain 6Ldb-bgrAAAAAOGcqoYtm7dlbuLHHwjR5s707UXh
+const RECAPTCHA_SECRET_KEY = '6LcsQcIrAAAAADfW13qP5bFwzB1UoE7H-8KuzwCC';
+// domain 6LcsQcIrAAAAADfW13qP5bFwzB1UoE7H-8KuzwCC
 // localhost 6LdykLQrAAAAAONL72QLlYPN_7zc6tx5j0q_V1zY
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
