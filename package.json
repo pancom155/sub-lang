@@ -17,9 +17,11 @@
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.5.0",
     "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-handlebars": "^8.0.1",
     "express-session": "^1.18.1",
+    "fs": "^0.0.1-security",
     "googleapis": "^158.0.0",
     "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.2",
@@ -31,6 +33,9 @@
     "otp-generator": "^4.0.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
-    "regression": "^2.0.1"
+    "path": "^0.12.7",
+    "puppeteer": "^24.19.0",
+    "regression": "^2.0.1",
+    "xlsx": "^0.18.5"
   }
 }

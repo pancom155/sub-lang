@@ -19,6 +19,7 @@ const orderSchema = new mongoose.Schema({
     ref: 'User', 
     required: true 
   },
+
   userInfoSnapshot: { 
     firstName: String, 
     lastName: String, 
@@ -27,14 +28,16 @@ const orderSchema = new mongoose.Schema({
     email: String, 
     username: String 
   },
+
   status: { 
     type: String, 
     enum: ['Pending', 'Processing', 'Cancelled', 'Completed'], 
     default: 'Pending' 
   },
+
   paymentMode: { 
     type: String, 
-    enum: ['COD', 'Pickup'], 
+    enum: ['COD', 'Pickup', 'GCash'],  // ✅ Added GCash
     required: true 
   },
 
@@ -43,22 +46,23 @@ const orderSchema = new mongoose.Schema({
     default: ''
   },
 
-  pickupProofImage: {
+  // Proof fields (required if Pickup OR GCash)
+  proofImage: {
     type: String, 
     required: function() {
-      return this.paymentMode === 'Pickup';
+      return this.paymentMode === 'Pickup' || this.paymentMode === 'GCash';
     }
   },
-  pickupReferenceNumber: {
+  referenceNumber: {
     type: String,
     required: function() {
-      return this.paymentMode === 'Pickup';
+      return this.paymentMode === 'Pickup' || this.paymentMode === 'GCash';
     }
   },
-  pickupSenderName: {
+  senderName: {
     type: String,
     required: function() {
-      return this.paymentMode === 'Pickup';
+      return this.paymentMode === 'Pickup' || this.paymentMode === 'GCash';
     }
   },
 
@@ -75,33 +79,52 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
+// ✅ Pre-save hook: snapshot user, calculate total, decrease stock
 orderSchema.pre('save', async function(next) {
-  const user = await mongoose.model('User').findById(this.user);
-  if (user) {
-    this.userInfoSnapshot = {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone,
-      address: user.address,
-      email: user.email,
-      username: user.username,
-    };
-  }
+  try {
+    const User = mongoose.model('User');
+    const Product = mongoose.model('Product');
 
-  for (const item of this.items) {
-    const product = await mongoose.model('Product').findById(item.productId);
-    
-    if (!product || product.stock < item.quantity) {
-      const error = new Error(`Not enough stock for ${item.productName}`);
-      return next(error);
+    // Snapshot user info
+    const user = await User.findById(this.user);
+    if (user) {
+      this.userInfoSnapshot = {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        address: user.address,
+        email: user.email,
+        username: user.username,
+      };
     }
-    product.stock -= item.quantity;
-    await product.save();  
-  }
 
-  this.totalAmount = this.items.reduce((total, item) => total + item.total, 0);
-  
-  next();
+    let total = 0;
+
+    for (const item of this.items) {
+      const product = await Product.findById(item.productId);
+
+      if (!product) {
+        return next(new Error('Product not found'));
+      }
+
+      if (product.stock < item.quantity) {
+        return next(new Error(`Not enough stock for ${product.productName}`));
+      }
+
+      // Decrease stock
+      product.stock -= item.quantity;
+      await product.save();
+
+      // Add to total
+      total += product.price * item.quantity;
+    }
+
+    this.totalAmount = total;
+
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = mongoose.models.Order || mongoose.model('Order', orderSchema);

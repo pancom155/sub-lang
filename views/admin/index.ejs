@@ -20,164 +20,106 @@
       overflow-y: auto;
       box-shadow: 4px 0px 10px rgba(0, 0, 0, 0.1);
     }
-    .sidebar h3 {
-      text-align: center;
-      font-size: 30px;
-      font-weight: bold;
-      margin-bottom: 30px;
-    }
-    .sidebar a {
-      color: white;
-      text-decoration: none;
-      padding: 12px 18px;
-      display: block;
-      border-radius: 25px;
-      font-size: 16px;
-      margin: 10px 0;
-      transition: all 0.3s ease;
-    }
-    .sidebar a:hover {
-      background-color: #f1f1f1;
-      color: #1d3c5a;
-      transform: translateX(10px);
-    }
-    .sidebar a.active {
-      background-color: #3a5f7d;
-      color: white;
-    }
-    .sidebar .logout {
-      position: absolute;
-      bottom: 20px;
-      width: 100%;
-      text-align: center;
-    }
-    .content {
-      margin-left: 270px;
-      padding: 20px;
-    }
-    .stat-box {
-      background-color: #f0f8ff; 
-      border-radius: 20px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-      margin-bottom: 20px;
-      height: 150px;
-      background: linear-gradient(145deg, #b3d9ff, #1d3c5a);
-    }
-    .stat-box h4 {
-      margin-bottom: 10px;
-      color: white;
-    }
-    .stat-box i {
-      font-size: 30px;
-      color: #ffffff; 
-    }
-    .stat-box p {
-      font-size: 24px;
-      font-weight: bold;
-      color: white;
-    }
-    .warning {
-      color: yellow;
-      font-weight: bold;
-    }
+    .sidebar h3 { text-align: center; font-size: 30px; font-weight: bold; margin-bottom: 30px; }
+    .sidebar a { color: white; text-decoration: none; padding: 12px 18px; display: block; border-radius: 25px; font-size: 16px; margin: 10px 0; transition: all 0.3s ease; }
+    .sidebar a:hover { background-color: #f1f1f1; color: #1d3c5a; transform: translateX(10px); }
+    .sidebar a.active { background-color: #3a5f7d; color: white; }
+    .sidebar .logout { position: absolute; bottom: 20px; width: 100%; text-align: center; }
+    .content { margin-left: 270px; padding: 20px; }
+    .card { border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+    .most-bought-header { font-weight: 700; color: #1d3c5a; margin-bottom: 20px; }
+    .donut-wrap { position: relative; width: 100%; display:flex; justify-content:center; align-items:center; }
+    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+    .donut-center .big { font-size: 22px; font-weight: 800; color: #1d3c5a; }
+    .donut-center .label { font-size: 12px; color: #6c757d; }
+    .product-list { max-height: 220px; overflow-y: auto; margin-top: 12px; border-top: 1px dashed #e9ecef; padding-top: 10px; }
+    .product-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.03); }
+    .product-item:last-child { border-bottom: none; }
+    .donut-wrap { position: relative; width: 280px; height: 280px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+    .donut-wrap canvas { width: 100% !important; height: 100% !important; }
+    .donut-center { position: absolute; text-align: center; pointer-events: none; }
+    .donut-center .big { font-size: 1.5rem; font-weight: bold; }
+    .donut-center .label { font-size: 0.9rem; color: #666; }
 
-    .most-bought-header {
-      font-weight: 700;
-      color: #1d3c5a;
-      margin-bottom: 25px;
-      border-bottom: 2px solid #3a5f7d;
-      padding-bottom: 8px;
-    }
-    .most-bought-grid {
+    .top-products-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px;
-      margin-bottom: 40px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
     }
-    .most-bought-card {
-      background: #e1efff;
-      border-radius: 15px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-      padding: 15px;
+    .product-card {
       display: flex;
       align-items: center;
-      gap: 15px;
-      margin-bottom: 10px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       transition: transform 0.2s ease;
     }
-    .most-bought-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 12px rgba(0,0,0,0.15);
-    }
-    .most-bought-card img {
-      width: 70px;
-      height: 70px;
+    .product-card:hover { transform: translateY(-3px); }
+    .product-card img {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
       object-fit: cover;
-      border-radius: 12px;
-      flex-shrink: 0;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      margin-right: 12px;
     }
-    .product-info {
-      flex-grow: 1;
-      font-weight: 600;
-      color: #1d3c5a;
-      font-size: 1.1rem;
-    }
-    .sold-badge {
-      background-color: #3a5f7d;
-      color: white;
-      padding: 6px 14px;
-      border-radius: 20px;
+    .product-info { flex-grow: 1; }
+    .product-info .name { font-weight: 700; color: #0d3b57; font-size: 15px; }
+    .product-info .sold { font-size: 13px; color: #6c757d; }
+    .product-icon { font-size: 1.5rem; color: #0d6efd; margin-left: auto; }
+    .most-bought-header {
       font-weight: 700;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      flex-shrink: 0;
+      color: #0d3b57;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .chart-select {
-  width: 140px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
 
-.chart-select:focus {
-  border-color: #1d3c5a;
-  outline: none;
-}
-  #salesChart {
-    width: 100% !important;
-    height: 300px !important;
-  }
-  #incomeLostDetails li {
-    padding: 6px 12px;
-    margin-bottom: 4px;
-    background-color: #fff3f3;
-    border-left: 4px solid #dc3545;
-    border-radius: 4px;
-    color: #b02a37;
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
+    .most-bought-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 14px;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
 
-  #incomeLostDetails li span {
-    float: right;
-    font-weight: bold;
-    color: #8a1c1c;
-  }
+    .most-bought-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
 
-  #lostIncomeList h6 {
-    border-bottom: 1px solid #dc3545;
-    padding-bottom: 4px;
-  }
-</style>
+    .most-bought-card img {
+      width: 45px;
+      height: 45px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
 
+    .most-bought-card small {
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .pagination {
+      margin: 0;
+    }
+
+    .pagination .page-link {
+      color: #0d3b57;
+      border-radius: 6px;
+    }
+
+    .pagination .page-item.active .page-link {
+      background-color: #0d3b57;
+      border-color: #0d3b57;
+    }
+  </style>
 </head>
 <body>
   <div class="sidebar">
@@ -186,1113 +128,263 @@
     </div>
     <h3 class="text-center text-white mb-4 fw-bold">Admin Panel</h3>
     <a href="/admin/index" class="active"><i class="bi bi-house-door"></i> Dashboard</a>
+    <a href="/admin/sales"><i class="bi bi-bar-chart"></i> Sales Overview</a>
     <a href="/admin/users"><i class="bi bi-person"></i> Users</a>
     <a href="/admin/products"><i class="bi bi-box"></i> Inventory</a>
     <a href="/admin/orders"><i class="bi bi-file-earmark-text"></i> Orders</a>
     <a href="/admin/staff"><i class="bi bi-person-badge"></i> Staff</a>
+    <a href="/admin/spoilage"><i class="bi bi-trash"></i> Spoilage</a>
     <a href="/admin/reviews"><i class="bi bi-star"></i> Reviews</a>
     <div class="logout">
       <a href="/logout" style="width: 150px;" class="btn btn-danger btn-sm mx-auto"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
   </div>
 
-  <div class="content"> 
-    <div class="row">
-      <div class="col-md-6">
+  <div class="content">
+    <div class="row g-4">
+      <div class="col-lg-6">
         <h3 class="most-bought-header">Top Selling Products</h3>
-        <div class="most-bought-grid">
-          <% if (!mostBoughtProducts || mostBoughtProducts.length === 0) { %>
-            <p>No sales data available.</p>
-          <% } else { %>
-            <% mostBoughtProducts.forEach(product => { %>
-              <div class="most-bought-card">
-                <img src="<%= product.productImage %>" alt="<%= product.productName %>" />
-                <div class="product-info"><%= product.productName %></div>
-                <div class="sold-badge">Sold: <%= product.totalQuantity %></div>
+        <% if (!mostBoughtProducts || mostBoughtProducts.length === 0) { %>
+          <p>No sales data available.</p>
+        <% } else { %>
+          <div class="top-products-grid">
+            <% mostBoughtProducts.slice(0,6).forEach(product => { %>
+              <div class="product-card">
+                <img src="<%= product.productImage %>" alt="<%= product.productName %>">
+                <div class="product-info">
+                  <div class="name"><%= product.productName %></div>
+                  <div class="sold">
+                    <i class="bi bi-bag-check-fill text-success"></i>
+                    Sold: <span style="font-weight:800;"><%= product.totalQuantity %></span>
+                  </div>
+                </div>
+                <i class="bi bi-star-fill product-icon"></i>
               </div>
             <% }) %>
-          <% } %>
-        </div>
-      </div>
-
-  <div class="col-md-6">
-    <h3 class="most-bought-header">Daily Orders</h3>
-    <% if (dailyOrders.length === 0) { %>
-      <p>No daily orders found.</p>
-    <% } else { %>
-      <% dailyOrders.forEach(order => { %>
-        <div class="most-bought-card">
-          <img src="<%= order.image || '/images/default.jpg' %>" alt="Order" />
-          <div class="product-info" style="font-size: 0.95rem; line-height: 1.3;">
-            <strong>Order ID:</strong> <%= order.orderId %><br>
-            <strong>Status:</strong> 
-            <% if (order.status === 'Completed') { %>
-              <span class="badge bg-success"><%= order.status %></span>
-            <% } else if (order.status === 'Pending') { %>
-              <span class="badge bg-warning text-dark"><%= order.status %></span>
-            <% } else if (order.status === 'Cancelled') { %>
-              <span class="badge bg-danger"><%= order.status %></span>
-            <% } else { %>
-              <%= order.status %>
-            <% } %>
-            <br>
-            <strong>Items:</strong> <%= order.productList %>
           </div>
-          <div class="sold-badge">₱<%= order.totalAmount %></div>
-        </div>
-      <% }) %>
-    
-    <!-- Pagination controls -->
-    <div class="mt-3 d-flex justify-content-center">
-      <nav aria-label="Daily Orders Pagination">
-        <ul class="pagination">
-          <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-            <a class="page-link" href="?page=<%= currentPage - 1 %>">Previous</a>
-          </li>
-
-          <% for(let i = 1; i <= totalPages; i++) { %>
-            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-              <a class="page-link" href="?page=<%= i %>"><%= i %></a>
-            </li>
-          <% } %>
-
-          <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-            <a class="page-link" href="?page=<%= currentPage + 1 %>">Next</a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  <% } %>
-</div>
-
-<div class="container mt-4">
-  <!-- Donut Charts Row -->
-  <div class="d-flex justify-content-center gap-4 flex-wrap">
-    <!-- Total Users Donut Chart -->
-    <div class="p-3 bg-white rounded shadow-sm text-center" style="width: 320px; border: 1px solid #ccc;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-        <h5 class="fw-bold" style="color: #1d3c5a; margin: 0;">Total Users</h5>
-        <select id="userSelect" class="chart-select" style="width: 140px; padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
-          <option value="all">All</option>
-          <option value="staff">Staff</option>
-          <option value="kitchen">Kitchen Staff</option>
-        </select>
-      </div>
-      <canvas id="userDonutChart" style="max-width: 280px; margin: 0 auto;"></canvas>
-    </div>
-
-    <!-- Order Status Donut Chart -->
-    <div class="p-3 bg-white rounded shadow-sm text-center" style="width: 320px; border: 1px solid #ccc;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-        <h5 class="fw-bold" style="color: #1d3c5a; margin: 0;">Order Status</h5>
-        <select id="orderSelect" class="chart-select" style="width: 140px; padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
-          <option value="all">All</option>
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-      </div>
-      <canvas id="orderStatusDonutChart" style="max-width: 280px; margin: 0 auto;"></canvas>
-    </div>
-
-    <!-- Total Stock Donut Chart -->
-    <div class="p-3 bg-white rounded shadow-sm text-center" style="width: 320px; border: 1px solid #ccc;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-        <h5 class="fw-bold" style="color: #1d3c5a; margin: 0;">Total Stock</h5>
-        <select id="stockSelect" class="chart-select" style="width: 140px; padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
-          <option value="all">All</option>
-          <% products.forEach(product => { %>
-            <option value="<%= product.productName %>"><%= product.productName %></option>
-          <% }) %>
-        </select>
-      </div>
-      <canvas id="stockDonutChart" style="max-width: 280px; margin: 0 auto;"></canvas>
-    </div>
-  </div>
-
-<div class="container py-4" style="max-width: 900px;">
-  <div class="card shadow-sm">
-    <div class="card-body position-relative">
-
-      <div id="lostIncomeList" class="position-absolute end-0 top-0 p-3 text-end" style="z-index: 10;">
-        <h6 class="fw-bold text-danger mb-2">Lost Income per Product</h6>
-
-        <ul class="list-unstyled small mt-3" id="incomeLostDetails" style="max-height: 200px; overflow-y: auto;"></ul>
-          <div id="totalLostIncomeDisplay" class="mb-2 fw-bold text-danger text-center fs-5">
-            Total: $0.00
-          </div>
+        <% } %>
       </div>
 
-      <div class="text-center mt-4">
-        <h5 class="fw-bold text-danger mb-3">
-          <i class="bi bi-currency-dollar"></i> Total Lost Income (Chart):
-        </h5>
-        <canvas id="lostIncomeDonutChartUnique" style="width: 350px; height: 350px; margin: 0 auto;"></canvas>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
-<script>
-let products = <%- JSON.stringify(products) %>;
-
-const ctxLostIncomeUnique = document.getElementById('lostIncomeDonutChartUnique').getContext('2d');
-let lostIncomeDonutChartUnique;
-
-async function fetchUpdatedProducts() {
-  try {
-    const res = await fetch('/api/products'); // Change this to your actual route
-    return await res.json();
-  } catch (err) {
-    console.error('Fetch failed:', err);
-    return products;
-  }
-}
-
-async function updateChartUnique() {
-  products = await fetchUpdatedProducts();
-
-  const labels = products.map(p => p.productName);
-  const lostIncomeData = products.map(p => p.lostIncome || 0);
-
-  // 📝 Update Top-Right List
-  const listContainer = document.getElementById('incomeLostDetails');
-  listContainer.innerHTML = '';
-
-  // Calculate total lost income
-  const totalLostIncome = lostIncomeData.reduce((sum, val) => sum + val, 0);
-
-  // Update total lost income display
-  const totalDisplay = document.getElementById('totalLostIncomeDisplay');
-  if (totalDisplay) {
-    totalDisplay.textContent = `Total: ₱${totalLostIncome.toFixed(2)}`;
-  }
-
-  products.forEach(p => {
-    const li = document.createElement('li');
-    li.textContent = `${p.productName}: ₱${(p.lostIncome || 0).toFixed(2)}`;
-    listContainer.appendChild(li);
-  });
-
-  // 🧁 Update Donut Chart
-  if (lostIncomeDonutChartUnique) lostIncomeDonutChartUnique.destroy();
-
-  lostIncomeDonutChartUnique = new Chart(ctxLostIncomeUnique, {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Lost Income',
-        data: lostIncomeData,
-        backgroundColor: [
-          '#dc3545', '#e4606d', '#ee848a', '#f5a2a8', '#fabcc2', 
-          '#fcd8d9', '#fdf1f2', '#ffebee', '#ffcdd2', '#ef9a9a'
-        ],
-        borderColor: '#fff',
-        borderWidth: 2,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: '#b02a37'
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const value = context.parsed || 0;
-              return `₱${value.toFixed(2)}`;
-            }
-          }
-        }
-      }
-    }
-  });
-}
-
-// Initial render
-updateChartUnique();
-
-// Optional: Refresh every 15 seconds
-setInterval(updateChartUnique, 15000);
-
-</script>
-
-
-
-
-  <!-- Sales Overview Section -->
-  <div style="margin-top: 100px;">
-    <h2 class="mb-4 fw-bold text-center">Sales Overview</h2>
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-      <h5 class="mb-0">Total Sales: <span class="text-success fw-bold">₱<%= totalSales.toFixed(2) %></span></h5>
-      
-      <div class="csv-tab-pill col-md-6 d-flex justify-content-md-end flex-wrap gap-2">
-        <ul class="nav nav-pills">
-          <li class="nav-item">
-            <a class="nav-link active" href="#" data-mode="daily">Daily</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" data-mode="weekly">Weekly</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" data-mode="monthly">Monthly</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" data-mode="yearly">Yearly</a>
-          </li>
-        </ul>
-        <button id="downloadCsvBtn" class="btn btn-success btn-sm">
-          <i class="bi bi-download"></i> Download Weekly CSV
-        </button>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <ul class="nav nav-tabs" id="salesTab" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button" role="tab" aria-controls="daily" aria-selected="true">Daily</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button" role="tab" aria-controls="weekly" aria-selected="false">Weekly</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly" type="button" role="tab" aria-controls="monthly" aria-selected="false">Monthly</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="yearly-tab" data-bs-toggle="tab" data-bs-target="#yearly" type="button" role="tab" aria-controls="yearly" aria-selected="false">Yearly</button>
-      </li>
-    </ul>
-
-    <div class="tab-content mt-3" id="salesTabContent">
-      <div class="tab-pane fade show active" id="daily" role="tabpanel" aria-labelledby="daily-tab">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title mb-4 text-center fw-bold">Daily Sales</h5>
-            <canvas id="dailySalesWaveChart" height="100"></canvas>
-          </div>
-        </div>
-      </div>
-      <div class="tab-pane fade" id="weekly" role="tabpanel" aria-labelledby="weekly-tab">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title mb-4 text-center fw-bold">Weekly Sales</h5>
-            <canvas id="weeklySalesChart" height="100"></canvas>
-          </div>
-        </div>
-      </div>
-      <div class="tab-pane fade" id="monthly" role="tabpanel" aria-labelledby="monthly-tab">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title mb-4 text-center fw-bold">Monthly Sales</h5>
-            <canvas id="monthlySalesChart" height="100"></canvas>
-          </div>
-        </div>
-      </div>
-      <div class="tab-pane fade" id="yearly" role="tabpanel" aria-labelledby="yearly-tab">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title mb-4 text-center fw-bold">Yearly Sales</h5>
-            <canvas id="yearlySalesChart" height="100"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div style="margin-top: 80px;">
-  <h2 class="fw-bold mb-5 text-center">Product Monitoring - <%= month %> <%= year %></h2>
-  <div class="row g-4">
-    <div class="col-lg-6">
-      <div class="row" style="display: flex; flex-wrap: wrap; gap: 1rem;">
-        <% if (!mostBoughtProducts || mostBoughtProducts.length === 0) { %>
-          <p class="text-center" style="width: 100%;">No sales data available.</p>
+      <div class="col-lg-6">
+        <h3 class="most-bought-header">Daily Orders</h3>
+        <% if (!dailyOrders || dailyOrders.length === 0) { %>
+          <p>No daily orders found.</p>
         <% } else { %>
-          <% mostBoughtProducts.forEach(product => { %>
-            <div style="flex: 0 0 calc(50% - 1rem); box-sizing: border-box; margin-bottom: 1rem;">
-              <div class="most-bought-card" style="display: flex; align-items: center; gap: 1rem; border: 1px solid #ddd; padding: 0.75rem; border-radius: 0.25rem;">
-                <img src="<%= product.productImage %>" alt="<%= product.productName %>" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px; flex-shrink: 0;" />
-                <div>
-                  <div class="product-info fw-bold"><%= product.productName %></div>
-                  <div class="text-success fw-bold">₱<%= product.price %></div>
-                  <div class="badge bg-info text-dark mb-1"><%= product.category %></div>
-                  <div class="sold-badge fw-semibold"> Sold: <%= product.totalQuantity %></div>
+          <% dailyOrders.forEach(order => { %>
+            <div class="most-bought-card mb-2">
+              <img src="<%= order.image || '/images/default.jpg' %>" alt="Order">
+              <div style="flex:1;">
+                <div style="font-weight:700;"><small>Order ID:</small> <%= order.orderId %></div>
+                <div style="font-size:13px; color:#6c757d;">
+                  <small>Status:</small>
+                  <% if (order.status === 'Completed') { %>
+                    <span class="badge bg-success"><%= order.status %></span>
+                  <% } else if (order.status === 'Pending') { %>
+                    <span class="badge bg-warning text-dark"><%= order.status %></span>
+                  <% } else if (order.status === 'Cancelled') { %>
+                    <span class="badge bg-danger"><%= order.status %></span>
+                  <% } else { %>
+                    <%= order.status %>
+                  <% } %>
+                </div>
+                <div style="font-size:13px; color:#6c757d; margin-top:6px;">
+                  <small>Items:</small> <%= order.productList %>
                 </div>
               </div>
+              <div style="min-width:75px; text-align:right; font-weight:800; color:#0d3b57;">₱<%= order.totalAmount %></div>
             </div>
-          <% }) %>
+          <% }); %>
+          <div class="mt-3 d-flex justify-content-center">
+            <nav aria-label="Daily Orders Pagination">
+              <ul class="pagination">
+                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                  <a class="page-link" href="?page=<%= currentPage - 1 %>">Previous</a>
+                </li>
+                <% for(let i = 1; i <= totalPages; i++) { %>
+                  <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                    <a class="page-link text-white" href="?page=<%= i %>"><%= i %></a>
+                  </li>
+                <% } %>
+                <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                  <a class="page-link" href="?page=<%= currentPage + 1 %>">Next</a>
+                </li>
+              </ul>
+            </nav>
+          </div>
         <% } %>
       </div>
     </div>
 
-    <div class="col-lg-6">
-      <div id="chartContainer">
-        <form id="monthForm" class="mb-3 d-flex align-items-center justify-content-between" method="GET" action="/admin/index">
-        <div>
-            <label for="monthSelect" class="form-label fw-semibold">Select Month:</label>
-            <select name="month" id="monthSelect" class="form-select" onchange="document.getElementById('monthForm').submit()">
-            <% const months = [
-                'January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'
-            ]; %>
-            <% months.forEach((m, index) => { %>
-                <option value="<%= index + 1 %>" <%= m === month ? 'selected' : '' %>><%= m %></option>
-            <% }); %>
+    <hr class="my-4">
+
+    <div class="row g-4 align-items-start">
+      <div class="col-md-4">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Users</h5>
+            <select id="userTypeSelect" class="form-select form-select-sm w-auto">
+              <option value="total">Total</option>
+              <option value="user">Users</option>
+              <option value="staff">Staff</option>
+              <option value="kitchen">Kitchen Staff</option>
             </select>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="userDonutChart"></canvas>
+            <div class="donut-center" id="userCenter">
+              <div class="big"><%= usersBreakdown.total %></div>
+              <div class="label">Total Users</div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div>
-            <label for="yearInput" class="form-label fw-semibold">Year:</label>
-            <input type="number" name="year" id="yearInput" class="form-control" value="<%= year %>" onchange="document.getElementById('monthForm').submit()" />
+      <div class="col-md-4">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Orders</h5>
+            <select id="orderTypeSelect" class="form-select form-select-sm w-auto">
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="orderStatusDonutChart"></canvas>
+            <div class="donut-center" id="orderCenter">
+              <div class="big"><%= ordersBreakdown.pending + ordersBreakdown.completed + ordersBreakdown.cancelled %></div>
+              <div class="label">Total Orders</div>
+            </div>
+          </div>
         </div>
-        </form>
+      </div>
 
-        <canvas id="salesChart" height="500"></canvas>
-
-        <p class="text-center mt-3 fw-bold text-secondary">
-          Showing data for <%= month %> <%= year %>
-        </p>
+      <div class="col-md-4">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Stock</h5>
+            <select id="stockProductSelect" class="form-select form-select-sm w-auto">
+              <option value="__all__">All</option>
+              <% (stockBreakdown.products || []).forEach(p => { %>
+                <option value="<%- p.name.replace(/"/g, '&quot;') %>"><%- p.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="stockDonutChart"></canvas>
+            <div class="donut-center" id="stockCenter">
+              <div class="big"><%= stockBreakdown.total %></div>
+              <div class="label">Total Stock</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
-<div class="card shadow-sm mt-4" style="border: 1px solid #dee2e6; border-radius: 0.5rem;">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h5 class="mb-0">
-      <i class="bi bi-bar-chart-line-fill me-2"></i>Daily Product Sales
-    </h5>
-    <span class="badge bg-primary-subtle text-dark fw-semibold" style="font-size: 0.9rem; padding: 0.5rem 0.75rem; border-radius: 0.5rem;">
-      Sales from 7:00 AM to 5:00 PM
-    </span>
   </div>
 
-  <div class="card-body" style="padding: 1.5rem;">
-    <% if (dailyProductSales.length === 0) { %>
-      <div class="alert alert-info mb-0">
-        No product sales recorded during business hours today.
-      </div>
-    <% } else { %>
-      <% dailyProductSales.forEach((product, index) => { %>
-        <div style="margin-bottom: 3rem; border-bottom: 1px solid #dee2e6; padding-bottom: 2rem;">
-          <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-            <img src="<%= product.productImage %>" alt="<%= product.productName %>" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #0d6efd;">
-            <h6 style="margin: 0; font-weight: 600; color: #0d6efd;"><%= product.productName %></h6>
-          </div>
-
-          <div style="position: relative; height: 250px; width: 100%;">
-            <canvas id="dailyProductSalesChart-<%= index %>" style="max-height: 100%;"></canvas>
-          </div>
-
-          <script>
-            document.addEventListener('DOMContentLoaded', () => {
-              const ctx = document.getElementById('dailyProductSalesChart-<%= index %>').getContext('2d');
-
-              new Chart(ctx, {
-                type: 'line',
-                data: {
-                  labels: <%- JSON.stringify(product.salesByTime.map(item => item.time)) %>,
-                  datasets: [{
-                    label: 'Quantity Sold',
-                    data: <%- JSON.stringify(product.salesByTime.map(item => item.quantity)) %>,
-                    fill: true,
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                    borderColor: 'rgba(13, 110, 253, 1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    pointBackgroundColor: 'rgba(13, 110, 253, 1)',
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                      callbacks: {
-                        label: function(context) {
-                          return `Quantity: ${context.raw}`;
-                        }
-                      }
-                    },
-                    datalabels: {
-                      color: '#212529',
-                      anchor: 'start',
-                      align: 'bottom',
-                      font: { weight: 'bold', size: 12 },
-                      formatter: value => value,
-                      padding: { bottom: 6 },
-                      clamp: true
-                    }
-                  },
-                  scales: {
-                    x: {
-                      ticks: {
-                        color: '#495057',
-                        maxRotation: 45,
-                        minRotation: 0,
-                        font: { size: 12 }
-                      }
-                    },
-                    y: {
-                      beginAtZero: true,
-                      ticks: {
-                        stepSize: 1,
-                        color: '#495057',
-                        font: { size: 12 }
-                      },
-                      grid: { color: '#dee2e6' }
-                    }
-                  }
-                },
-                plugins: [ChartDataLabels]
-              });
-            });
-          </script>
-        </div>
-      <% }); %>
-    <% } %>
-  </div>
-</div>
-
-<div class="card shadow-sm mt-4" style="border: 1px solid #dee2e6; border-radius: 0.5rem;">
-<div class="card-header d-flex justify-content-between align-items-center flex-wrap py-3 px-4" style="gap: 1rem;">
-  <h5 class="mb-0 d-flex align-items-center">
-    <i class="bi bi-graph-up-arrow me-2 text-primary"></i>
-    <span class="fw-semibold text-dark">Product Sales Trends</span>
-  </h5>
-  
-  <div class="d-flex flex-wrap align-items-center gap-2">
-    <div class="form-group mb-0">
-      <label for="productFilter" class="form-label mb-1 small fw-medium text-muted">Product</label>
-      <select id="productFilter" class="form-select form-select-sm border-primary-subtle">
-        <option value="">All Products</option>
-        <% const productNames = new Set([...weeklyTrends, ...monthlyProductTrends].map(p => p.productName)); %>
-        <% productNames.forEach(name => { %>
-          <option value="<%= name %>"><%= name %></option>
-        <% }); %>
-      </select>
-    </div>
-
-    <div class="form-group mb-0">
-      <label for="trendFilter" class="form-label mb-1 small fw-medium text-muted">Trend</label>
-      <select id="trendFilter" class="form-select form-select-sm border-primary-subtle">
-        <option value="weekly">Weekly</option>
-        <option value="monthly" selected>Monthly</option>
-      </select>
-    </div>
-  </div>
-</div>
-
-  <div class="card-body">
-    <div style="position: relative; height: 350px; width: 100%;">
-      <canvas id="trendChart"></canvas>
-    </div>
-   
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const ctx = document.getElementById('trendChart').getContext('2d');
-        const trendFilter = document.getElementById('trendFilter');
-        const productFilter = document.getElementById('productFilter');
-
-        const weeklyData = <%- JSON.stringify(weeklyTrends) %>;
-        const monthlyData = <%- JSON.stringify(monthlyProductTrends) %>;
-
-        let chart;
-
-        function createDataset(data) {
-          const labels = [...new Set(data.flatMap(p => p.dailySales.map(d => d.date)))];
-
-          const datasets = data.map(product => {
-            const quantities = product.dailySales.map(d => d.quantity);
-            const peak = Math.max(...quantities);
-            const fall = Math.min(...quantities);
-
-            return {
-              label: product.productName,
-              data: labels.map(label => (
-                product.dailySales.find(s => s.date === label)?.quantity || 0
-              )),
-              fill: false,
-              tension: 0.4,
-              borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
-              borderWidth: 2,
-              pointBackgroundColor: labels.map(label => {
-                const qty = product.dailySales.find(s => s.date === label)?.quantity;
-                return qty === peak ? 'green' : qty === fall ? 'red' : 'blue';
-              }),
-              pointRadius: labels.map(label => {
-                const qty = product.dailySales.find(s => s.date === label)?.quantity;
-                return qty === peak || qty === fall ? 6 : 4;
-              })
-            };
-          });
-
-          return { labels, datasets };
-        }
-
-        function renderChart(data, selectedProduct = '') {
-          const filtered = selectedProduct
-            ? data.filter(p => p.productName === selectedProduct)
-            : data;
-
-          const config = {
-            type: 'line',
-            data: createDataset(filtered),
-            options: {
-              responsive: true,
-              plugins: {
-                legend: { position: 'top' },
-                tooltip: {
-                  callbacks: {
-                    label: ctx => `${ctx.dataset.label}: ${ctx.raw}`
-                  }
-                }
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: { stepSize: 1 }
-                },
-                x: {
-                  ticks: {
-                    autoSkip: false,
-                    maxRotation: 45,
-                    minRotation: 0
-                  }
-                }
-              }
-            }
-          };
-
-          if (chart) chart.destroy();
-          chart = new Chart(ctx, config);
-        }
-
-        function updateChart() {
-          const selectedTrend = trendFilter.value;
-          const selectedProduct = productFilter.value;
-          const sourceData = selectedTrend === 'weekly' ? weeklyData : monthlyData;
-          renderChart(sourceData, selectedProduct);
-        }
-
-        trendFilter.addEventListener('change', updateChart);
-        productFilter.addEventListener('change', updateChart);
-
-        updateChart(); // Initial load
-      });
-    </script>
-  </div>
-</div>
-  </div>
-</div>
-
-
-
-
-    </div>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  const centerTextPlugin = {
-    id: 'centerText',
-    beforeDraw(chart) {
-      const showText = chart.config.options.plugins.centerText?.show;
-      if (!showText) return;
-
-      const { width, height, ctx } = chart;
-      const total = chart.config.options.plugins.centerText.total || 0;
-
-      ctx.restore();
-      ctx.font = 'bold 1em sans-serif';
-      ctx.fillStyle = '#1d3c5a';
-      ctx.textBaseline = 'middle';
-      const text = `Total: ${total}`;
-      const textX = (width - ctx.measureText(text).width) / 2;
-      const textY = height / 2;
-      ctx.fillText(text, textX, textY);
-      ctx.save();
-    }
-  };
-
-  Chart.register(centerTextPlugin);
-
-  const userCtx = document.getElementById('userDonutChart').getContext('2d');
-  const userDataRaw = {
-    labels: ['Total Users', 'Staff', 'Kitchen Staff'],
-    datasets: [{
-      data: [<%= totalUsers %>, <%= totalStaff %>, <%= totalKitchenStaff %>],
-      backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e'],
-      hoverOffset: 30,
-      borderWidth: 1,
-      borderColor: '#fff'
-    }]
-  };
-
-  const userOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'bottom', labels: { font: { size: 12 } } },
-      tooltip: { enabled: true },
-      centerText: { show: false, total: 0 }
-    },
-    cutout: '70%'
-  };
-
-  const userChart = new Chart(userCtx, {
-    type: 'doughnut',
-    data: structuredClone(userDataRaw),
-    options: structuredClone(userOptions)
-  });
-
-  document.getElementById('userSelect').addEventListener('change', e => {
-    const value = e.target.value;
-    let newData = [];
-    let newLabels = [];
-    let newColors = [];
-
-    if (value === 'all') {
-      newData = userDataRaw.datasets[0].data;
-      newLabels = userDataRaw.labels;
-      newColors = userDataRaw.datasets[0].backgroundColor;
-      userChart.options.plugins.centerText.show = false;
-    } else if (value === 'staff') {
-      newData = [<%= totalStaff %>];
-      newLabels = ['Staff'];
-      newColors = ['#1cc88a'];
-      userChart.options.plugins.centerText.show = true;
-      userChart.options.plugins.centerText.total = <%= totalStaff %>;
-    } else if (value === 'kitchen') {
-      newData = [<%= totalKitchenStaff %>];
-      newLabels = ['Kitchen Staff'];
-      newColors = ['#f6c23e'];
-      userChart.options.plugins.centerText.show = true;
-      userChart.options.plugins.centerText.total = <%= totalKitchenStaff %>;
-    }
-
-    userChart.data.labels = newLabels;
-    userChart.data.datasets[0].data = newData;
-    userChart.data.datasets[0].backgroundColor = newColors;
-    userChart.update();
-  });
-
-  const orderCtx = document.getElementById('orderStatusDonutChart').getContext('2d');
-  const orderDataRaw = {
-    labels: ['Pending Orders', 'Completed Orders', 'Cancelled Orders'],
-    datasets: [{
-      data: [<%= pendingOrdersCount %>, <%= completedOrdersCount %>, <%= cancelledOrdersCount %>],
-      backgroundColor: ['#f6c23e', '#1cc88a', '#e74a3b'],
-      hoverOffset: 30,
-      borderWidth: 1,
-      borderColor: '#fff'
-    }]
-  };
-
-  const orderOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'bottom', labels: { font: { size: 12 } } },
-      tooltip: { enabled: true },
-      centerText: { show: false, total: 0 }
-    },
-    cutout: '70%'
-  };
-
-  const orderChart = new Chart(orderCtx, {
-    type: 'doughnut',
-    data: structuredClone(orderDataRaw),
-    options: structuredClone(orderOptions)
-  });
-
-  document.getElementById('orderSelect').addEventListener('change', e => {
-    const value = e.target.value;
-    let newData = [];
-    let newLabels = [];
-    let newColors = [];
-
-    if (value === 'all') {
-      newData = orderDataRaw.datasets[0].data;
-      newLabels = orderDataRaw.labels;
-      newColors = orderDataRaw.datasets[0].backgroundColor;
-      orderChart.options.plugins.centerText.show = false;
-    } else if (value === 'pending') {
-      newData = [<%= pendingOrdersCount %>];
-      newLabels = ['Pending Orders'];
-      newColors = ['#f6c23e'];
-      orderChart.options.plugins.centerText.show = true;
-      orderChart.options.plugins.centerText.total = <%= pendingOrdersCount %>;
-    } else if (value === 'completed') {
-      newData = [<%= completedOrdersCount %>];
-      newLabels = ['Completed Orders'];
-      newColors = ['#1cc88a'];
-      orderChart.options.plugins.centerText.show = true;
-      orderChart.options.plugins.centerText.total = <%= completedOrdersCount %>;
-    } else if (value === 'cancelled') {
-      newData = [<%= cancelledOrdersCount %>];
-      newLabels = ['Cancelled Orders'];
-      newColors = ['#e74a3b'];
-      orderChart.options.plugins.centerText.show = true;
-      orderChart.options.plugins.centerText.total = <%= cancelledOrdersCount %>;
-    }
-
-    orderChart.data.labels = newLabels;
-    orderChart.data.datasets[0].data = newData;
-    orderChart.data.datasets[0].backgroundColor = newColors;
-    orderChart.update();
-  });
-</script>
-
-<script>
-  const stockCtx = document.getElementById('stockDonutChart').getContext('2d');
-
-  const stockDataRaw = {
-    labels: [<% products.forEach(p => { %>'<%= p.productName %>',<% }) %>],
-    datasets: [{
-      data: [<% products.forEach(p => { %><%= p.stock %>,<% }) %>],
-      backgroundColor: [
-        '#4e73df', '#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc',
-        '#8e44ad', '#2ecc71', '#f39c12', '#e67e22', '#3498db'
-      ],
-      hoverOffset: 30,
-      borderWidth: 1,
-      borderColor: '#fff'
-    }]
-  };
-
-  const stockChart = new Chart(stockCtx, {
-    type: 'doughnut',
-    data: structuredClone(stockDataRaw),
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom', labels: { font: { size: 10 } } },
-        tooltip: { enabled: true },
-        centerText: { show: false, total: 0 }
-      },
-      cutout: '70%'
-    }
-  });
-
-document.getElementById('stockSelect').addEventListener('change', e => {
-  const value = e.target.value;
-
-  if (value === 'all') {
-    stockChart.data = structuredClone(stockDataRaw);
-    stockChart.options.plugins.centerText = { show: false }; 
-    stockChart.update();
-    return;
-  }
-
-  const index = stockDataRaw.labels.indexOf(value);
-  const newLabel = [value];
-  const newData = [stockDataRaw.datasets[0].data[index]];
-  const newColor = [stockDataRaw.datasets[0].backgroundColor[index]];
-
-  stockChart.data.labels = newLabel;
-  stockChart.data.datasets[0].data = newData;
-  stockChart.data.datasets[0].backgroundColor = newColor;
-
-  stockChart.options.plugins.centerText = {
-    show: true,
-    total: newData[0] 
-  };
-
-  stockChart.update();
-});
-</script>
-
-<script>
-  // Helper function to map sales data ensuring zero when no data
-  function mapSalesData(labels, salesObj) {
-    return labels.map(label => (salesObj[label] ? parseFloat(salesObj[label].toFixed(2)) : 0));
-  }
-
-  // Data passed from server-side rendering
-  const weeklyLabels = <%- JSON.stringify(weeklyLabels) %>;
-  const weeklySalesData = <%- JSON.stringify(weeklySales) %>;
-
-  const monthlyLabels = <%- JSON.stringify(monthlyLabels) %>;
-  const monthlySalesData = <%- JSON.stringify(monthlySales) %>;
-
-  const yearlyLabels = <%- JSON.stringify(yearlyLabels) %>;
-  const yearlySalesData = <%- JSON.stringify(yearlySales) %>;
-
-  // Prepare datasets for charts
-  const weeklyData = mapSalesData(weeklyLabels, weeklySalesData);
-  const monthlyData = mapSalesData(monthlyLabels, monthlySalesData);
-  const yearlyData = mapSalesData(yearlyLabels, yearlySalesData);
-
-  // Common chart options for all charts (with datalabels)
-  const commonOptions = {
-    responsive: true,
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: value => '₱' + value.toLocaleString()
-        }
-      }
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: ctx => '₱' + ctx.parsed.y.toLocaleString()
-        }
-      },
-      datalabels: {
-        anchor: 'end',
-        align: 'top',
-        color: '#000',
-        formatter: value => '₱' + value.toLocaleString(),
-        font: {
-          weight: 'bold'
-        }
-      }
-    }
-  };
-
-  // Weekly sales chart
-  const weeklyCtx = document.getElementById('weeklySalesChart').getContext('2d');
-  new Chart(weeklyCtx, {
-    type: 'bar',
-    data: {
-      labels: weeklyLabels,
-      datasets: [{
-        label: 'Weekly Sales (₱)',
-        data: weeklyData,
-        backgroundColor: 'rgba(0, 123, 255, 0.7)'
-      }]
-    },
-    options: commonOptions,
-    plugins: [ChartDataLabels]
-  });
-
-  // Monthly sales chart
-  const monthlyCtx = document.getElementById('monthlySalesChart').getContext('2d');
-  new Chart(monthlyCtx, {
-    type: 'bar',
-    data: {
-      labels: monthlyLabels,
-      datasets: [{
-        label: 'Monthly Sales (₱)',
-        data: monthlyData,
-        backgroundColor: 'rgba(40, 167, 69, 0.7)'
-      }]
-    },
-    options: commonOptions,
-    plugins: [ChartDataLabels]
-  });
-
-  // Yearly sales chart
-  const yearlyCtx = document.getElementById('yearlySalesChart').getContext('2d');
-  new Chart(yearlyCtx, {
-    type: 'bar',
-    data: {
-      labels: yearlyLabels,
-      datasets: [{
-        label: 'Yearly Sales (₱)',
-        data: yearlyData,
-        backgroundColor: 'rgba(255, 193, 7, 0.7)'
-      }]
-    },
-    options: commonOptions,
-    plugins: [ChartDataLabels]
-  });
-
-  // Daily sales chart
-  const dailySales = <%- JSON.stringify(dailySales) %> || {};
-  const dailyLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const dailyData = dailyLabels.map((_, i) => (dailySales[i] ? parseFloat(dailySales[i].toFixed(2)) : 0));
-
-  const dailyCtx = document.getElementById('dailySalesWaveChart').getContext('2d');
-  new Chart(dailyCtx, {
-    type: 'line',
-    data: {
-      labels: dailyLabels,
-      datasets: [{
-        label: 'Sales (₱)',
-        data: dailyData,
-        borderColor: '#003366',
-        backgroundColor: 'rgba(0, 51, 102, 0.3)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 3,
-        pointBackgroundColor: '#003366'
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        x: {
-          title: { display: true },
-          ticks: {
-            maxRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 24
-          }
-        },
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: 'Sales (₱)' },
-          ticks: {
-            callback: value => '₱' + value.toLocaleString()
-          }
-        }
-      },
-      plugins: {
-        legend: {
-          display: true,
-          labels: {
-            color: '#003366',
-            font: { weight: 'bold' }
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => '₱' + ctx.parsed.y.toLocaleString()
-          }
-        },
-        datalabels: {
-          anchor: 'end',
-          align: 'top',
-          color: '#003366',
-          formatter: value => '₱' + value.toLocaleString(),
-          font: {
-            weight: 'bold'
-          }
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
-
-  // CSV Download feature
-  function createCSV(labels, data) {
-    const rows = [['Period', 'Sales']];
-    for (let i = 0; i < labels.length; i++) {
-      rows.push([labels[i], data[i].toFixed(2)]);
-    }
-    return rows.map(row => row.join(',')).join('\n');
-  }
-
-  function downloadCSV(filename, csvContent) {
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  const downloadBtn = document.getElementById('downloadCsvBtn');
-  const navLinks = document.querySelectorAll('.csv-tab-pill .nav-link');
-  let currentMode = 'daily';
-
-  function updateDownloadButton() {
-    downloadBtn.innerHTML = `<i class="bi bi-download"></i> Download ${currentMode.charAt(0).toUpperCase() + currentMode.slice(1)} CSV`;
-  }
-
-  downloadBtn.addEventListener('click', () => {
-    let labels, data, filename;
-
-    if (currentMode === 'weekly') {
-      labels = weeklyLabels;
-      data = weeklyData;
-      filename = 'weekly_sales.csv';
-    } else if (currentMode === 'monthly') {
-      labels = monthlyLabels;
-      data = monthlyData;
-      filename = 'monthly_sales.csv';
-    } else if (currentMode === 'yearly') {
-      labels = yearlyLabels;
-      data = yearlyData;
-      filename = 'yearly_sales.csv';
-    } else if (currentMode === 'daily') {
-      labels = dailyLabels;
-      data = dailyData;
-      filename = 'daily_sales.csv';
-    }
-
-    const csvContent = createCSV(labels, data);
-    downloadCSV(filename, csvContent);
-  });
-
-  navLinks.forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      navLinks.forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
-      currentMode = link.getAttribute('data-mode');
-      updateDownloadButton();
-    });
-  });
-
-  updateDownloadButton();
-</script>
-
-  <% if (mostBoughtProducts && mostBoughtProducts.length > 0) { %>
   <script>
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    const productNames = <%- JSON.stringify(mostBoughtProducts.map(p => p.productName)) %>;
-    const totalSoldPrices = <%- JSON.stringify(
-      mostBoughtProducts.map(p => parseFloat((p.price * p.totalQuantity).toFixed(2)))
-    ) %>;
+    const usersBreakdown = <%- JSON.stringify(usersBreakdown) %>;
+    const ordersBreakdown = <%- JSON.stringify(ordersBreakdown) %>;
+    const stockBreakdown = <%- JSON.stringify(stockBreakdown) %>;
 
-    new Chart(ctx, {
-      type: 'bar',
+    function genColors(n) {
+      const colors = [];
+      for (let i = 0; i < n; i++) {
+        colors.push(`hsl(${(i*60)%360}, 65%, 55%)`);
+      }
+      return colors;
+    }
+
+    const userChart = new Chart(document.getElementById('userDonutChart'), {
+      type: 'doughnut',
       data: {
-        labels: productNames,
+        labels: ['Users','Staff','Kitchen'],
         datasets: [{
-          label: 'Total Sold Price (₱)',
-          data: totalSoldPrices,
-        backgroundColor: 'rgba(29, 60, 90, 0.7)',
-        borderColor: 'rgba(29, 60, 90, 1)',
-        borderWidth: 1,
-        borderRadius: 6,
-        maxBarThickness: 60
+          data: [usersBreakdown.user, usersBreakdown.staff, usersBreakdown.kitchen],
+          backgroundColor: genColors(3),
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: true },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                return `₱${context.raw.toFixed(2)}`;
-              }
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: function(value) {
-                return `₱${value}`;
-              }
-            }
-          }
-        }
+      options: { cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+    });
+    document.getElementById('userTypeSelect').addEventListener('change', function() {
+      const v = this.value;
+      const center = document.querySelector('#userCenter .big');
+      if (v === 'total') {
+        userChart.data.labels = ['Users','Staff','Kitchen'];
+        userChart.data.datasets[0].data = [usersBreakdown.user, usersBreakdown.staff, usersBreakdown.kitchen];
+        center.textContent = usersBreakdown.total;
+      } else {
+        userChart.data.labels = [v];
+        userChart.data.datasets[0].data = [usersBreakdown[v] || 0];
+        center.textContent = usersBreakdown[v] || 0;
       }
+      userChart.data.datasets[0].backgroundColor = genColors(userChart.data.labels.length);
+      userChart.update();
+    });
+
+    const orderChart = new Chart(document.getElementById('orderStatusDonutChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Pending','Completed','Cancelled'],
+        datasets: [{
+          data: [ordersBreakdown.pending, ordersBreakdown.completed, ordersBreakdown.cancelled],
+          backgroundColor: ['#f6c23e','#1cc88a','#e74a3b']
+        }]
+      },
+      options: { cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+    });
+    document.getElementById('orderTypeSelect').addEventListener('change', function() {
+      const v = this.value;
+      const center = document.querySelector('#orderCenter .big');
+      if (v === 'all') {
+        orderChart.data.labels = ['Pending','Completed','Cancelled'];
+        orderChart.data.datasets[0].data = [ordersBreakdown.pending, ordersBreakdown.completed, ordersBreakdown.cancelled];
+        center.textContent = ordersBreakdown.pending + ordersBreakdown.completed + ordersBreakdown.cancelled;
+      } else {
+        orderChart.data.labels = [v.charAt(0).toUpperCase()+v.slice(1)];
+        orderChart.data.datasets[0].data = [ordersBreakdown[v] || 0];
+        center.textContent = ordersBreakdown[v] || 0;
+      }
+      orderChart.data.datasets[0].backgroundColor = genColors(orderChart.data.labels.length);
+      orderChart.update();
+    });
+
+    const stockProducts = stockBreakdown.products || [];
+    const stockChart = new Chart(document.getElementById('stockDonutChart'), {
+      type: 'doughnut',
+      data: {
+        labels: stockProducts.map(p => p.name),
+        datasets: [{
+          data: stockProducts.map(p => p.stock),
+          backgroundColor: genColors(stockProducts.length),
+        }]
+      },
+      options: { cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+    });
+
+    const stockSelect = document.getElementById('stockProductSelect');
+    const stockCenterBig = document.querySelector('#stockCenter .big');
+    const stockCenterLabel = document.querySelector('#stockCenter .label');
+
+    stockSelect.addEventListener('change', function() {
+      const v = this.value;
+      if (v === '__all__') {
+        stockChart.data.labels = stockProducts.map(p => p.name);
+        stockChart.data.datasets[0].data = stockProducts.map(p => p.stock);
+        stockCenterBig.textContent = stockBreakdown.total;
+        stockCenterLabel.textContent = "Total Stock";
+      } else {
+        const p = stockProducts.find(x => x.name === v);
+        stockChart.data.labels = [p ? p.name : v];
+        stockChart.data.datasets[0].data = [p ? p.stock : 0];
+        stockCenterBig.textContent = p ? p.stock : 0;
+        stockCenterLabel.textContent = p ? p.name : v;
+      }
+      stockChart.data.datasets[0].backgroundColor = genColors(stockChart.data.labels.length);
+      stockChart.update();
     });
   </script>
-  <% } %>
 </body>
 </html>

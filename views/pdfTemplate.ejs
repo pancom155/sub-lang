@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Zero Degree Café Sales Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; text-align: center; }
+    header img { width: 100px; height: 100px; margin-bottom: 10px; border-radius: 50%; }
+    h1 { margin: 0 0 5px 0; }
+    .owner-info-top { text-align: center; font-size: 14px; margin-bottom: 20px; }
+    .owner-info-top p { margin: 2px 0; }
+    .info p { margin: 5px 0; font-size: 14px; }
+    .intro { margin-bottom: 20px; font-size: 14px; text-align: left; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { text-align: center; padding: 10px; font-size: 14px; }
+    th { background-color: #f2f2f2; }
+    td { border-top: 1px solid #eee; }
+    .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 60px; width: 100%; }
+    .total-sales { font-weight: bold; font-size: 16px; }
+    .signature { text-align: left; }
+    .signature-line { margin-top: 40px; border-top: 1px solid #000; width: 300px; }
+    .signature-info { font-size: 12px; margin-top: 5px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="<%= logoData %>" alt="Logo">
+  <h1>Zero Degree Café</h1>
+  <div class="owner-info-top">
+    <p>Purol 1, Latorre, Talavera, Nueva Ecija</p>
+  </div>
+</header>
+
+<div class="intro">
+  <p>This document provides a detailed summary of sales transactions for the selected period. It includes information on completed orders, payment methods, total sales, and the corresponding dates and times. The report is intended for internal review, record keeping, and operational analysis.</p>
+</div>
+
+<div class="info">
+  <p><strong>Sales Report:</strong> <%= startDate %> to <%= endDate %></p>
+  <p><strong>Generated At:</strong> <%= generatedAt %></p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Customer</th>
+      <th>Payment Mode</th>
+      <th>Total (₱)</th>
+      <th>Date</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% orders.forEach(order => { %>
+      <tr>
+        <td><%= order.customerName %></td>
+        <td><%= order.paymentMode %></td>
+        <td>₱<%= order.total.toFixed(2) %></td>
+        <td><%= order.date %></td>
+        <td><%= order.time %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<div class="footer">
+  <div class="signature">
+    <div class="signature-line"></div>
+    <div class="signature-info">
+      Naja Medel<br>
+      Owner
+    </div>
+  </div>
+
+  <div class="total-sales">
+    Total Sales: ₱<%= totalSales.toFixed(2) %>
+  </div>
+</div>
+
+</body>
+</html>

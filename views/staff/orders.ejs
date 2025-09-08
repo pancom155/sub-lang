@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -56,7 +56,6 @@
       padding: 20px;
     }
 
-    /* Themed darker blue striped table */
     .table {
       border: none;
     }
@@ -104,191 +103,172 @@
 
 <div class="content">
   <h1 class="fw-bold mb-4">Recent Orders</h1>
-  <div class="table-responsive">
-<table class="table table-bordered table-hover">
-  <thead class="text-center">
-    <tr>
-      <th>Order ID</th>
-      <th>Customer</th>
-      <th>Status</th>
-      <th>Payment</th>
-      <th>Image</th>
-      <th>Name</th>
-      <th>Qty</th>
-      <th>Total</th>
-      <th>Placed</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-<tbody>
-  <% if (orders && orders.length > 0) { %>
-    <% orders.forEach(order => {
-        if (order.status.toLowerCase() === 'completed') return; // skip completed
-        const itemCount = order.items?.length || 1;
-    %>
-      <% if (order.items && order.items.length > 0) { %>
-        <% order.items.forEach((item, index) => { %>
-          <tr>
-            <% if (index === 0) { %>
-              <td rowspan="<%= itemCount %>"><%= order._id %></td>
-              <td rowspan="<%= itemCount %>"><%= order.userInfoSnapshot?.firstName || 'N/A' %> <%= order.userInfoSnapshot?.lastName || '' %></td>
-              <td rowspan="<%= itemCount %>"><%= order.status %></td>
-              <td rowspan="<%= itemCount %>">
-                <select class="form-select form-select-sm payment-mode-select" data-order-id="<%= order._id %>">
-                  <option value="COD" <%= order.paymentMode === 'COD' ? 'selected' : '' %>>COD</option>
-                  <option value="Pickup" <%= order.paymentMode === 'Pickup' ? 'selected' : '' %>>Pickup</option>
-                </select>
-                <div class="pickup-details mt-2" id="pickup-details-<%= order._id %>" style="display: <%= order.paymentMode === 'Pickup' ? 'block' : 'none' %>;">
-                  <div><strong>Sender Name:</strong> <%= order.pickupSenderName || 'N/A' %></div>
-                  <div><strong>Reference Number:</strong> <%= order.pickupReferenceNumber || 'N/A' %></div>
-                  <div>
-                    <strong>Proof Image:</strong><br/>
-                    <% if (order.pickupProofImage) { %>
-                      <img src="<%= order.pickupProofImage %>" alt="Proof Image" style="max-width: 100px; max-height: 100px; border-radius: 5px;">
-                    <% } else { %>
-                      N/A
+
+  <div class="card shadow-lg border-0 mb-4">
+    <div class="card-header bg-dark text-white">
+      <i class="bi bi-receipt-cutoff me-2"></i> Pending & Processing Orders
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle mb-0">
+          <thead class="text-center">
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Placed</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (orders && orders.length > 0) { %>
+              <% orders.forEach(order => { 
+                   if (order.status.toLowerCase() === 'completed') return;
+              %>
+                <tr>
+                  <td><span class="badge bg-secondary"><%= order._id %></span></td>
+                  <td><%= order.userInfoSnapshot?.firstName || 'N/A' %> <%= order.userInfoSnapshot?.lastName || '' %></td>
+                  <td>
+                    <span class="badge <%= order.status.toLowerCase() === 'pending' ? 'bg-warning text-dark' : 'bg-info' %>">
+                      <%= order.status %>
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge bg-dark"><%= order.paymentMode %></span>
+                    <% if ((order.paymentMode === 'Pickup' || order.paymentMode === 'GCash') && order.proofImage) { %>
+                      <button class="btn btn-sm btn-outline-dark ms-2" data-bs-toggle="modal" data-bs-target="#proofModal-<%= order._id %>">
+                        View Proof
+                      </button>
                     <% } %>
+                  </td>
+                  <td>
+                    <% if (order.items && order.items.length > 0) { %>
+                      <ul class="list-unstyled mb-0">
+                        <% order.items.forEach(item => { %>
+                          <li class="d-flex align-items-center mb-1">
+                            <% if (item.productId?.productImage) { %>
+                              <img src="<%= item.productId.productImage %>" alt="Product" class="me-2 rounded" style="width: 35px; height: 35px; object-fit: cover;">
+                            <% } else { %>
+                              <img src="/images/no-image.jpg" alt="No Image" class="me-2 rounded" style="width: 35px; height: 35px; object-fit: cover;">
+                            <% } %>
+                            <span><%= item.productId?.productName || 'Unknown' %> (x<%= item.quantity %>)</span>
+                          </li>
+                        <% }) %>
+                      </ul>
+                    <% } else { %>
+                      <span class="text-muted">No items</span>
+                    <% } %>
+                  </td>
+                  <td>₱<%= order.totalAmount.toFixed(2) %></td>
+                  <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                  <td>
+                    <% if (order.status.toLowerCase() === 'pending') { %>
+                      <a href="#" onclick="confirmAction('/staff/orders/<%= order._id %>/process', 'process')" class="btn btn-success btn-sm">Process</a>
+                      <a href="#" onclick="confirmAction('/staff/orders/<%= order._id %>/cancel', 'cancel')" class="btn btn-danger btn-sm">Cancel</a>
+                    <% } else if (order.status.toLowerCase() === 'processing') { %>
+                      <a href="#" onclick="confirmAction('/staff/orders/<%= order._id %>/complete', 'complete')" class="btn btn-primary btn-sm">Complete</a>
+                    <% } else { %>
+                      <span class="text-muted">No actions</span>
+                    <% } %>
+                  </td>
+                </tr>
+
+            <% if ((order.paymentMode === 'Pickup' || order.paymentMode === 'GCash') && order.proofImage) { %>
+              <div class="modal fade" id="proofModal-<%= order._id %>" tabindex="-1" aria-labelledby="proofModalLabel-<%= order._id %>" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="proofModalLabel-<%= order._id %>">Payment Proof - Order <%= order._id %></h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                      <img src="<%= order.proofImage %>" alt="Payment Proof" class="img-fluid rounded shadow mb-3" style="max-height: 400px; object-fit: contain;">
+                      <p class="mb-1"><strong>Sender:</strong> <%= order.senderName || 'N/A' %></p>
+                      <p><strong>Reference #:</strong> <%= order.referenceNumber || 'N/A' %></p>
+                    </div>
                   </div>
                 </div>
-              </td>
-            <% } %>
-
-            <td class="text-center" style="width: 50px; padding: 0.25rem;">
-              <% if (item.productId?.productImage) { %>
-                <img src="<%= item.productId.productImage %>" alt="Product" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
-              <% } else { %>
-                <img src="/images/no-image.jpg" alt="No Image" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
-              <% } %>
-            </td>
-            <td style="padding: 0.25rem;"><%= item.productId?.productName || 'Unknown' %></td>
-            <td style="padding: 0.25rem;" class="text-center"><%= item.quantity %></td>
-
-            <% if (index === 0) { %>
-              <td rowspan="<%= itemCount %>">₱<%= order.totalAmount.toFixed(2) %></td>
-              <td rowspan="<%= itemCount %>"><%= new Date(order.createdAt).toLocaleDateString() %></td>
-              <td rowspan="<%= itemCount %>">
-                <% if (order.status.toLowerCase() === 'pending') { %>
-                  <a href="#" onclick="confirmAction('/staff/orders/<%= order._id %>/process', 'process')" class="btn btn-success btn-sm">Process</a>
-                  <a href="#" onclick="confirmAction('/staff/orders/<%= order._id %>/cancel', 'cancel')" class="btn btn-danger btn-sm">Cancel</a>
-                <% } else if (order.status.toLowerCase() === 'processing') { %>
-                  <a href="#" onclick="confirmAction('/staff/orders/<%= order._id %>/complete', 'complete')" class="btn btn-primary btn-sm">Complete</a>
-                <% } else { %>
-                  <span class="text-muted">No actions</span>
-                <% } %>
-              </td>
-            <% } %>
-          </tr>
-        <% }) %>
-      <% } else { %>
-        <!-- no items fallback -->
-        <tr>
-          <td><%= order._id %></td>
-          <td><%= order.userInfoSnapshot?.firstName || 'N/A' %> <%= order.userInfoSnapshot?.lastName || '' %></td>
-          <td><%= order.status %></td>
-          <td>
-            <select class="form-select form-select-sm payment-mode-select" data-order-id="<%= order._id %>">
-              <option value="COD" <%= order.paymentMode === 'COD' ? 'selected' : '' %>>COD</option>
-              <option value="Pickup" <%= order.paymentMode === 'Pickup' ? 'selected' : '' %>>Pickup</option>
-            </select>
-            <div class="pickup-details mt-2" id="pickup-details-<%= order._id %>" style="display: <%= order.paymentMode === 'Pickup' ? 'block' : 'none' %>;">
-              <div><strong>Sender Name:</strong> <%= order.pickupSenderName || 'N/A' %></div>
-              <div><strong>Reference Number:</strong> <%= order.pickupReferenceNumber || 'N/A' %></div>
-              <div>
-                <strong>Proof Image:</strong><br/>
-                <% if (order.pickupProofImage) { %>
-                  <img src="<%= order.pickupProofImage %>" alt="Proof Image" style="max-width: 100px; max-height: 100px; border-radius: 5px;">
-                <% } else { %>
-                  N/A
-                <% } %>
               </div>
-            </div>
-          </td>
-          <td colspan="3" class="text-center">No items</td>
-          <td>₱<%= order.totalAmount.toFixed(2) %></td>
-          <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
-          <td>
-            <% if (order.status.toLowerCase() === 'pending') { %>
-              <a href="#" onclick="confirmAction('/staff/orders/<%= order._id %>/process', 'process')" class="btn btn-success btn-sm">Process</a>
-              <a href="#" onclick="confirmAction('/staff/orders/<%= order._id %>/cancel', 'cancel')" class="btn btn-danger btn-sm">Cancel</a>
-            <% } else if (order.status.toLowerCase() === 'processing') { %>
-              <a href="#" onclick="confirmAction('/staff/orders/<%= order._id %>/complete', 'complete')" class="btn btn-primary btn-sm">Complete</a>
-            <% } else { %>
-              <span class="text-muted">No actions</span>
             <% } %>
-          </td>
-        </tr>
-      <% } %>
-    <% }) %>
-  <% } else { %>
-    <tr>
-      <td colspan="10" class="text-center">No pending or processing orders</td>
-    </tr>
-  <% } %>
-</tbody>
-
-</table>
-
+              <% }) %>  
+            <% } else { %>
+              <tr>
+                <td colspan="8" class="text-center text-muted">No pending or processing orders</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <h2 class="fw-bold mb-4 mt-5">Completed Orders</h2>
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped table-hover">
-      <thead class="text-center">
-        <tr>
-          <th>Order ID</th>
-          <th>Customer</th>
-          <th>Status</th>
-          <th>Total</th>
-          <th>Placed</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (completedOrders && completedOrders.length > 0) { %>
-          <% completedOrders.forEach(order => { %>
+  <div class="card shadow-lg border-0">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle mb-0">
+          <thead class="text-center">
             <tr>
-              <td><%= order.orderId?._id || order._id %></td>
-              <td><%= order.userInfoSnapshot?.firstName || 'N/A' %> <%= order.userInfoSnapshot?.lastName || '' %></td>
-              <td><%= order.status %></td>
-              <td>₱<%= order.totalAmount.toFixed(2) %></td>
-              <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th>Total</th>
+              <th>Placed</th>
             </tr>
-          <% }) %>
-        <% } else { %>
-          <tr>
-            <td colspan="5" class="text-center">No completed orders</td>
-          </tr>
-        <% } %>
-      </tbody>
-    </table>
-<% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
-  <nav aria-label="Completed Orders Pagination">
-    <ul class="pagination justify-content-center">
-      <% if (currentPage > 1) { %>
-        <li class="page-item">
-          <a class="page-link" href="?page=<%= currentPage - 1 %>">Previous</a>
-        </li>
-      <% } %>
+          </thead>
+          <tbody>
+            <% if (completedOrders && completedOrders.length > 0) { %>
+              <% completedOrders.forEach(order => { %>
+                <tr>
+                  <td><span class="badge bg-secondary"><%= order._id %></span></td>
+                  <td><%= order.userInfoSnapshot?.firstName || 'N/A' %> <%= order.userInfoSnapshot?.lastName || '' %></td>
+                  <td><span class="badge bg-success"><%= order.status %></span></td>
+                  <td>
+                    <span class="badge bg-dark"><%= order.paymentMode %></span>
+                    <% if ((order.paymentMode === 'Pickup' || order.paymentMode === 'GCash') && order.proofImage) { %>
+                      <button class="btn btn-sm btn-outline-light ms-2" data-bs-toggle="modal" data-bs-target="#proofModal-<%= order._id %>">
+                        View Proof
+                      </button>
+                    <% } %>
+                  </td>
+                  <td>₱<%= order.totalAmount.toFixed(2) %></td>
+                  <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                </tr>
 
-      <% for (let i = 1; i <= totalPages; i++) { %>
-        <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-          <a class="page-link" href="?page=<%= i %>"><%= i %></a>
-        </li>
-      <% } %>
-
-      <% if (currentPage < totalPages) { %>
-        <li class="page-item">
-          <a class="page-link" href="?page=<%= currentPage + 1 %>">Next</a>
-        </li>
-      <% } %>
-    </ul>
-  </nav>
-<% } %>
-
-
+                <% if ((order.paymentMode === 'Pickup' || order.paymentMode === 'GCash') && order.proofImage) { %>
+                  <div class="modal fade" id="proofModal-<%= order._id %>" tabindex="-1" aria-labelledby="proofModalLabel-<%= order._id %>" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="proofModalLabel-<%= order._id %>">Payment Proof - Order <%= order._id %></h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                          <img src="<%= order.proofImage %>" alt="Payment Proof" class="img-fluid rounded shadow mb-3" style="max-height: 400px; object-fit: contain;">
+                          <p class="mb-1"><strong>Sender:</strong> <%= order.senderName || 'N/A' %></p>
+                          <p><strong>Reference #:</strong> <%= order.referenceNumber || 'N/A' %></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% } %>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="text-center text-muted">No completed orders</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 function confirmAction(url, action) {
@@ -342,19 +322,6 @@ function confirmAction(url, action) {
   });
 }
 </script>
-<script>
-  document.querySelectorAll('.payment-mode-select').forEach(select => {
-    select.addEventListener('change', e => {
-      const orderId = e.target.getAttribute('data-order-id');
-      const pickupDetails = document.getElementById(`pickup-details-${orderId}`);
-      if (e.target.value === 'Pickup') {
-        pickupDetails.style.display = 'block';
-      } else {
-        pickupDetails.style.display = 'none';
-      }
-    });
-  });
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

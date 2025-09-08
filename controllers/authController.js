@@ -7,7 +7,8 @@ const CartItem = require('../models/cartItem');
 const bcrypt = require("bcrypt");
 const axios = require('axios');
 const { sendEmail, otpTemplate } = require("../utils/emailService");
-const RECAPTCHA_SECRET_KEY = '6Ldb-bgrAAAAAOGcqoYtm7dlbuLHHwjR5s707UXh';
+const RECAPTCHA_SECRET_KEY = '6LdykLQrAAAAAONL72QLlYPN_7zc6tx5j0q_V1zY';
+// domain 6Ldb-bgrAAAAAOGcqoYtm7dlbuLHHwjR5s707UXh
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 let otpStore = {};
@@ -105,7 +106,8 @@ exports.removeCartItem = async (req, res) => {
   }
 };
 
-exports.checkout = async (req, res) => {
+
+exports.showCheckout = async (req, res) => {
   try {
     const userId = req.session.userId;
     if (!userId) return res.redirect('/login');
@@ -114,39 +116,110 @@ exports.checkout = async (req, res) => {
       .populate('product_id')
       .lean();
 
-    if (cartItems.length === 0) return res.redirect('/cart');
+    if (!cartItems || cartItems.length === 0) return res.redirect('/cart');
 
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).send('User not found');
-
-    const { paymentMode, pickupSenderName, pickupReferenceNumber } = req.body;
-
-    let pickupPaymentInfo = null;
-
-    if (paymentMode === 'Pickup') {
-      if (!pickupSenderName || !pickupReferenceNumber || !req.file) {
-        return res.status(400).send('Missing pickup payment details.');
-      }
-
-      pickupPaymentInfo = {
-        senderName: pickupSenderName,
-        referenceNumber: pickupReferenceNumber,
-        proofImagePath: `/uploads/proofs/${req.file.filename}`
-      };
-    }
-
-    const order = await processOrder(cartItems, user, paymentMode, pickupPaymentInfo);
-
-    await CartItem.deleteMany({ user_id: userId });
-    res.render('order-success', { order, user });
-
+    res.render('checkout', { user: req.session.user, cartItems });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error processing the order.');
+    res.redirect('/cart');
   }
 };
 
-async function processOrder(cartItems, user, paymentMode = 'COD', pickupPaymentInfo = null) {
+exports.checkout = async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    if (!userId) return res.redirect('/login');
+
+    const { paymentMode, noteToCashier, senderName, referenceNumber } = req.body;
+    const proofImage = req.file ? `/uploads/proofs/${req.file.filename}` : null;
+
+    const cartItems = await CartItem.find({ user_id: userId }).populate('product_id').lean();
+
+    if (!cartItems || cartItems.length === 0) return res.redirect('/cart');
+
+    const orderItems = cartItems.map(item => ({
+      productId: item.product_id._id,
+      quantity: item.quantity
+    }));
+
+    const orderData = {
+      user: userId,
+      items: orderItems,
+      paymentMode,
+      noteToCashier: noteToCashier || '',
+      totalAmount: 0, // pre-save hook will calculate
+      ...(paymentMode === 'Pickup' || paymentMode === 'GCash'
+        ? { senderName, referenceNumber, proofImage }
+        : {})
+    };
+
+    const order = new Order(orderData);
+    await order.save();
+
+    // Clear cart after order
+    await CartItem.deleteMany({ user_id: userId });
+
+    res.redirect(`/order-success?id=${order._id}`);
+  } catch (err) {
+    console.error('Checkout Error:', err);
+    res.redirect('/cart');
+  }
+};
+
+exports.placeOrder = async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const user = req.session.user;
+    if (!userId) return res.redirect('/login');
+
+    const cartItems = await CartItem.find({ user_id: userId })
+      .populate('product_id')
+      .lean();
+
+    if (!cartItems || cartItems.length === 0) return res.redirect('/cart');
+
+    const paymentMode = req.body.paymentMode || 'COD';
+    const paymentInfo = req.file
+      ? {
+          senderName: req.body.senderName,
+          referenceNumber: req.body.referenceNumber,
+          proofImagePath: 'uploads/' + req.file.filename,
+        }
+      : null;
+
+    const order = await processOrder(cartItems, user, paymentMode, paymentInfo);
+
+    await CartItem.deleteMany({ user_id: userId });
+
+    res.redirect(`/order-success?id=${order._id}`);
+  } catch (err) {
+    console.error('Place Order Error:', err);
+    res.status(500).send('Error placing order');
+  }
+};
+
+exports.confirmOrder = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const pickupProofImage = req.file ? 'uploads/' + req.file.filename : null;
+
+    if (!orderId) return res.status(400).send('Missing order ID');
+
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).send('Order not found');
+
+    order.status = 'completed';
+    order.pickupProofImage = pickupProofImage;
+    await order.save();
+
+    res.redirect(`/order-success?id=${order._id}`);
+  } catch (err) {
+    console.error('Confirm Order Error:', err);
+    res.status(500).send('Error confirming order');
+  }
+};
+
+async function processOrder(cartItems, user, paymentMode = 'COD', paymentInfo = null) {
   for (let item of cartItems) {
     const product = await Product.findById(item.product_id._id);
     if (!product || !product.price || item.quantity <= 0) {
@@ -175,38 +248,55 @@ async function processOrder(cartItems, user, paymentMode = 'COD', pickupPaymentI
     totalAmount
   };
 
-  if (paymentMode === 'Pickup' && pickupPaymentInfo) {
-    orderData.pickupSenderName = pickupPaymentInfo.senderName;
-    orderData.pickupReferenceNumber = pickupPaymentInfo.referenceNumber;
-    orderData.pickupProofImage = pickupPaymentInfo.proofImagePath;
+  if ((paymentMode === 'Pickup' || paymentMode === 'GCash') && paymentInfo) {
+    orderData.senderName = paymentInfo.senderName;
+    orderData.referenceNumber = paymentInfo.referenceNumber;
+    orderData.proofImage = paymentInfo.proofImagePath;
   }
 
   const order = new Order(orderData);
   return await order.save();
 }
 
-exports.showOrderSuccess = (req, res) => {
-  res.render('order-success', { order: req.session.order, user: req.session.user });
+exports.showOrderSuccess = async (req, res) => {
+  try {
+    const orderId = req.params.id || req.query.id;
+
+    let order = null;
+    if (orderId) {
+      order = await Order.findById(orderId)
+        .populate('items.productId') // assumes your Order schema has { productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' } }
+        .exec();
+    }
+
+    // Always pass `order`, even if null
+    res.render('order-success', { order });
+  } catch (err) {
+    console.error('Error fetching order:', err);
+    res.render('order-success', { order: null });
+  }
 };
 
 exports.showOrder = async (req, res) => {
   try {
     const userId = req.session.userId;
-
-    if (!userId) {  
-      return res.redirect('/login');
-    }
+    if (!userId) return res.redirect('/login');
 
     const orders = await Order.find({ userId }).lean();
+
     res.render('order', {
+      user: req.session.user || null,
       orders,
-      message: orders.length === 0 ? 'You have no recent orders.' : null
+      message: orders.length === 0 ? 'You have no recent orders.' : null,
+      error: null
     });
   } catch (err) {
     console.error('Error fetching orders:', err);
     res.render('order', {
+      user: req.session.user || null,
       orders: [],
-      message: 'Something went wrong while loading your orders.'
+      message: null,
+      error: 'Something went wrong while loading your orders.'
     });
   }
 };
@@ -386,7 +476,7 @@ exports.login = async (req, res) => {
 
     if (email === 'zerodegreecafe@gmail.com' && password === 'admin12345') {
       req.session.user = { email, role: 'admin' };
-      return res.redirect('/dashboard');
+      return res.redirect('/admin/index');
     }
 
     const staffDomains = [
@@ -400,16 +490,22 @@ exports.login = async (req, res) => {
         if (!staff) {
           return res.render('login', { error: 'Invalid email or password.' });
         }
-        const match = await bcrypt.compare(password, staff.password);
+
+        const staffPassword = staff.password || staff.s_password;
+        const match = await bcrypt.compare(password, staffPassword);
         if (!match) return res.render('login', { error: 'Invalid email or password.' });
+
+        const firstName = staff.firstName || staff.s_fname || '';
+        const lastName = staff.lastName || staff.s_lname || '';
 
         req.session.user = {
           id: staff._id,
           role,
-          name: `${staff[`${role[0]}_fname`]} ${staff[`${role[0]}_lname`]}`,
+          name: `${firstName} ${lastName}`.trim(),
           email
         };
-        return res.redirect('/dashboard');
+
+        return res.redirect(role === 'staff' ? '/staff/index' : '/kitchen/index');
       }
     }
 
@@ -432,6 +528,7 @@ exports.login = async (req, res) => {
     res.status(500).render('login', { error: 'Login error: ' + error.message });
   }
 };
+
 
 exports.dashboard = async (req, res) => {
   if (!req.session.user) return res.redirect('/login');
