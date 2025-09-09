@@ -18,8 +18,8 @@
       color: white;
       text-align: center;
       position: relative;
+      padding: 0 15px;
     }
-
     .hero-section::before {
       content: "";
       position: absolute;
@@ -29,150 +29,158 @@
       background-color: rgba(0, 0, 0, 0.5);
       z-index: 0;
     }
-
     .hero-section .container {
       position: relative;
       z-index: 1;
     }
-
+    .hero-section h1 {
+      font-size: 2.2rem;
+    }
+    .hero-section p {
+      font-size: 1rem;
+    }
     .navbar-custom {
       background-color: transparent;
       transition: background-color 0.3s ease-in-out;
       padding: 10px 0;
       border-radius: 20px;
-      width: 80%; /* Adjust the width to your preference */
-      max-width: 1200px; /* Max width to avoid too wide on large screens */
-      margin: 0 auto; /* Center the navbar */
+      width: 90%;
+      max-width: 1200px;
+      margin: 0 auto;
     }
-
     .navbar-custom.scrolled {
       background-color: rgba(0, 0, 0, 0.8);
     }
-
     .navbar-custom .navbar-nav .nav-link {
       color: white;
       font-weight: 600;
     }
-
     .navbar-custom .navbar-nav .nav-link:hover {
       color: #f8f9fa;
     }
-
-    .menu-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 0;
+    #menu .card-img-top {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
     }
-
-    .menu-item i {
-      font-size: 1.5rem;
-      margin-right: 15px;
-    }
-
     .contact-section {
       background-color: #f8f9fa;
-      padding: 50px 0;
+      padding: 50px 15px;
     }
-
     .contact-section h2 {
       text-align: center;
       margin-bottom: 30px;
     }
-
     .contact-section .form-control {
       margin-bottom: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-
     .contact-section .btn {
       border-radius: 10px;
       padding: 10px 20px;
       font-weight: 600;
     }
-
     .footer {
       background-color: #343a40;
       color: white;
-      padding: 30px 0;
+      padding: 30px 15px;
     }
-
     .footer a {
       color: white;
       text-decoration: none;
     }
-
     .footer a:hover {
       text-decoration: underline;
     }
-
     .footer i {
       font-size: 1.5rem;
       margin: 0 10px;
     }
-
     .social-icons a {
-      margin: 0 15px;
+      margin: 0 10px;
     }
-
-    .footer p {
-      margin: 10px 0;
-    }
-    #menu .card-img-top {
-      width: 100%;
-      height: 300px;  /* You can adjust the height as needed */
-      object-fit: cover;  /* Ensures images maintain their aspect ratio and cover the area */
-    }
-
+@media (max-width: 768px) {
+  .hero-section {
+    height: auto;
+    padding: 50px 15px;
+  }
+  .hero-section p {
+    font-size: 0.9rem;
+  }
+  .navbar-custom {
+    width: 95%;
+  }
+  #menu .col-md-3 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+@media (max-width: 480px) {
+  .hero-section h1 {
+    font-size: 1.5rem;
+    margin-top: 50px;
+  }
+  .hero-section p {
+    font-size: 0.85rem;
+  }
+  #menu .card-img-top {
+    height: 180px;
+  }
+  #menu .col-md-3 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  .footer i {
+    font-size: 1.2rem;
+    margin: 0 5px;
+  }
+}
+.navbar-custom .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28255,255,255,1%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+.navbar-custom .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.7);
+}
   </style>
 </head>
 <body>
-
-  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-custom fixed-top mt-3">
     <div class="container">
       <img src="/images/logo.webp" class="rounded-circle me-2" style="width: 40px;" alt="">
       <a class="navbar-brand text-light fw-semibold" href="#">Zero Degree Café</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="#"><i class="bi bi-house-door"></i> Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#menu"><i class="bi bi-list-ul"></i> Menu</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#contact"><i class="bi bi-envelope"></i> Contact</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/login"><i class="bi bi-person-circle"></i> Sign In</a>
-          </li>
+          <li class="nav-item"><a class="nav-link active" href="#"><i class="bi bi-house-door"></i> Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#menu"><i class="bi bi-list-ul"></i> Menu</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact"><i class="bi bi-envelope"></i> Contact</a></li>
+          <li class="nav-item"><a class="nav-link" href="/login"><i class="bi bi-person-circle"></i> Sign In</a></li>
         </ul>
       </div>
     </div>
   </nav>
-
-  <!-- Hero Section -->
   <section class="hero-section">
     <div class="container">
-      <h1 class="display-3 fw-bold">Welcome to Zero Degree Café</h1>
-      <p class="lead">Discover the art of coffee crafted with passion and warmth. At Zero Degree Café, we take pride in serving the finest blends, meticulously brewed to perfection. Whether you're here for a quick espresso, a leisurely latte, or a refreshing iced coffee, our menu is designed to cater to every coffee lover's taste. Join us in celebrating the rich flavors, cozy ambiance, and the joy of sharing moments over a cup of coffee.</p>
-      <a href="#menu" class="btn btn-light"><i class="bi bi-cup-fill"></i> Explore Menu</a>
+      <h1 class="fw-bold">Welcome to Zero Degree Café</h1>
+      <p class="lead">
+        Discover the art of coffee crafted with passion and warmth. At Zero Degree Café, we take pride in serving the finest blends. 
+      </p>
+      <p class="lead">
+        Whether you are in for a quick espresso, a leisurely latte, or a refreshing iced coffee, our menu is designed to cater to every coffee lover's taste. Enjoy a cozy ambiance perfect for work, meetings, or casual hangouts.
+      </p>
+      <p class="lead">
+        Join us in celebrating rich flavors, community, and the joy of sharing moments over a perfectly brewed cup of coffee. We invite you to explore our menu and experience coffee at its finest.
+      </p>
+      <a href="#menu" class="btn btn-light mt-3"><i class="bi bi-cup-fill"></i> Explore Menu</a>
     </div>
   </section>
-
-  <!-- Menu Section -->
   <section id="menu" class="container my-5">
     <h2 class="text-center mb-4 fw-bold">What We Offer</h2>
-
     <% if (noProducts) { %>
-      <div class="alert alert-warning text-center" role="alert">
-        No products yet. Please check back later!
-      </div>
+      <div class="alert alert-warning text-center">No products yet. Please check back later!</div>
     <% } else { %>
       <div class="row">
         <% products.forEach(product => { %>
@@ -190,8 +198,6 @@
       </div>
     <% } %>
   </section>
-
-  <!-- Contact Section -->
   <section id="contact" class="contact-section">
     <div class="container">
       <h2 class="text-center fw-bold">Reach Out For Us</h2>
@@ -199,21 +205,15 @@
         <div class="col-md-6">
           <form>
             <div class="mb-3">
-              <label for="name" class="form-label">
-                <i class="bi bi-person"></i> Your Name
-              </label>
+              <label for="name" class="form-label"><i class="bi bi-person"></i> Your Name</label>
               <input type="text" id="name" class="form-control" placeholder="Your Name" required>
             </div>
             <div class="mb-3">
-              <label for="email" class="form-label">
-                <i class="bi bi-envelope"></i> Your Email
-              </label>
+              <label for="email" class="form-label"><i class="bi bi-envelope"></i> Your Email</label>
               <input type="email" id="email" class="form-control" placeholder="Your Email" required>
             </div>
             <div class="mb-3">
-              <label for="message" class="form-label">
-                <i class="bi bi-chat-dots"></i> Your Message
-              </label>
+              <label for="message" class="form-label"><i class="bi bi-chat-dots"></i> Your Message</label>
               <textarea id="message" class="form-control" rows="5" placeholder="Your Message" required></textarea>
             </div>
             <button type="submit" class="btn btn-primary w-100">Send Message</button>
@@ -222,8 +222,6 @@
       </div>
     </div>
   </section>
-
-  <!-- Footer -->
   <footer class="footer">
     <div class="container text-center">
       <div class="social-icons mb-3">
@@ -234,10 +232,7 @@
       <p>&copy; 2025 Zero Degree Café. All rights reserved.</p>
     </div>
   </footer>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
-
   <script>
     window.addEventListener('scroll', function() {
       const navbar = document.querySelector('.navbar-custom');

@@ -5,9 +5,11 @@ const Staff = require('../models/Staff');
 const KitchenStaff = require('../models/KitchenStaff');
 const CartItem = require('../models/cartItem');
 const bcrypt = require("bcrypt");
+const mongoose = require('mongoose');
 const axios = require('axios');
 const { sendEmail, otpTemplate } = require("../utils/emailService");
 const RECAPTCHA_SECRET_KEY = '6LcsQcIrAAAAADfW13qP5bFwzB1UoE7H-8KuzwCC';
+
 // domain 6LcsQcIrAAAAADfW13qP5bFwzB1UoE7H-8KuzwCC
 // localhost 6LdykLQrAAAAAONL72QLlYPN_7zc6tx5j0q_V1zY
 
@@ -126,46 +128,104 @@ exports.showCheckout = async (req, res) => {
   }
 };
 
+
 exports.checkout = async (req, res) => {
   try {
     const userId = req.session.userId;
-    if (!userId) return res.redirect('/login');
+    if (!userId) return res.status(401).json({ error: 'You must be logged in to checkout' });
 
-    const { paymentMode, noteToCashier, senderName, referenceNumber } = req.body;
-    const proofImage = req.file ? `/uploads/proofs/${req.file.filename}` : null;
+    const { noteToCashier, paymentMode, senderName, referenceNumber } = req.body;
 
-    const cartItems = await CartItem.find({ user_id: userId }).populate('product_id').lean();
+    // Fetch user info
+    const user = await User.findById(userId);
 
-    if (!cartItems || cartItems.length === 0) return res.redirect('/cart');
+    // Fetch cart items
+    const cartItems = await CartItem.find({ user_id: userId }).populate('product_id');
+    if (!cartItems || cartItems.length === 0) {
+      return res.status(400).json({ error: 'Your cart is empty!' });
+    }
 
-    const orderItems = cartItems.map(item => ({
-      productId: item.product_id._id,
-      quantity: item.quantity
-    }));
+    // Calculate total
+    let totalAmount = 0;
+    const orderItems = cartItems.map(item => {
+      const price = item.product_id.price || 0;
+      const subtotal = price * item.quantity;
+      totalAmount += subtotal;
 
+      return {
+        productId: item.product_id._id,
+        quantity: item.quantity,
+        price,
+        subtotal
+      };
+    });
+
+    // Prepare order data
     const orderData = {
       user: userId,
-      items: orderItems,
-      paymentMode,
+      userInfoSnapshot: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone
+      },
       noteToCashier: noteToCashier || '',
-      totalAmount: 0, // pre-save hook will calculate
-      ...(paymentMode === 'Pickup' || paymentMode === 'GCash'
-        ? { senderName, referenceNumber, proofImage }
-        : {})
+      paymentMode,
+      items: orderItems,
+      totalAmount
     };
 
+    // Extra fields for Pickup / GCash
+    if (paymentMode === 'Pickup' || paymentMode === 'GCash') {
+      if (!req.file || !senderName || !referenceNumber) {
+        return res.status(400).json({
+          error: 'Sender Name, Reference Number, and Proof Image are required!'
+        });
+      }
+
+      orderData.senderName = senderName;
+      orderData.referenceNumber = referenceNumber;
+      orderData.proofImage = `/uploads/${req.file.filename}`;
+    }
+
+    // Save order
     const order = new Order(orderData);
     await order.save();
 
-    // Clear cart after order
+    // Reduce product stock
+    for (const item of cartItems) {
+      const product = await Product.findById(item.product_id._id);
+      if (product) {
+        product.stock -= item.quantity;
+        await product.save();
+      }
+    }
+
+    // Clear cart
     await CartItem.deleteMany({ user_id: userId });
 
-    res.redirect(`/order-success?id=${order._id}`);
+    // ✅ Differentiate COD response with pretty-printed JSON
+    if (paymentMode === 'COD') {
+      return res.setHeader('Content-Type', 'application/json')
+        .send(JSON.stringify({
+          success: true,
+          redirectUrl: `/order-success?id=${order._id}`,
+          message: 'Cash on Delivery order placed successfully!'
+        }, null, 2)); // pretty print with 2 spaces
+    }
+
+    // ✅ For other modes, normal JSON (handled by fetch + SweetAlert in frontend)
+    res.json({
+      success: true,
+      redirectUrl: `/order-success?id=${order._id}`
+    });
+
   } catch (err) {
-    console.error('Checkout Error:', err);
-    res.redirect('/cart');
+    console.error('Checkout error:', err);
+    res.status(500).json({ error: err.message || 'Checkout failed!' });
   }
 };
+
 
 exports.placeOrder = async (req, res) => {
   try {
@@ -263,14 +323,24 @@ exports.showOrderSuccess = async (req, res) => {
   try {
     const orderId = req.params.id || req.query.id;
 
-    let order = null;
-    if (orderId) {
-      order = await Order.findById(orderId)
-        .populate('items.productId') // assumes your Order schema has { productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' } }
-        .exec();
+    if (!orderId) {
+      return res.render('order-success', { order: null });
     }
 
-    // Always pass `order`, even if null
+    // Fetch order with product details
+    const order = await Order.findById(orderId)
+      .populate('items.productId') // Populate products
+      .exec();
+
+    if (!order) {
+      return res.render('order-success', { order: null });
+    }
+
+    // Normalize proofImage path for easier display
+    if (order.proofImage && !order.proofImage.startsWith('http') && !order.proofImage.startsWith('/uploads/')) {
+      order.proofImage = `/uploads/${order.proofImage}`;
+    }
+
     res.render('order-success', { order });
   } catch (err) {
     console.error('Error fetching order:', err);

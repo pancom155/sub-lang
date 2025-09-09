@@ -9,56 +9,17 @@
   <style>
     body {
       background-color: #f1f1f1;
+      font-family: 'Segoe UI', sans-serif;
     }
-    .dashboard-content {
-      padding: 40px;
-    }
+
     .container-fluid {
       max-width: 1200px;
     }
-    .card {
-      margin-bottom: 20px;
-      border-radius: 20px;
-    }
-    .card-img-top {
-      height: 250px;
-      border-radius: 20px;
-      object-fit: cover;
-      width: 100%;
-    }
-    .filter-container {
-      margin-bottom: 20px;
-      width: 100%;
-    }
-    .filter-container .form-control, .filter-container .form-select {
-      max-width: 250px;
-      display: inline-block;
-    }
-    .filter-container i {
-      color: #5f6368;
-    }
-    .search-bar {
-      flex: 1;
-    }
-    .search-bar input {
-      border-right: 0;
-    }
-    .search-bar span {
-      border-left: 0;
-    }
-    #cart-icon {
-      position: relative;
-    }
-    #cart-count {
-      position: absolute;
-      top: 0;
-      left: 100%;
-      transform: translate(-50%, -50%);
-    }
-    .navbar{
+
+    .navbar {
       background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
     }
-    .navbar a{
+    .navbar a {
       color: #fff;
     }
     .navbar .nav-link.active {
@@ -75,6 +36,212 @@
       color: #67c3f5 !important;
       text-decoration: none;
     }
+
+    .card {
+      margin-bottom: 20px;
+      border-radius: 20px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    .card-img-top {
+      height: 200px;
+      border-radius: 20px 20px 0 0;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .card:hover .card-img-top {
+      transform: scale(1.05);
+    }
+    .card-body {
+      padding: 15px;
+    }
+    .card-title {
+      font-size: 1rem;
+      height: 2.4em;
+      overflow: hidden;
+    }
+    .card-text {
+      margin-bottom: 0.5rem;
+    }
+
+    .btn-add-cart {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+    .btn-add-cart i {
+      font-size: 1.2rem;
+    }
+
+    #cart-icon {
+      position: relative;
+    }
+    #cart-count {
+      position: absolute;
+      top: 0;
+      left: 100%;
+      transform: translate(-50%, -50%);
+    }
+    .cart-feedback {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #28a745;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 20px;
+      display: none;
+      font-size: 0.9rem;
+      opacity: 0;
+      transition: opacity 0.3s ease, top 0.3s ease;
+      white-space: nowrap;
+    }
+    .cart-feedback.show {
+      display: block;
+      opacity: 1;
+      top: 35px;
+    }
+
+  .filter-container {
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+  }
+
+  /* Input group styling */
+  .filter-container .input-group {
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  /* Search input */
+  .filter-container .form-control {
+    border: none;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    border-radius: 0;
+    background-color: #fff;
+  }
+
+  .filter-container .form-control:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  /* Input group text (icons) */
+  .filter-container .input-group-text {
+    background-color: #1d3c5a;
+    color: #fff;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .filter-container .input-group-text:hover {
+    background-color: #3a5f7d;
+  }
+
+  /* Select dropdown styling */
+  .filter-container .form-select {
+    border: none;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    border-radius: 0;
+    background-color: #fff;
+    transition: all 0.3s ease;
+  }
+
+  .filter-container .form-select:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+
+    @media (max-width: 992px) {
+      .filter-container .col-md-6,
+      .filter-container .col-md-2 {
+        max-width: 100%;
+        flex: 0 0 100%;
+        margin-bottom: 10px;
+      }
+      .filter-container .input-group {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .navbar .navbar-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        margin-top: 10px;
+      }
+      .navbar .nav-item {
+        margin-bottom: 5px;
+      }
+
+      .filter-container {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+      .filter-container .col-md-6,
+      .filter-container .col-md-2 {
+        max-width: 48%;
+        flex: 1;
+      }
+
+      #product-list .col-md-3 {
+        flex: 0 0 48%;
+        max-width: 48%;
+        margin-bottom: 15px;
+      }
+      #product-list .col-md-3:nth-child(odd) {
+        margin-right: 4%;
+      }
+      #product-list .col-md-3:nth-child(even) {
+        margin-right: 0;
+      }
+
+      #product-list .btn-add-cart {
+        font-size: 0;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+      }
+      #product-list .btn-add-cart i {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #product-list .col-md-3 {
+        flex: 0 0 48%;
+        max-width: 48%;
+        margin-bottom: 15px;
+      }
+      .filter-container {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .filter-container .col-md-6,
+      .filter-container .col-md-2 {
+        max-width: 100%;
+        flex: 1;
+      }
+    }
   </style>
 </head>
 <body>
@@ -85,22 +252,38 @@
       <img src="/images/zicon.jpg" alt="Logo" class="rounded-circle" style="width: 40px; height: 40px; margin-right: 10px;">
       Zero Degree Café
     </a>
-    <div class="collapse navbar-collapse">
+
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon" style="filter: invert(100%);"></span>
+    </button>
+
+    <div class="d-flex ms-2 d-lg-none align-items-center">
+      <a href="/cart" class="btn btn-light rounded-3 position-relative me-2" id="cart-icon">
+        <i class="bi bi-cart text-dark"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">0</span>
+        <div class="cart-feedback" id="cart-feedback"></div>
+      </a>
+      <a href="/logout" class="btn btn-danger rounded-3"><i class="bi bi-box-arrow-right"></i></a>
+    </div>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav mx-auto">
         <li class="nav-item"><a class="nav-link active" href="/dashboard">Menu</a></li>
         <li class="nav-item"><a class="nav-link" href="/profile">Profile</a></li>
         <li class="nav-item"><a class="nav-link" href="/reviews">Reviews</a></li>
       </ul>
-      <span class="navbar-text text-light">
+      <span class="navbar-text text-light d-none d-lg-block">
         Welcome, <strong style="font-family: Georgia;"><%= user.username %></strong>!
       </span>
-      <a href="/cart" class="btn btn-light ms-4 rounded-3 position-relative" id="cart-icon">
-        <i class="bi bi-cart text-dark"></i>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">
-          0
-        </span>
-      </a>      
-      <a href="/logout" class="btn btn-danger ms-3 rounded-3"><i class="bi bi-box-arrow-right"></i></a>
+
+      <div class="d-none d-lg-flex ms-3 align-items-center">
+        <a href="/cart" class="btn btn-light rounded-3 position-relative me-2" id="cart-icon-desktop">
+          <i class="bi bi-cart text-dark"></i>
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count-desktop">0</span>
+          <div class="cart-feedback" id="cart-feedback-desktop"></div>
+        </a>
+        <a href="/logout" class="btn btn-danger rounded-3"><i class="bi bi-box-arrow-right"></i></a>
+      </div>
     </div>
   </div>
 </nav>
@@ -139,73 +322,63 @@
             <p class="card-text text-success fw-bold">₱<%= product.price.toFixed(2) %></p>
             <p class="mb-1"><strong>Stock:</strong> <%= product.stock %></p>
             <p class="mb-3"><strong>Sold:</strong> <%= product.totalSold || 'No sold yet' %></p>
-            <a class="btn btn-primary w-50 mx-auto <%= product.stock <= 0 ? 'disabled' : '' %>" 
-              onclick="<%= product.stock > 0 ? `addToCart('${product._id}', '${product.productName}', ${product.price}, ${product.stock}, '${product.productImage || '/path/to/default-image.jpg'}')` : 'return false;' %>">
+            <a class="btn btn-primary btn-add-cart w-50 mx-auto <%= product.stock <= 0 ? 'disabled' : '' %>"
+               onclick="<%= product.stock > 0 ? `addToCart('${product._id}', '${product.productName}', ${product.price}, ${product.stock}, '${product.productImage || '/path/to/default-image.jpg'}')` : 'return false;' %>">
               <i class="bi bi-cart-plus"></i> Add to Cart
             </a>
           </div>
         </div>
       </div>
     <% }) %>
-  </div>  
+  </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // Function to filter products based on search input and category selection
-  function filterProducts() {
-    var input, filter, category, products, card, title, i;
-    input = document.getElementById("search");
-    filter = input.value.toUpperCase();
-    category = document.getElementById("category").value.toUpperCase();
-    products = document.getElementsByClassName("product");
-
-    for (i = 0; i < products.length; i++) {
-      card = products[i];
-      title = card.getElementsByTagName("h5")[0];
-      if (title.innerText.toUpperCase().indexOf(filter) > -1 && (category === '' || card.getAttribute('data-category').toUpperCase() === category)) {
-        card.style.display = "";
-      } else {
-        card.style.display = "none";
-      }
-    }
+function filterProducts() {
+  var input = document.getElementById("search");
+  var filter = input.value.toUpperCase();
+  var category = document.getElementById("category").value.toUpperCase();
+  var products = document.getElementsByClassName("product");
+  for (var i=0; i<products.length; i++){
+    var card = products[i];
+    var title = card.getElementsByTagName("h5")[0];
+    if(title.innerText.toUpperCase().indexOf(filter) > -1 && 
+       (category === '' || card.getAttribute('data-category').toUpperCase() === category)){
+      card.style.display="";
+    } else card.style.display="none";
   }
-</script>
-
-<script>
-function addToCart(productId, productName, price, stock, productImage) {
-  fetch('/cart/add', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      productId,
-      productName,
-      price,
-      stock,
-      productImage,
-      quantity: 1,  // Default quantity, can be customized
-    }),
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.message === 'Product added to cart') {
-      // Update the cart count dynamically
-      document.getElementById('cart-count').textContent = data.cartCount;
-      Swal.fire('Success!', data.message, 'success');
-    } else {
-      Swal.fire('Error!', data.message, 'error');
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    Swal.fire('Error!', 'Something went wrong. Please try again later.', 'error');
-  });
 }
 
-</script>
+function showCartFeedback(feedbackId, productName){
+  const feedback = document.getElementById(feedbackId);
+  feedback.textContent = `✔ ${productName} added!`;
+  feedback.classList.add('show');
+  setTimeout(()=>feedback.classList.remove('show'), 1500);
+}
 
+function addToCart(productId, productName, price, stock, productImage){
+  fetch('/cart/add',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({productId, productName, price, stock, productImage, quantity:1})
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.message==='Product added to cart'){
+      document.getElementById('cart-count').textContent = data.cartCount;
+      document.getElementById('cart-count-desktop').textContent = data.cartCount;
+      showCartFeedback('cart-feedback', productName);
+      showCartFeedback('cart-feedback-desktop', productName);
+      const cartIconMobile = document.getElementById('cart-icon');
+      const cartIconDesktop = document.getElementById('cart-icon-desktop');
+      [cartIconMobile, cartIconDesktop].forEach(icon=>{
+        icon.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 300 });
+      });
+    }
+  })
+  .catch(err=>console.error(err));
+}
+</script>
 </body>
 </html>

@@ -1,8 +1,6 @@
 const Order = require('../models/Order');
-const Review = require('../models/Review');
 const Product = require('../models/Product');
 
-// Process an order
 exports.processOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -19,7 +17,6 @@ exports.processOrder = async (req, res) => {
   }
 };
 
-// Complete an order
 exports.completeOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate('items.productId');
@@ -45,7 +42,6 @@ exports.completeOrder = async (req, res) => {
   }
 };
 
-// Cancel an order
 exports.cancelOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -62,61 +58,41 @@ exports.cancelOrder = async (req, res) => {
   }
 };
 
-// Upload proof of payment
-exports.uploadProof = async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).send('Order not found');
-
-    if (!req.file) {
-      req.flash('error', 'No file uploaded');
-      return res.redirect('/staff/orders');
-    }
-
-    order.proofImage = '/uploads/' + req.file.filename; // path relative to public folder
-    order.senderName = req.body.senderName || order.senderName;
-    order.referenceNumber = req.body.referenceNumber || order.referenceNumber;
-    await order.save();
-
-    req.flash('success', 'Proof uploaded successfully');
-    res.redirect('/staff/orders');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error uploading proof');
-  }
-};
-
-// Display staff orders
 exports.staffOrders = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = 5;
-    const skip = (page - 1) * limit;
+    const pendingPage = parseInt(req.query.pendingPage) || 1;
+    const completedPage = parseInt(req.query.completedPage) || 1;
+    const limit = 10;
 
-    // Pending & Processing
+    const totalPending = await Order.countDocuments({ status: { $in: ['Pending', 'Processing'] } });
     const orders = await Order.find({ status: { $in: ['Pending', 'Processing'] } })
       .populate('userInfoSnapshot')
-      .populate('items.productId');
+      .populate('items.productId')
+      .sort({ createdAt: -1 })
+      .skip((pendingPage - 1) * limit)
+      .limit(limit);
+    const totalPagesPending = Math.ceil(totalPending / limit) || 1;
 
-    // Completed (paginated)
+    const totalCompleted = await Order.countDocuments({ status: 'Completed' });
     const completedOrders = await Order.find({ status: 'Completed' })
       .populate('userInfoSnapshot')
       .populate('items.productId')
-      .sort({ completedAt: -1 })
-      .skip(skip)
+      .sort({ createdAt: -1 })
+      .skip((completedPage - 1) * limit)
       .limit(limit);
-
-    const totalCompleted = await Order.countDocuments({ status: 'Completed' });
-    const totalPages = Math.ceil(totalCompleted / limit);
+    const totalPagesCompleted = Math.ceil(totalCompleted / limit) || 1;
 
     res.render('staff/orders', {
       orders,
       completedOrders,
-      currentPage: page,
-      totalPages
+      currentPendingPage: pendingPage,
+      totalPagesPending,
+      currentCompletedPage: completedPage,
+      totalPagesCompleted
     });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error fetching orders');
   }
 };
+

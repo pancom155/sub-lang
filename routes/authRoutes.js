@@ -1,28 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../middleware/upload');
+const { uploadProof } = require('../middleware/upload');
 const authController = require('../controllers/authController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.get('/dashboard', authController.dashboard);
+router.get('/dashboard', authMiddleware, authController.dashboard);
 
-router.get('/cart', authController.showCart);
-router.post('/cart/add', authController.addToCart);
-router.post('/cart/update', authController.updateCartItem);
-router.post('/cart/remove', authController.removeCartItem);
+router.get('/cart', authMiddleware, authController.showCart);
+router.post('/cart/add', authMiddleware, authController.addToCart);
+router.post('/cart/update', authMiddleware, authController.updateCartItem);
+router.post('/cart/remove', authMiddleware, authController.removeCartItem);
 
-router.get('/cart/checkout', authController.showCheckout);
-router.post('/cart/checkout', upload.single('proofImageModal'), authController.checkout);
+router.get('/cart/checkout', authMiddleware, authController.showCheckout);
+router.post('/cart/checkout', authMiddleware, uploadProof.single('proofImage'), authController.checkout);
 
-router.get('/order', authController.showOrder);
-router.post('/orders/:id/cancel', authController.cancelOrder);
-router.get('/order-success/:id', authController.showOrderSuccess);
+router.get('/order', authMiddleware, authController.showOrder);
+router.post('/orders/:id/cancel', authMiddleware, authController.cancelOrder);
+router.get('/order-success/:id', authMiddleware, authController.showOrderSuccess);
 
-router.get('/order-success', (req, res) => {
+router.get('/order-success', authMiddleware, (req, res) => {
   res.render('order-success', { order: null });
 });
 
-router.get('/profile', authController.showProfile);
-router.post('/profile/edit', authController.editProfile);
+router.get('/profile', authMiddleware, authController.showProfile);
+router.post('/profile/edit', authMiddleware, authController.editProfile);
 
 router.get('/login', authController.showLogin);
 router.post('/login', authController.login);

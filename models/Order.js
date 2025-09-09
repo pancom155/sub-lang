@@ -37,7 +37,7 @@ const orderSchema = new mongoose.Schema({
 
   paymentMode: { 
     type: String, 
-    enum: ['COD', 'Pickup', 'GCash'],  // ✅ Added GCash
+    enum: ['COD', 'Pickup', 'GCash'],
     required: true 
   },
 
@@ -46,7 +46,6 @@ const orderSchema = new mongoose.Schema({
     default: ''
   },
 
-  // Proof fields (required if Pickup OR GCash)
   proofImage: {
     type: String, 
     required: function() {
@@ -79,51 +78,28 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
-// ✅ Pre-save hook: snapshot user, calculate total, decrease stock
 orderSchema.pre('save', async function(next) {
   try {
-    const User = mongoose.model('User');
     const Product = mongoose.model('Product');
-
-    // Snapshot user info
-    const user = await User.findById(this.user);
-    if (user) {
-      this.userInfoSnapshot = {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone,
-        address: user.address,
-        email: user.email,
-        username: user.username,
-      };
-    }
-
     let total = 0;
+
+    if (!this.items.length) return next(new Error('Order has no items'));
 
     for (const item of this.items) {
       const product = await Product.findById(item.productId);
+      if (!product) return next(new Error('Product not found'));
+      if (product.stock < item.quantity) return next(new Error(`Not enough stock for ${product.productName}`));
 
-      if (!product) {
-        return next(new Error('Product not found'));
-      }
-
-      if (product.stock < item.quantity) {
-        return next(new Error(`Not enough stock for ${product.productName}`));
-      }
-
-      // Decrease stock
       product.stock -= item.quantity;
       await product.save();
 
-      // Add to total
       total += product.price * item.quantity;
     }
 
     this.totalAmount = total;
-
     next();
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 });
 

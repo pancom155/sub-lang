@@ -6,64 +6,254 @@
   <title>Your Cart | Zero Degree Café</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.12.1/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f1f1f1;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    h2 {
+      color: #1d3c5a;
+      margin-bottom: 30px;
+    }
+
+    .mb-3.d-flex {
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .mb-3.d-flex a {
+      font-size: 1.1rem;
+      color: #1d3c5a;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      transition: color 0.3s, transform 0.2s;
+      background-color: #e6f0ff;
+      padding: 8px 14px;
+      border-radius: 30px;
+    }
+
+    .mb-3.d-flex a i {
+      font-size: 1.3rem;
+      margin-right: 8px;
+      background-color: #cce0ff;
+      padding: 6px;
+      border-radius: 50%;
+      transition: transform 0.2s, background-color 0.3s;
+    }
+
+    .mb-3.d-flex a:hover {
+      color: #fff;
+      background-color: #3a5f7d;
+    }
+
+    .mb-3.d-flex a:hover i {
+      transform: translateX(-3px);
+      background-color: #1d3c5a;
+    }
+        
+    .card {
+      border-radius: 15px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+    }
+
+    .card img {
+      object-fit: cover;
+      border-radius: 12px;
+      width: 100%;
+      height: 150px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+      border: none;
+      transition: background 0.3s;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(145deg, #3a5f7d, #1d3c5a);
+    }
+
+    .btn-danger {
+      transition: transform 0.2s;
+    }
+
+    .btn-danger:hover {
+      transform: scale(1.1);
+    }
+
+    .card.p-3 {
+      background-color: #fff;
+      border-radius: 15px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    }
+
+    .card.p-3 h5 {
+      color: #1d3c5a;
+    }
+
+    .card.p-3 a.btn-success {
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+      border: none;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .card.p-3 a.btn-success:hover {
+      background: linear-gradient(145deg, #3a5f7d, #1d3c5a);
+    }
+
+    .row.cart-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .row.cart-items .card {
+      flex: 0 0 48%;
+    }
+
+    @media (max-width: 768px) {
+      .row.cart-items .card {
+        flex: 0 0 48%;
+      }
+      .card img {
+        height: 140px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .row.cart-items .card {
+        flex: 0 0 48%;
+        margin-bottom: 15px;
+      }
+
+      .mb-3.d-flex a {
+        font-size: 1rem;
+        padding: 6px 12px;
+      }
+
+      .mb-3.d-flex a i {
+        font-size: 1.2rem;
+        padding: 5px;
+      }
+    }
+
+      .row.g-0.align-items-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .row.g-0.align-items-center .col-md-3 img {
+        width: 100%;
+        height: 120px;
+        margin-bottom: 10px;
+      }
+
+      .row.g-0.align-items-center .col-md-6 {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .row.g-0.align-items-center .col-md-3.text-end {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .btn-primary, .btn-danger, .btn-success {
+        font-size: 0.9rem;
+        padding: 6px 10px;
+      }
+  </style>
 </head>
 <body>
-<div class="container mt-4">
-  <h2 class="text-center mb-4">Your Cart</h2>
+  <div class="container mt-4">
 
-  <% if (!cartItems || cartItems.length === 0) { %>
-    <div class="alert alert-warning text-center">Your cart is empty</div>
-  <% } else { %>
-    <div class="row">
-      <div class="col-md-8">
-        <% cartItems.forEach(item => { %>
-          <div class="card mb-3">
-            <div class="row g-0 align-items-center">
-              <div class="col-md-3">
-                <img src="<%= item.product_id.productImage || '/images/default.jpg' %>" class="img-fluid rounded" alt="Product">
-              </div>
-              <div class="col-md-6">
-                <h5><%= item.product_id.productName %></h5>
-                <p>₱<%= item.product_id.price.toFixed(2) %></p>
-                <form action="/cart/update" method="POST" class="d-inline">
-                  <input type="hidden" name="cartItemId" value="<%= item._id %>">
-                  <button type="submit" name="quantity" value="<%= item.quantity - 1 %>" class="btn btn-sm btn-primary" <%= item.quantity <=1 ? 'disabled' : '' %>>-</button>
-                  <span class="mx-2"><%= item.quantity %></span>
-                  <button type="submit" name="quantity" value="<%= item.quantity + 1 %>" class="btn btn-sm btn-primary">+</button>
-                </form>
-              </div>
-              <div class="col-md-3 text-end">
-                <form action="/cart/remove" method="POST">
-                  <input type="hidden" name="cartItemId" value="<%= item._id %>">
-                  <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
-                </form>
-              </div>
-            </div>
-          </div>
-        <% }) %>
-      </div>
+      <div class="mb-3 justify-content-center align-items-center d-flex">
+    <a href="/dashboard" class="text-decoration-none text-primary fw-bold">
+      <i class="bi bi-arrow-left-circle me-1"></i>Back to Menu
+    </a>
+  </div>
 
-      <div class="col-md-4">
-        <div class="card p-3">
-          <h5 class="mb-3">Order Summary</h5>
-          <% let total = 0; %>
-          <% cartItems.forEach(item => { %>
-            <div class="d-flex justify-content-between">
-              <span><%= item.product_id.productName %> x <%= item.quantity %></span>
-              <span>₱<%= (item.product_id.price * item.quantity).toFixed(2) %></span>
-            </div>
-            <% total += item.product_id.price * item.quantity; %>
-          <% }) %>
-          <hr>
-          <div class="d-flex justify-content-between fw-bold">
-            <span>Total</span>
-            <span>₱<%= total.toFixed(2) %></span>
+    <h2 class="text-center mb-4">Your Cart</h2>
+
+    <% if (!cartItems || cartItems.length === 0) { %>
+      <div class="alert alert-warning text-center">Your cart is empty</div>
+    <% } else { %>
+      <div class="row">
+        <div class="col-md-8">
+          <div class="row cart-items">
+            <% cartItems.forEach(item => { %>
+              <div class="card mb-3">
+                <div class="row g-0 align-items-center">
+                  <div class="col-md-3">
+                    <img src="<%= item.product_id.productImage || '/images/default.jpg' %>" class="img-fluid rounded" alt="Product">
+                  </div>
+                  <div class="col-md-6">
+                    <h5><%= item.product_id.productName %></h5>
+                    <p>₱<%= item.product_id.price.toFixed(2) %></p>
+                    <form action="/cart/update" method="POST" class="d-inline">
+                      <input type="hidden" name="cartItemId" value="<%= item._id %>">
+                      <button type="submit" name="quantity" value="<%= item.quantity - 1 %>" class="btn btn-sm btn-primary" <%= item.quantity <=1 ? 'disabled' : '' %>>-</button>
+                      <span class="mx-2"><%= item.quantity %></span>
+                      <button type="submit" name="quantity" value="<%= item.quantity + 1 %>" class="btn btn-sm btn-primary">+</button>
+                    </form>
+                  </div>
+                  <div class="col-md-3 text-end">
+                    <form action="/cart/remove" method="POST">
+                      <input type="hidden" name="cartItemId" value="<%= item._id %>">
+                      <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
           </div>
-          <a href="/cart/checkout" class="btn btn-success w-100 mt-3">Proceed to Checkout</a>
+        </div>
+
+        <div class="col-md-4">
+          <div class="card p-3 shadow-sm border-0">
+            <h5 class="mb-3 text-primary text-center"><i class="bi bi-basket3 me-2"></i>Order Summary</h5>
+            <% let total = 0; %>
+            <% cartItems.forEach(item => { %>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center">
+                  <img src="<%= item.product_id.productImage || '/images/default.jpg' %>" alt="<%= item.product_id.productName %>" style="width:40px; height:40px; object-fit:cover; border-radius:5px; margin-right:10px;">
+                  <span><%= item.product_id.productName %> x <%= item.quantity %></span>
+                </div>
+                <span class="fw-bold text-success">₱<%= (item.product_id.price * item.quantity).toFixed(2) %></span>
+              </div>
+              <% total += item.product_id.price * item.quantity; %>
+            <% }) %>
+            <hr>
+            <div class="d-flex justify-content-between fw-bold fs-5 text-dark">
+              <span><i class="bi bi-calculator me-1"></i>Total</span>
+              <span>₱<%= total.toFixed(2) %></span>
+            </div>
+            <a href="/cart/checkout" class="btn w-100 mt-3" style="background: linear-gradient(145deg, #1d3c5a, #3a5f7d); color:#fff; font-weight:600; border:none;">
+              <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
+            </a>
+          </div>
         </div>
       </div>
-    </div>
-  <% } %>
-</div>
+    <% } %>
+  </div>
 </body>
 </html>
