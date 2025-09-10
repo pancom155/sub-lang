@@ -10,9 +10,18 @@ const { Parser } = require('json2csv');
 const { fetchWeeklyProductSalesTrends, fetchMonthlyProductSalesTrends } = require('../utils/salesTrends');
 const ejs = require('ejs');
 const path = require('path');
-const puppeteer = require('puppeteer');
 const fs = require('fs');
 const ExcelJS = require('exceljs');
+
+let puppeteer;
+let chromium;
+
+if (process.env.NODE_ENV === 'production') {
+  puppeteer = require('puppeteer-core');
+  chromium = require('@sparticuz/chromium');
+} else {
+  puppeteer = require('puppeteer');
+}
 
 const calculateTotalSales = async () => {
   try {
@@ -107,6 +116,7 @@ exports.exportSalesExcel = async (req, res) => {
 exports.exportSalesPDF = async (req, res) => {
   try {
     const { start, end } = req.query;
+
     const dateFilter = {};
     if (start) dateFilter.$gte = new Date(start);
     if (end) {
@@ -130,7 +140,6 @@ exports.exportSalesPDF = async (req, res) => {
       time: o.createdAt ? o.createdAt.toLocaleTimeString() : '',
       paymentMode: o.paymentMode || 'N/A'
     }));
-
     const totalSales = filteredOrders.reduce((sum, o) => sum + o.total, 0);
 
     let logoData = null;
@@ -158,14 +167,18 @@ exports.exportSalesPDF = async (req, res) => {
       totalSales
     });
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
-      ]
-    });
+    const browser =
+      process.env.NODE_ENV === 'production'
+        ? await puppeteer.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath(),
+            headless: chromium.headless
+          })
+        : await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+          });
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
