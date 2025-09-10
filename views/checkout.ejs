@@ -161,7 +161,7 @@ const modalStep2 = new bootstrap.Modal(document.getElementById('modalStep2'));
 paymentSelect.addEventListener('change', function() {
   const mode = this.value;
   if (mode === 'GCash' || mode === 'Pickup') {
-    qrImage.src = mode === 'GCash' ? '/images/gcash-qr.png' : '/images/pickup.png';
+    qrImage.src = mode === 'GCash' ? '/images/qr.jpg' : '/images/qr.jpg';
     paymentText.textContent = mode === 'GCash'
       ? 'Scan this QR code using your GCash app.'
       : 'Pickup instructions: Please provide your details.';
