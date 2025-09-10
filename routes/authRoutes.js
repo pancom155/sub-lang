@@ -18,10 +18,6 @@ router.get('/order', authMiddleware, authController.showOrder);
 router.post('/orders/:id/cancel', authMiddleware, authController.cancelOrder);
 router.get('/order-success/:id', authMiddleware, authController.showOrderSuccess);
 
-router.get('/order-success', authMiddleware, (req, res) => {
-  res.render('order-success', { order: null });
-});
-
 router.get('/profile', authMiddleware, authController.showProfile);
 router.post('/profile/edit', authMiddleware, authController.editProfile);
 

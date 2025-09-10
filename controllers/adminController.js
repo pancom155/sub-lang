@@ -133,11 +133,22 @@ exports.exportSalesPDF = async (req, res) => {
 
     const totalSales = filteredOrders.reduce((sum, o) => sum + o.total, 0);
 
-    const logoPath = path.resolve(__dirname, '../public/images/zicon.jpg');
-    const logoBase64 = fs.readFileSync(logoPath, { encoding: 'base64' });
-    const logoData = `data:image/jpeg;base64,${logoBase64}`;
+    let logoData = null;
+    try {
+      const logoPath = path.resolve(__dirname, '../public/images/zicon.jpg');
+      if (fs.existsSync(logoPath)) {
+        const logoBase64 = fs.readFileSync(logoPath, { encoding: 'base64' });
+        logoData = `data:image/jpeg;base64,${logoBase64}`;
+      }
+    } catch (e) {
+      console.warn('Logo not found, skipping logo in PDF.');
+    }
 
     const templatePath = path.join(__dirname, '../views/pdfTemplate.ejs');
+    if (!fs.existsSync(templatePath)) {
+      throw new Error(`Missing template file: ${templatePath}`);
+    }
+
     const html = await ejs.renderFile(templatePath, {
       logoData,
       startDate: start || 'All Time',
@@ -147,14 +158,24 @@ exports.exportSalesPDF = async (req, res) => {
       totalSales
     });
 
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage'
+      ]
+    });
+
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
+
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
       margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
     });
+
     await browser.close();
 
     res.set({
@@ -162,10 +183,11 @@ exports.exportSalesPDF = async (req, res) => {
       'Content-Disposition': `attachment; filename="Sales_${start || 'all'}_to_${end || 'all'}.pdf"`,
       'Content-Length': pdfBuffer.length
     });
+
     res.send(pdfBuffer);
   } catch (err) {
     console.error('Error generating PDF:', err);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send(`Internal Server Error: ${err.message}`);
   }
 };
 

@@ -168,7 +168,6 @@
               <th>Payment</th>
               <th>Total</th>
               <th>Placed</th>
-              <th>Note</th>
             </tr>
           </thead>
           <tbody class="text-center">
@@ -188,7 +187,6 @@
                   </td>
                   <td>₱<%= order.totalAmount.toFixed(2) %></td>
                   <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
-                  <td class="text-muted"><%= order.noteToCashier || 'None' %></td>
                 </tr>
 
                 <% if ((order.paymentMode === 'Pickup' || order.paymentMode === 'GCash') && order.proofImage) { %>
@@ -200,7 +198,12 @@
                           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body text-center">
-                          <img src="<%= order.proofImage.startsWith('/uploads') ? order.proofImage : '/uploads/proofs/' + order.proofImage %>" class="img-fluid rounded shadow mb-3" style="max-height:400px;object-fit:contain;">
+                          <img 
+                          src="<%= item.productId?.productImage 
+                                ? '/uploads/' + item.productId.productImage 
+                                : '/images/no-image.jpg' %>" 
+                          class="me-2 rounded" 
+                          style="width:35px;height:35px;object-fit:cover;">
                           <p class="mb-1"><strong>Sender:</strong> <%= order.senderName || 'N/A' %></p>
                           <p><strong>Reference #:</strong> <%= order.referenceNumber || 'N/A' %></p>
                           <p><strong>Note to Cashier:</strong> <%= order.noteToCashier || 'None' %></p>

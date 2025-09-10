@@ -11,7 +11,7 @@ const { sendEmail, otpTemplate } = require("../utils/emailService");
 const RECAPTCHA_SECRET_KEY = '6LcsQcIrAAAAADfW13qP5bFwzB1UoE7H-8KuzwCC';
 
 // domain 6LcsQcIrAAAAADfW13qP5bFwzB1UoE7H-8KuzwCC
-// localhost 6LdykLQrAAAAAONL72QLlYPN_7zc6tx5j0q_V1zY
+// localhost 6LfAuMQrAAAAAJeLSw-bey7KxfyHFj3Zd9UKg5gN
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 let otpStore = {};
@@ -128,24 +128,21 @@ exports.showCheckout = async (req, res) => {
   }
 };
 
-
 exports.checkout = async (req, res) => {
   try {
     const userId = req.session.userId;
-    if (!userId) return res.status(401).json({ error: 'You must be logged in to checkout' });
-
-    const { noteToCashier, paymentMode, senderName, referenceNumber } = req.body;
-
-    // Fetch user info
-    const user = await User.findById(userId);
-
-    // Fetch cart items
-    const cartItems = await CartItem.find({ user_id: userId }).populate('product_id');
-    if (!cartItems || cartItems.length === 0) {
-      return res.status(400).json({ error: 'Your cart is empty!' });
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'You must be logged in to checkout' });
     }
 
-    // Calculate total
+    const { noteToCashier, paymentMode, senderName, referenceNumber } = req.body;
+    const user = await User.findById(userId);
+
+    const cartItems = await CartItem.find({ user_id: userId }).populate('product_id');
+    if (!cartItems || cartItems.length === 0) {
+      return res.status(400).json({ success: false, error: 'Your cart is empty!' });
+    }
+
     let totalAmount = 0;
     const orderItems = cartItems.map(item => {
       const price = item.product_id.price || 0;
@@ -160,7 +157,6 @@ exports.checkout = async (req, res) => {
       };
     });
 
-    // Prepare order data
     const orderData = {
       user: userId,
       userInfoSnapshot: {
@@ -175,24 +171,21 @@ exports.checkout = async (req, res) => {
       totalAmount
     };
 
-    // Extra fields for Pickup / GCash
     if (paymentMode === 'Pickup' || paymentMode === 'GCash') {
       if (!req.file || !senderName || !referenceNumber) {
         return res.status(400).json({
+          success: false,
           error: 'Sender Name, Reference Number, and Proof Image are required!'
         });
       }
 
       orderData.senderName = senderName;
       orderData.referenceNumber = referenceNumber;
-      orderData.proofImage = `/uploads/${req.file.filename}`;
+      orderData.proofImage = `/uploads/proofs/${req.file.filename}`;
     }
 
-    // Save order
     const order = new Order(orderData);
     await order.save();
-
-    // Reduce product stock
     for (const item of cartItems) {
       const product = await Product.findById(item.product_id._id);
       if (product) {
@@ -200,29 +193,15 @@ exports.checkout = async (req, res) => {
         await product.save();
       }
     }
-
-    // Clear cart
     await CartItem.deleteMany({ user_id: userId });
-
-    // ✅ Differentiate COD response with pretty-printed JSON
-    if (paymentMode === 'COD') {
-      return res.setHeader('Content-Type', 'application/json')
-        .send(JSON.stringify({
-          success: true,
-          redirectUrl: `/order-success?id=${order._id}`,
-          message: 'Cash on Delivery order placed successfully!'
-        }, null, 2)); // pretty print with 2 spaces
-    }
-
-    // ✅ For other modes, normal JSON (handled by fetch + SweetAlert in frontend)
-    res.json({
+    return res.json({
       success: true,
-      redirectUrl: `/order-success?id=${order._id}`
+      redirectUrl: `/order-success/${order._id}`
     });
 
   } catch (err) {
     console.error('Checkout error:', err);
-    res.status(500).json({ error: err.message || 'Checkout failed!' });
+    return res.status(500).json({ success: false, error: 'Checkout failed!' });
   }
 };
 
@@ -273,7 +252,7 @@ exports.confirmOrder = async (req, res) => {
     order.pickupProofImage = pickupProofImage;
     await order.save();
 
-    res.redirect(`/order-success?id=${order._id}`);
+    res.redirect(`/order-success/${order._id}`);
   } catch (err) {
     console.error('Confirm Order Error:', err);
     res.status(500).send('Error confirming order');
@@ -321,24 +300,29 @@ async function processOrder(cartItems, user, paymentMode = 'COD', paymentInfo = 
 
 exports.showOrderSuccess = async (req, res) => {
   try {
-    const orderId = req.params.id || req.query.id;
+    const orderId = req.params.id;
+    if (!orderId) return res.render('order-success', { order: null });
 
-    if (!orderId) {
-      return res.render('order-success', { order: null });
-    }
-
-    // Fetch order with product details
     const order = await Order.findById(orderId)
-      .populate('items.productId') // Populate products
+      .populate('items.productId')
       .exec();
 
-    if (!order) {
-      return res.render('order-success', { order: null });
-    }
+    if (!order) return res.render('order-success', { order: null });
 
-    // Normalize proofImage path for easier display
-    if (order.proofImage && !order.proofImage.startsWith('http') && !order.proofImage.startsWith('/uploads/')) {
-      order.proofImage = `/uploads/${order.proofImage}`;
+    // Fix product images → /uploads/
+    order.items.forEach(item => {
+      if (item.productId && item.productId.productImage) {
+        if (!item.productId.productImage.startsWith('/uploads/')) {
+          item.productId.productImage = `/uploads/${item.productId.productImage}`;
+        }
+      }
+    });
+
+    // Fix proof image → /uploads/proofs/
+    if (order.proofImage) {
+      if (!order.proofImage.startsWith('/uploads/proofs/')) {
+        order.proofImage = `/uploads/proofs/${order.proofImage}`;
+      }
     }
 
     res.render('order-success', { order });
@@ -704,10 +688,6 @@ exports.cancelOrder = async (req, res) => {
     console.error('Error cancelling order:', error);
     res.status(500).send('Error cancelling order');
   }
-};
-
-exports.showOrderSuccess = (req, res) => {
-  res.render('order-success');
 };
 
 exports.logout = (req, res) => {
