@@ -157,7 +157,6 @@ const checkoutForm = document.getElementById('checkoutForm');
 const modalStep1 = new bootstrap.Modal(document.getElementById('modalStep1'));
 const modalStep2 = new bootstrap.Modal(document.getElementById('modalStep2'));
 
-// Open modal automatically on dropdown change for GCash/Pickup
 paymentSelect.addEventListener('change', function() {
   const mode = this.value;
   if (mode === 'GCash' || mode === 'Pickup') {
@@ -175,7 +174,6 @@ nextModalBtn.addEventListener('click', () => {
   modalStep2.show();
 });
 
-// Submit for GCash/Pickup
 submitModalBtn.addEventListener('click', async () => {
   try {
     const formData = new FormData(checkoutForm);
@@ -203,7 +201,7 @@ submitModalBtn.addEventListener('click', async () => {
       text: 'Your checkout was successful.',
       confirmButtonText: 'OK',
       allowOutsideClick: false
-    }).then(() => window.location.href = data.redirectUrl || '/order-success');
+    }).then(() => window.location.href = data.redirectUrl);
 
   } catch (err) {
     console.error(err);
@@ -211,33 +209,54 @@ submitModalBtn.addEventListener('click', async () => {
   }
 });
 
-// COD → SweetAlert before submitting
-openModalBtn.addEventListener('click', (e) => {
+openModalBtn.addEventListener('click', async (e) => {
   const mode = paymentSelect.value;
   if (!mode) {
     alert('Please select a payment mode first.');
     return;
   }
 
+  if (mode === 'GCash' || mode === 'Pickup') {
+    modalStep1.show();
+    return;
+  }
+
   if (mode === 'COD') {
     e.preventDefault();
-    Swal.fire({
+    const result = await Swal.fire({
       title: 'Confirm Order',
       text: "You chose Cash On Delivery. Proceed?",
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Yes, Place Order',
       cancelButtonText: 'Cancel'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        checkoutForm.submit();
-      }
     });
-  } else if (mode === 'GCash' || mode === 'Pickup') {
-    // trigger modals automatically
-    modalStep1.show();
+
+    if (result.isConfirmed) {
+      try {
+        const formData = new FormData(checkoutForm);
+
+        const res = await fetch('/cart/checkout', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Order Placed!',
+          text: 'Your checkout was successful.',
+          confirmButtonText: 'OK',
+          allowOutsideClick: false
+        }).then(() => window.location.href = data.redirectUrl);
+
+      } catch (err) {
+        console.error(err);
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Something went wrong!' });
+      }
+    }
   }
 });
+
 </script>
 </body>
 </html>

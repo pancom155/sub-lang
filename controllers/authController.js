@@ -109,7 +109,6 @@ exports.removeCartItem = async (req, res) => {
   }
 };
 
-
 exports.showCheckout = async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -132,7 +131,7 @@ exports.checkout = async (req, res) => {
   try {
     const userId = req.session.userId;
     if (!userId) {
-      return res.status(401).json({ success: false, error: 'You must be logged in to checkout' });
+      return res.status(401).json({ error: 'You must be logged in to checkout' });
     }
 
     const { noteToCashier, paymentMode, senderName, referenceNumber } = req.body;
@@ -140,7 +139,7 @@ exports.checkout = async (req, res) => {
 
     const cartItems = await CartItem.find({ user_id: userId }).populate('product_id');
     if (!cartItems || cartItems.length === 0) {
-      return res.status(400).json({ success: false, error: 'Your cart is empty!' });
+      return res.status(400).json({ error: 'Your cart is empty!' });
     }
 
     let totalAmount = 0;
@@ -173,10 +172,7 @@ exports.checkout = async (req, res) => {
 
     if (paymentMode === 'Pickup' || paymentMode === 'GCash') {
       if (!req.file || !senderName || !referenceNumber) {
-        return res.status(400).json({
-          success: false,
-          error: 'Sender Name, Reference Number, and Proof Image are required!'
-        });
+        return res.status(400).json({ error: 'Sender Name, Reference Number, and Proof Image are required!' });
       }
 
       orderData.senderName = senderName;
@@ -186,6 +182,7 @@ exports.checkout = async (req, res) => {
 
     const order = new Order(orderData);
     await order.save();
+
     for (const item of cartItems) {
       const product = await Product.findById(item.product_id._id);
       if (product) {
@@ -193,7 +190,9 @@ exports.checkout = async (req, res) => {
         await product.save();
       }
     }
+
     await CartItem.deleteMany({ user_id: userId });
+
     return res.json({
       success: true,
       redirectUrl: `/order-success/${order._id}`
@@ -201,7 +200,7 @@ exports.checkout = async (req, res) => {
 
   } catch (err) {
     console.error('Checkout error:', err);
-    return res.status(500).json({ success: false, error: 'Checkout failed!' });
+    return res.status(500).json({ error: 'Checkout failed!' });
   }
 };
 
