@@ -1,9 +1,10 @@
 const User = require('../models/User');
 const Product = require('../models/Product');
 const bcrypt = require('bcrypt');
-const Order = require('../models/Order'); 
+const Order = require('../models/Order');
 const Staff = require('../models/Staff');
 const CompletedOrder = require('../models/CompletedOrder');
+const Review = require('../models/Review');
 const moment = require('moment');
 const KitchenStaff = require('../models/KitchenStaff');
 const { Parser } = require('json2csv');
@@ -22,6 +23,15 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   puppeteer = require('puppeteer');
 }
+
+const resolveImageUrl = (req, img) => {
+  const origin = `${req.protocol}://${req.get('host')}`;
+  if (!img) return `${origin}/images/default.jpg`;
+  if (typeof img !== 'string') return `${origin}/images/default.jpg`;
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+  if (img.startsWith('/')) return `${origin}${img}`;
+  return `${origin}/uploads/${img}`;
+};
 
 const calculateTotalSales = async () => {
   try {
@@ -250,99 +260,142 @@ exports.dashboard = async (req, res) => {
     const limit = parseInt(req.query.limit) || 3;
     const skip = (page - 1) * limit;
     const now = new Date();
-    const month = now.toLocaleString("default", { month: "long" });
-    const year = now.getFullYear();
+
+    const selectedSalesMonth = parseInt(req.query.salesMonth) || now.getMonth() + 1;
+    const selectedSalesYear = parseInt(req.query.salesYear) || now.getFullYear();
+    const selectedOrdersMonth = parseInt(req.query.ordersMonth) || now.getMonth() + 1;
+    const selectedOrdersYear = parseInt(req.query.ordersYear) || now.getFullYear();
+
+    const salesMonthName = new Date(selectedSalesYear, selectedSalesMonth - 1).toLocaleString("default", { month: "long" });
+    const ordersMonthName = new Date(selectedOrdersYear, selectedOrdersMonth - 1).toLocaleString("default", { month: "long" });
+
     const [totalUsers, totalStaff, totalKitchenStaff] = await Promise.all([
       User.countDocuments(),
       Staff.countDocuments(),
       KitchenStaff.countDocuments(),
     ]);
-    const [pendingOrdersCount, completedOrdersCount, cancelledOrdersCount] =
-      await Promise.all([
-        Order.countDocuments({ status: "Pending" }),
-        Order.countDocuments({ status: "Completed" }),
-        Order.countDocuments({ status: "Cancelled" }),
-      ]);
-    const totalOrders =
-      pendingOrdersCount + completedOrdersCount + cancelledOrdersCount;
-    const completedOrders = await Order.find({ status: "Completed" });
-    const totalSales = completedOrders.reduce(
-      (sum, o) => sum + (o.totalAmount || 0),
-      0
-    );
+
+    const [pendingOrdersCount, completedOrdersCount, cancelledOrdersCount] = await Promise.all([
+      Order.countDocuments({ status: "Pending" }),
+      Order.countDocuments({ status: "Completed" }),
+      Order.countDocuments({ status: "Cancelled" }),
+    ]);
+    const totalOrders = pendingOrdersCount + completedOrdersCount + cancelledOrdersCount;
+
+    const allCompletedOrders = await CompletedOrder.find().populate("items.productId");
+
+    const totalSales = allCompletedOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+    const monthlySales = allCompletedOrders.reduce((sum, o) => {
+      const orderDate = new Date(o.createdAt);
+      if (orderDate.getMonth() + 1 === selectedSalesMonth && orderDate.getFullYear() === selectedSalesYear) {
+        return sum + (o.totalAmount || 0);
+      }
+      return sum;
+    }, 0);
+
     const products = await Product.find();
     const productStockChartData = products.map((p) => ({
       name: p.productName || p.name,
       stock: p.stock,
     }));
+
     let totalStocks = 0;
     let lowStockWarning = [];
     products.forEach((p) => {
       totalStocks += p.stock;
       if (p.stock < 20) lowStockWarning.push(p.productName || p.name);
     });
-    const stockBreakdown = {
-      total: totalStocks,
-      products: productStockChartData,
-    };
-    const orders = await Order.find({}).populate("items.productId");
+    const stockBreakdown = { total: totalStocks, products: productStockChartData };
+
     const productSalesMap = {};
-    orders.forEach((order) => {
+    allCompletedOrders.forEach((order) => {
       order.items.forEach((item) => {
         const pid = item.productId?._id?.toString();
         if (!pid) return;
         productSalesMap[pid] = (productSalesMap[pid] || 0) + item.quantity;
       });
     });
-    const topProductIds = Object.entries(productSalesMap)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([id]) => id);
-    const mostBoughtProducts = await Product.find({
-      _id: { $in: topProductIds },
-    });
-    const mostBoughtProductsWithQty = mostBoughtProducts.map((p) => ({
-      productName: p.productName || p.name,
-      productImage: p.productImage || "/images/default.jpg",
-      totalQuantity: productSalesMap[p._id.toString()] || 0,
-    }));
+
+    const mostBoughtProductsWithQty = products
+      .map((p) => ({
+        productName: p.productName || p.name,
+        productImage: p.productImage || "/images/default.jpg",
+        totalQuantity: productSalesMap[p._id.toString()] || 0,
+      }))
+      .filter(p => p.totalQuantity > 0) // ✅ remove products with 0 sales
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, 6);
+
+    const productTrendData = [];
+    for (let i = 5; i >= 0; i--) {
+      const start = moment().subtract(i, "months").startOf("month").toDate();
+      const end = moment().subtract(i, "months").endOf("month").toDate();
+      const monthOrders = allCompletedOrders.filter((o) => o.createdAt >= start && o.createdAt <= end);
+      const monthlyTotal = monthOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+      productTrendData.push({ month: moment(start).format("MMM YYYY"), sales: monthlyTotal });
+    }
+
+    const monthlyOrdersCount = allCompletedOrders.filter((o) => {
+      const orderDate = new Date(o.createdAt);
+      return orderDate.getMonth() + 1 === selectedOrdersMonth && orderDate.getFullYear() === selectedOrdersYear;
+    }).length;
+
     const startOfDay = moment().startOf("day").toDate();
     const endOfDay = moment().endOf("day").toDate();
-    const todaysOrders = await Order.find({
-      createdAt: { $gte: startOfDay, $lte: endOfDay },
-    }).populate("items.productId");
-    const kitchenCompletedOrders = await CompletedOrder.find({
-      createdAt: { $gte: startOfDay, $lte: endOfDay },
-    }).populate("items.productId");
-    const combinedOrders = [...todaysOrders, ...kitchenCompletedOrders];
-    const allDailyOrders = combinedOrders.map((order) => {
+    const todaysOrders = allCompletedOrders.filter(o => new Date(o.createdAt) >= startOfDay && new Date(o.createdAt) <= endOfDay);
+
+    const allDailyOrders = todaysOrders.map((order) => {
       const productMap = {};
       order.items.forEach((item) => {
-        const productName =
-          item.productId?.productName ||
-          item.productId?.name ||
-          "Unknown Product";
-        productMap[productName] =
-          (productMap[productName] || 0) + item.quantity;
+        const productName = item.productId?.productName || item.productId?.name || "Unknown Product";
+        productMap[productName] = (productMap[productName] || 0) + item.quantity;
       });
-      const productList = Object.entries(productMap)
-        .map(([name, qty]) => `${name} (x${qty})`)
-        .join(", ");
+      const productList = Object.entries(productMap).map(([name, qty]) => `${name} (x${qty})`).join(", ");
       return {
         orderId: order._id.toString(),
         status: order.status || "Completed",
         productList,
         totalAmount: order.totalAmount || 0,
-        image:
-          order.items[0]?.productId?.productImage || "/images/default.jpg",
+        image: order.items[0]?.productId?.productImage || "/images/default.jpg",
       };
     });
+
+    const reviews = await Review.find().populate("productId");
+    const totalReviews = reviews.length;
+    const avgRating = reviews.length ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(2) : 0;
+
+    const productRatingsMap = {};
+    reviews.forEach(r => {
+      if (!r.productId) return;
+      const pid = r.productId._id.toString();
+      if (!productRatingsMap[pid]) productRatingsMap[pid] = { total: 0, count: 0, name: r.productId.productName, image: r.productId.productImage };
+      productRatingsMap[pid].total += r.rating;
+      productRatingsMap[pid].count += 1;
+    });
+
+    const topRatedProducts = Object.values(productRatingsMap)
+      .map(p => ({ ...p, avg: p.total / p.count }))
+      .sort((a, b) => b.avg - a.avg)
+      .slice(0, 5);
+
     const paginatedDailyOrders = allDailyOrders.slice(skip, skip + limit);
     const totalDailyOrders = allDailyOrders.length;
     const totalPages = Math.ceil(totalDailyOrders / limit);
+
     res.render("admin/index", {
-      month,
-      year,
+      salesMonth: salesMonthName,
+      salesYear: selectedSalesYear,
+      selectedSalesMonth,
+      selectedSalesYear,
+      ordersMonth: ordersMonthName,
+      ordersYear: selectedOrdersYear,
+      selectedOrdersMonth,
+      selectedOrdersYear,
+      totalSales,
+      monthlySales,
+      productTrendData,
+      monthlyOrdersCount,
       currentPage: page,
       totalPages,
       limit,
@@ -350,21 +403,12 @@ exports.dashboard = async (req, res) => {
       totalStaff,
       totalKitchenStaff,
       totalOrders,
-      totalSales,
       totalStocks,
-      usersBreakdown: {
-        total: totalUsers,
-        user: totalUsers,
-        staff: totalStaff,
-        kitchen: totalKitchenStaff,
-      },
-      ordersBreakdown: {
-        pending: pendingOrdersCount,
-        completed: completedOrdersCount,
-        cancelled: cancelledOrdersCount,
-      },
+      reviewKpi: { totalReviews, avgRating, topRatedProducts },
+      usersBreakdown: { total: totalUsers, user: totalUsers, staff: totalStaff, kitchen: totalKitchenStaff },
+      ordersBreakdown: { pending: pendingOrdersCount, completed: completedOrdersCount, cancelled: cancelledOrdersCount },
       stockBreakdown,
-      products,
+      products: products.map(p => ({ ...p.toObject(), productImage: p.productImage || '/images/default.jpg' })),
       lowStockWarning,
       productStockChartData,
       mostBoughtProducts: mostBoughtProductsWithQty,
@@ -448,7 +492,7 @@ exports.getSales = async (req, res) => {
 
 exports.getOrders = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; 
+    const page = parseInt(req.query.page) || 1;
     const limit = 5;
     const skip = (page - 1) * limit;
     const totalOrders = await CompletedOrder.countDocuments();
@@ -458,8 +502,21 @@ exports.getOrders = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
+    const prepared = completedOrders.map(o => {
+      const items = o.items.map(it => {
+        return {
+          productName: it.productId?.productName || it.productId?.name || 'Unknown',
+          quantity: it.quantity,
+          productImage: resolveImageUrl(req, it.productId?.productImage)
+        };
+      });
+      return {
+        ...o.toObject(),
+        items,
+      };
+    });
     res.render('admin/orders', {
-      orders: completedOrders,
+      orders: prepared,
       currentPage: page,
       totalPages: totalPages,
     });
@@ -485,9 +542,41 @@ exports.getStaff = async (req, res) => {
   }
 };
 
-exports.getReviews = (req, res) => {
-  res.render('admin/reviews');
+exports.getReviews = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    const [reviews, totalReviews, avgRating, fiveStarCount] = await Promise.all([
+      Review.find()
+        .populate("productId", "productName productImage")
+        .populate("userId", "firstName lastName email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      Review.countDocuments(),
+      Review.aggregate([{ $group: { _id: null, avg: { $avg: "$rating" } } }]),
+      Review.countDocuments({ rating: 5 }),
+    ]);
+
+    const totalPages = Math.ceil(totalReviews / limit);
+
+    res.render("admin/reviews", {
+      reviews,
+      currentPage: page,
+      totalPages,
+      totalReviews,
+      avgRating: avgRating.length > 0 ? avgRating[0].avg.toFixed(1) : 0,
+      fiveStarCount,
+    });
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    res.status(500).send("Server error");
+  }
 };
+
 
 exports.getUsers = async (req, res) => {
   try {
@@ -502,8 +591,9 @@ exports.getUsers = async (req, res) => {
 exports.getProducts = async (req, res) => {
   try {
     const products = await Product.find();
+    const prepared = products.map(p => ({ ...p.toObject ? p.toObject() : p, productImage: resolveImageUrl(req, p.productImage) }));
     res.render('admin/products', {
-      products,
+      products: prepared,
       successMessage: res.locals.successMessage,
     });
   } catch (err) {
@@ -519,6 +609,7 @@ exports.createProduct = async (req, res) => {
       req.flash('error', 'Product image is required');
       return res.redirect('/admin/products');
     }
+
     const newProduct = new Product({
       productName,
       price,
@@ -527,6 +618,7 @@ exports.createProduct = async (req, res) => {
       category,
       reviews: [],
     });
+
     await newProduct.save();
     req.flash('success', 'Product added successfully!');
     res.redirect('/admin/products');
@@ -554,23 +646,27 @@ exports.editProduct = async (req, res) => {
     const { productName, price, stock, category } = req.body;
     const { id } = req.params;
     const product = await Product.findById(id);
+
     if (!product) {
       req.flash('error', 'Product not found');
       return res.redirect('/admin/products');
     }
+
     product.productName = productName || product.productName;
     product.price = price || product.price;
     product.stock = stock || product.stock;
     product.category = category || product.category;
+
     if (req.file) {
       product.productImage = `/uploads/${req.file.filename}`;
     }
+
     await product.save();
-    req.flash('success', '✅ Product updated successfully!');
+    req.flash('success', 'Product updated successfully!');
     res.redirect('/admin/products');
   } catch (err) {
-    console.error('Error updating product:', err);
-    req.flash('error', '❌ Error updating product');
+    console.error(err);
+    req.flash('error', 'Error updating product');
     res.redirect('/admin/products');
   }
 };
@@ -580,16 +676,15 @@ exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(id);
     if (!product) {
-      return res.status(404).send('Product not found');
+      req.flash('error', 'Product not found');
+      return res.redirect('/admin/products');
     }
-    res.locals.successMessage = {
-      title: 'Deleted!',
-      text: 'Product deleted successfully!',
-    };
+    req.flash('success', 'Product deleted successfully!');
     res.redirect('/admin/products');
   } catch (err) {
-    console.error('Error deleting product:', err);
-    res.status(500).send('Server Error');
+    console.error(err);
+    req.flash('error', 'Error deleting product');
+    res.redirect('/admin/products');
   }
 };
 
@@ -774,5 +869,95 @@ exports.reportDamage = async (req, res) => {
   } catch (error) {
     console.error('Error reporting damage:', error);
     res.status(500).send('Internal Server Error');
+  }
+};
+
+exports.productMonitoring = async (req, res) => {
+  try {
+    const selectedMonth = parseInt(req.query.month) || null; 
+
+    const filter = {};
+    if (selectedMonth) {
+      filter.createdAt = {
+        $gte: new Date(`2025-${selectedMonth}-01`),
+        $lt: new Date(`2025-${selectedMonth + 1}-01`),
+      };
+    }
+
+    const orders = await CompletedOrder.find(filter).populate("items.productId");
+    const products = await Product.find();
+    const stockLabels = products.map(p => p.productName);
+    const stockLevels = products.map(p => p.stock);
+
+    let totalSold = 0;
+    let totalSales = 0;
+    let totalStock = 0;
+    let outOfStock = 0;
+
+    const productsSoldMap = {};
+
+    products.forEach(p => {
+      totalStock += p.stock;
+      if (p.stock === 0) outOfStock++;
+    });
+
+    orders.forEach(order => {
+      totalSales += order.totalAmount;
+
+      order.items.forEach(item => {
+        const product = item.productId;
+        if (!product) return;
+
+        totalSold += item.quantity;
+
+        if (!productsSoldMap[product._id]) {
+          productsSoldMap[product._id] = {
+            productName: product.productName || product.name,
+            productImage: product.productImage || "/images/default.jpg",
+            stock: product.stock,
+            totalQuantity: 0,
+            totalSales: 0,
+          };
+        }
+
+        productsSoldMap[product._id].totalQuantity += item.quantity;
+        productsSoldMap[product._id].totalSales += product.price * item.quantity;
+      });
+    });
+
+    const months = [
+      "January","February","March","April","May","June",
+      "July","August","September","October","November","December"
+    ];
+
+    const labels = months;
+    const salesData = months.map((_, idx) => {
+      const monthOrders = orders.filter(order => new Date(order.createdAt).getMonth() === idx);
+      return monthOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+    });
+    const stockData = months.map((_, idx) => {
+      const monthOrders = orders.filter(order => new Date(order.createdAt).getMonth() === idx);
+      return monthOrders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0);
+    });
+
+    const productsSold = Object.values(productsSoldMap).sort((a, b) => b.totalQuantity - a.totalQuantity);
+
+    res.render("admin/productMonitoring", {
+      labels,
+      salesData,
+      stockData,
+      totalSold,
+      totalSales,
+      totalStock,
+      outOfStock,
+      productsSold,
+      selectedMonth,
+      months,
+      stockLabels,  
+      stockLevels 
+    });
+  } catch (err) {
+    console.error("Error in productMonitoring:", err);
+    res.status(500).send("Server Error");
   }
 };

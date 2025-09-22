@@ -24,6 +24,7 @@ router.post('/products/delete/:id', AdminController.deleteProduct);
 
 router.post('/products/report-damage', AdminController.reportDamage);
 router.get('/spoilage', AdminController.getSpoilage);
+router.get("/productMonitoring", AdminController.productMonitoring);
 
 router.get('/sales', AdminController.getSales);
 router.get('/sales/export/pdf', AdminController.exportSalesPDF);

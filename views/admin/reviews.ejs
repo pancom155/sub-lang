@@ -6,28 +6,30 @@
   <title>Admin Dashboard | Zero Degree Café</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+    }
+
     .sidebar {
       height: 100vh;
       position: fixed;
       top: 0;
       left: 0;
       width: 250px;
-      background: linear-gradient(145deg, #1d3c5a, #3a5f7d); 
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
       color: white;
       padding-top: 30px;
       overflow-y: auto;
       box-shadow: 4px 0px 10px rgba(0, 0, 0, 0.1);
     }
-
     .sidebar h3 {
       text-align: center;
       font-size: 30px;
       font-weight: bold;
       margin-bottom: 30px;
     }
-
     .sidebar a {
       color: white;
       text-decoration: none;
@@ -38,13 +40,11 @@
       margin: 10px 0;
       transition: all 0.3s ease;
     }
-
     .sidebar a:hover {
       background-color: #f1f1f1;
       color: #1d3c5a;
       transform: translateX(10px);
     }
-    
     .sidebar a.active {
       background-color: #3a5f7d;
       color: white;
@@ -57,11 +57,33 @@
     }
     .content {
       margin-left: 270px;
-      padding: 20px;
+      padding: 30px;
     }
-    .sidebar a.active {
-      background-color: #3a5f7d;
+
+    .table img {
+      border-radius: 5px;
     }
+
+    .review-table th, .review-table td {
+      vertical-align: middle !important;
+    }
+
+    .star-rating i {
+      margin-right: 2px;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 200px; }
+      .content { margin-left: 210px; padding: 15px; }
+      .sidebar h3 { font-size: 22px; }
+    }
+      .kpi-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .kpi-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+      }
   </style>
 </head>
 <body>
@@ -69,23 +91,147 @@
     <div class="d-flex justify-content-center mb-3">
       <img src="/images/zicon.jpg" style="width: 75px;" class="rounded-circle" alt="">
     </div>
-    <h3 class="text-center text-white mb-4 fw-bold">Admin Panel</h3>
+    <h3 class="text-center mb-4 fw-bold">Admin Panel</h3>
     <a href="/admin/index"><i class="bi bi-house-door"></i> Dashboard</a>
     <a href="/admin/sales"><i class="bi bi-bar-chart"></i> Sales Overview</a>
     <a href="/admin/users"><i class="bi bi-person"></i> Users</a>
     <a href="/admin/products"><i class="bi bi-box"></i> Inventory</a>
+    <a href="/admin/productMonitoring"><i class="bi bi-display"></i> Product Monitoring</a>
     <a href="/admin/orders"><i class="bi bi-file-earmark-text"></i> Orders</a>
     <a href="/admin/staff"><i class="bi bi-person-badge"></i> Staff</a>
+    <a href="/admin/spoilage"><i class="bi bi-trash"></i> Spoilage</a>
     <a href="/admin/reviews" class="active"><i class="bi bi-star"></i> Reviews</a>
     <div class="logout">
-      <a href="/logout" style="width: 150px;" class="btn btn-danger btn-sm mx-auto"><i class="bi bi-box-arrow-right"></i> Logout</a>
+      <a href="/logout" style="width: 150px;" class="btn btn-danger btn-sm mx-auto">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </a>
     </div>
   </div>
 
-  <div class="content">
-    <h1 class="mb-5 fw-bold">Reviews <hr></h1>
+<div class="content">
+  <h1 class="mb-4 fw-bold">Product Reviews <hr></h1>
 
+<!-- KPI CARDS -->
+<div class="row g-3 mb-4">
+  <!-- Total Reviews -->
+  <div class="col-md-3">
+    <div class="card shadow-lg text-center p-4 rounded-lg text-white kpi-card" style="background: linear-gradient(145deg, #1d3c5a, #3a5f7d);">
+      <div class="mb-2">
+        <i class="bi bi-chat-dots-fill fs-1"></i>
+      </div>
+      <h6 class="fw-bold text-uppercase">Total Reviews</h6>
+      <h4 class="fw-bold"><%= totalReviews %></h4>
+    </div>
   </div>
+
+  <!-- Average Rating -->
+  <div class="col-md-3">
+    <div class="card shadow-lg text-center p-4 rounded text-white kpi-card" style="background: linear-gradient(145deg, #1d3c5a, #3a5f7d);">
+      <div class="mb-2">
+        <i class="bi bi-star-fill fs-1"></i>
+      </div>
+      <h6 class="fw-bold text-uppercase">Average Rating</h6>
+      <h4 class="fw-bold"><%= avgRating %> / 5</h4>
+    </div>
+  </div>
+
+  <!-- 5-Star Reviews -->
+  <div class="col-md-3">
+    <div class="card shadow-lg text-center p-4 rounded text-light kpi-card" style="background: linear-gradient(145deg, #1d3c5a, #3a5f7d);">
+      <div class="mb-2">
+        <i class="bi bi-hand-thumbs-up-fill fs-1"></i>
+      </div>
+      <h6 class="fw-bold text-uppercase">5-Star Reviews</h6>
+      <h4 class="fw-bold"><%= fiveStarCount %></h4>
+    </div>
+  </div>
+
+  <!-- Pagination Info -->
+  <div class="col-md-3">
+    <div class="card shadow-lg text-center p-4 rounded text-white kpi-card" style="background: linear-gradient(145deg, #1d3c5a, #3a5f7d);">
+      <div class="mb-2">
+        <i class="bi bi-collection fs-1"></i>
+      </div>
+      <h6 class="fw-bold text-uppercase">Current Page</h6>
+      <h4 class="fw-bold"><%= currentPage %> / <%= totalPages %></h4>
+    </div>
+  </div>
+</div>
+
+  <% if (reviews.length === 0) { %>
+    <p class="text-muted">No reviews available.</p>
+  <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle review-table">
+        <thead class="table-dark">
+          <tr>
+            <th>#</th>
+            <th>Product</th>
+            <th>User</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% reviews.forEach((review, index) => { %>
+            <tr>
+              <th scope="row"><%= (currentPage - 1) * 10 + index + 1 %></th>
+              <td>
+                <div class="d-flex align-items-center">
+                  <img src="<%= review.productId?.productImage || '/images/default.jpg' %>" 
+                       alt="<%= review.productId?.productName || 'Product' %>" 
+                       class="me-2" style="width:40px; height:40px; object-fit:cover;">
+                  <span><%= review.productId?.productName || 'Unknown Product' %></span>
+                </div>
+              </td>
+              <td>
+                <%= review.userId?.firstName && review.userId?.lastName ? 
+                      review.userId.firstName + ' ' + review.userId.lastName : 
+                      review.userId?.email || 'Unknown User' %> 
+                (<%= review.userId?.email || '-' %>)
+              </td>
+
+              <td class="star-rating">
+                <% for (let i = 1; i <= 5; i++) { %>
+                  <% if (i <= review.rating) { %>
+                    <i class="bi bi-star-fill text-warning"></i>
+                  <% } else { %>
+                    <i class="bi bi-star text-secondary"></i>
+                  <% } %>
+                <% } %>
+              </td>
+
+              <td><%= review.comment %></td>
+              <td><%= new Date(review.createdAt).toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="mt-3">
+      <ul class="pagination justify-content-center">
+        <% if (currentPage > 1) { %>
+          <li class="page-item">
+            <a class="page-link" href="?page=<%= currentPage - 1 %>">Previous</a>
+          </li>
+        <% } %>
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+            <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+          </li>
+        <% } %>
+        <% if (currentPage < totalPages) { %>
+          <li class="page-item">
+            <a class="page-link" href="?page=<%= currentPage + 1 %>">Next</a>
+          </li>
+        <% } %>
+      </ul>
+    </nav>
+  <% } %>
+</div>
+
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -4,6 +4,7 @@ const Order = require('../models/Order');
 const Staff = require('../models/Staff');
 const KitchenStaff = require('../models/KitchenStaff');
 const CartItem = require('../models/cartItem');
+const Review = require('../models/Review');
 const bcrypt = require("bcrypt");
 const mongoose = require('mongoose');
 const axios = require('axios');
@@ -204,7 +205,6 @@ exports.checkout = async (req, res) => {
   }
 };
 
-
 exports.placeOrder = async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -258,45 +258,6 @@ exports.confirmOrder = async (req, res) => {
   }
 };
 
-async function processOrder(cartItems, user, paymentMode = 'COD', paymentInfo = null) {
-  for (let item of cartItems) {
-    const product = await Product.findById(item.product_id._id);
-    if (!product || !product.price || item.quantity <= 0) {
-      throw new Error('Invalid cart item data');
-    }
-
-    if (product.stock < item.quantity) {
-      throw new Error(`Not enough stock for product: ${product.productName}`);
-    }
-
-    item.total = product.price * item.quantity;
-  }
-
-  const totalAmount = cartItems.reduce((total, item) => total + item.total, 0);
-  if (isNaN(totalAmount) || totalAmount <= 0) {
-    throw new Error('Invalid total order amount');
-  }
-
-  const orderData = {
-    items: cartItems.map(item => ({
-      productId: item.product_id._id,
-      quantity: item.quantity,
-    })),
-    user: user._id,
-    paymentMode,
-    totalAmount
-  };
-
-  if ((paymentMode === 'Pickup' || paymentMode === 'GCash') && paymentInfo) {
-    orderData.senderName = paymentInfo.senderName;
-    orderData.referenceNumber = paymentInfo.referenceNumber;
-    orderData.proofImage = paymentInfo.proofImagePath;
-  }
-
-  const order = new Order(orderData);
-  return await order.save();
-}
-
 exports.showOrderSuccess = async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -308,7 +269,6 @@ exports.showOrderSuccess = async (req, res) => {
 
     if (!order) return res.render('order-success', { order: null });
 
-    // Fix product images → /uploads/
     order.items.forEach(item => {
       if (item.productId && item.productId.productImage) {
         if (!item.productId.productImage.startsWith('/uploads/')) {
@@ -317,7 +277,6 @@ exports.showOrderSuccess = async (req, res) => {
       }
     });
 
-    // Fix proof image → /uploads/proofs/
     if (order.proofImage) {
       if (!order.proofImage.startsWith('/uploads/proofs/')) {
         order.proofImage = `/uploads/proofs/${order.proofImage}`;
@@ -601,9 +560,28 @@ exports.dashboard = async (req, res) => {
       }
     ]);
 
+    const ratingResults = await Review.aggregate([
+      { $match: { productId: { $ne: null } } },
+      {
+        $group: {
+          _id: '$productId',
+          avgRating: { $avg: '$rating' },
+          totalReviews: { $sum: 1 }
+        }
+      }
+    ]);
+
     const soldMap = {};
-    soldResults.forEach(result => {
-      soldMap[result._id.toString()] = result.totalSold;
+    soldResults.forEach(r => {
+      soldMap[r._id.toString()] = r.totalSold;
+    });
+
+    const ratingMap = {};
+    ratingResults.forEach(r => {
+      ratingMap[r._id.toString()] = {
+        avgRating: r.avgRating,
+        totalReviews: r.totalReviews
+      };
     });
 
     products.forEach(product => {
@@ -611,11 +589,13 @@ exports.dashboard = async (req, res) => {
         product.productImage = '/images/default.jpg';
       }
       product.totalSold = soldMap[product._id.toString()] || 0;
+      product.avgRating = ratingMap[product._id.toString()]?.avgRating || 0;
+      product.totalReviews = ratingMap[product._id.toString()]?.totalReviews || 0;
     });
 
     res.render('dashboard', {
       user: req.session.user,
-      products: products
+      products
     });
   } catch (error) {
     console.error('Error loading dashboard:', error);
@@ -671,21 +651,32 @@ exports.editProfile = async (req, res) => {
 
 exports.cancelOrder = async (req, res) => {
   try {
-    const orderId = req.params.id;
+    const { orderId } = req.params;
     const order = await Order.findById(orderId);
-    if (!order) return res.status(404).send('Order not found');
 
-    if (order.status === 'Completed') {
-      return res.status(400).send('Completed orders cannot be cancelled');
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.status === 'Cancelled') {
+      return res.status(400).json({ message: 'Order is already cancelled' });
+    }
+
+    for (const item of order.items) {
+      const product = await Product.findById(item.productId);
+      if (product) {
+        product.stock += item.quantity;
+        await product.save();
+      }
     }
 
     order.status = 'Cancelled';
     await order.save();
 
-    res.redirect('/profile'); 
-  } catch (error) {
-    console.error('Error cancelling order:', error);
-    res.status(500).send('Error cancelling order');
+    res.json({ message: 'Order cancelled successfully and stock restored', order });
+  } catch (err) {
+    console.error('Error cancelling order:', err);
+    res.status(500).json({ message: 'Server error while cancelling order' });
   }
 };
 

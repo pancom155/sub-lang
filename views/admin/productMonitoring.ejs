@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Product Monitoring | Zero Degree Café</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f0f2f5;
+}
+.sidebar {
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+    color: white;
+    padding-top: 30px;
+    overflow-y: auto;
+    box-shadow: 4px 0px 10px rgba(0,0,0,0.1);
+}
+.sidebar h3 {
+    text-align: center;
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+.sidebar a {
+    color: white;
+    text-decoration: none;
+    padding: 12px 18px;
+    display: block;
+    border-radius: 25px;
+    font-size: 16px;
+    margin: 10px 0;
+    transition: all 0.3s ease;
+}
+.sidebar a:hover {
+    background-color: #f1f1f1;
+    color: #1d3c5a;
+    transform: translateX(10px);
+}
+.sidebar a.active {
+    background-color: #3a5f7d;
+    color: white;
+}
+.content {
+    margin-left: 270px;
+    padding: 30px;
+}
+h2 {
+    margin-bottom: 25px;
+    color: #1d3c5a;
+    font-weight: bold;
+    border-bottom: 2px solid #3a5f7d;
+    padding-bottom: 8px;
+}
+.card-icon {
+    font-size: 35px;
+    margin-bottom: 10px;
+}
+.card.kpi-card {
+    color: white;
+    background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
+    border-radius: 15px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.card.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+.product-card {
+    border-radius: 15px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+.product-card img {
+    max-height: 120px;
+    object-fit: contain;
+    border-radius: 10px;
+}
+#monthSelect {
+    border-radius: 10px;
+    padding: 4px 12px;
+    border: none;
+    font-weight: 500;
+    transition: all 0.3s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+#monthSelect:focus {
+    outline: none;
+    box-shadow: 0 0 8px rgba(29,60,90,0.8);
+}
+#monthFilterForm {
+    display: flex;
+    align-items: center;
+}
+#monthFilterForm select option {
+    color: #1d3c5a;
+    background-color: #f8f9fa;
+}
+</style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="d-flex justify-content-center mb-3">
+        <img src="/images/zicon.jpg" style="width: 75px;" class="rounded-circle" alt="Logo">
+    </div>
+    <h3 class="fw-bold">Admin Panel</h3>
+    <a href="/admin/index"><i class="bi bi-house-door"></i> Dashboard</a>
+    <a href="/admin/sales"><i class="bi bi-bar-chart"></i> Sales Overview</a>
+    <a href="/admin/users"><i class="bi bi-person"></i> Users</a>
+    <a href="/admin/products"><i class="bi bi-box"></i> Inventory</a>
+    <a href="/admin/productMonitoring" class="active"><i class="bi bi-display"></i> Product Monitoring</a>
+    <a href="/admin/orders"><i class="bi bi-file-earmark-text"></i> Orders</a>
+    <a href="/admin/staff"><i class="bi bi-person-badge"></i> Staff</a>
+    <a href="/admin/spoilage"><i class="bi bi-trash"></i> Spoilage</a>
+    <a href="/admin/reviews"><i class="bi bi-star"></i> Reviews</a>
+    <div class="logout d-flex justify-content-center mt-4 text-center">
+        <a href="/logout" class="btn btn-danger btn-sm w-75">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
+</div>
+
+<div class="content">
+    <h2>Product Monitoring</h2>
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm text-center p-4">
+                <i class="bi bi-cash-stack card-icon"></i>
+                <h6>Total Sales</h6>
+                <h4>₱<%= totalSales.toFixed(2) %></h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm text-center p-4">
+                <i class="bi bi-basket card-icon"></i>
+                <h6>Total Products Sold</h6>
+                <h4><%= totalSold %></h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm text-center p-4">
+                <i class="bi bi-box-seam card-icon"></i>
+                <h6>Total Stock Available</h6>
+                <h4><%= totalStock %></h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm text-center p-4">
+                <i class="bi bi-exclamation-triangle card-icon"></i>
+                <h6>Out of Stock</h6>
+                <h4><%= outOfStock %></h4>
+            </div>
+        </div>
+    </div>
+<div class="card shadow-sm mb-4" style="border-radius:15px; overflow:hidden;">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(145deg, #1d3c5a, #3a5f7d); color:white; font-weight:bold;">
+        <span>Products Sold</span>
+        <form id="monthFilterForm" method="GET" action="/admin/productMonitoring" class="d-flex">
+            <select name="month" id="monthSelect" class="form-select form-select-sm" style="min-width:150px;">
+                <option value="">-- Select Month --</option>
+                <% months.forEach((monthName, idx) => { const value = idx + 1; %>
+                    <option value="<%= value %>" <%= selectedMonth == value ? "selected" : "" %>>
+                        <%= monthName %> 2025
+                    </option>
+                <% }) %>
+            </select>
+        </form>
+    </div>
+    <div class="card-body p-4">
+        <% if (productsSold && productsSold.length > 0) { %>
+            <div class="row g-3">
+                <% productsSold.forEach(product => { %>
+                    <div class="col-md-4">
+                        <div class="card product-card shadow-sm h-100 p-3" style="border-radius:15px; transition: transform 0.3s, box-shadow 0.3s;">
+                            <img src="<%= product.productImage %>" alt="<%= product.productName %>" class="img-fluid rounded mb-3" style="height:120px; object-fit:contain;">
+                            <div class="card-body text-center p-0">
+                                <h6 class="fw-bold mb-2"><%= product.productName %></h6>
+                                <p class="mb-1"><i class="bi bi-basket"></i> Sold: <strong><%= product.totalQuantity %></strong></p>
+                                <p class="mb-1"><i class="bi bi-cash"></i> Sales: ₱<%= product.totalSales.toFixed(2) %></p>
+                                <p class="mb-0 text-muted"><i class="bi bi-box"></i> Stock Left: <%= product.stock %></p>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <p class="text-center text-muted mt-3" style="font-style:italic;">
+                <% if (selectedMonth) { %>
+                    No products sold in <%= months[selectedMonth - 1] %> 2025.
+                <% } else { %>
+                    No products sold in this period.
+                <% } %>
+            </p>
+        <% } %>
+    </div>
+</div>
+<div class="card shadow-sm mb-4" style="border-radius:15px; overflow:hidden;">
+    <div class="card-header text-white" style="background: linear-gradient(145deg, #1d3c5a, #3a5f7d); font-weight:bold; font-size:1.1rem;">
+        Sales & Products Sold Per Month
+    </div>
+    <div class="card-body p-4">
+        <canvas id="salesChart" height="120"></canvas>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4" style="border-radius:15px; overflow:hidden;">
+  <div class="card-header text-white" style="background: linear-gradient(145deg, #1d3c5a, #3a5f7d); font-weight:bold; font-size:1.1rem;">
+    Stock Monitoring
+  </div>
+  <div class="card-body p-4">
+    <canvas id="stockChart" height="120"></canvas>
+  </div>
+</div>
+</div>
+
+<script>
+const ctx = document.getElementById('salesChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: <%- JSON.stringify(labels) %>,
+        datasets: [
+            { label: 'Sales (₱)', data: <%- JSON.stringify(salesData) %>, borderColor: 'rgba(75,192,192,1)', backgroundColor: 'rgba(75,192,192,0.2)', fill: true, tension: 0.4 },
+            { label: 'Products Sold', data: <%- JSON.stringify(stockData) %>, borderColor: 'rgba(255,99,132,1)', backgroundColor: 'rgba(255,99,132,0.2)', fill: true, tension: 0.4 }
+        ]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+});
+document.getElementById('monthSelect').addEventListener('change', function(){ this.form.submit(); });
+
+const stockCtx = document.getElementById('stockChart').getContext('2d');
+new Chart(stockCtx, {
+    type: 'bar',
+    data: {
+        labels: <%- JSON.stringify(stockLabels) %>,
+        datasets: [
+            {
+                label: 'Stock Left',
+                data: <%- JSON.stringify(stockLevels) %>, 
+                backgroundColor: 'rgba(54,162,235,0.6)',
+                borderColor: 'rgba(54,162,235,1)',
+                borderWidth: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

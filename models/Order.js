@@ -11,6 +11,16 @@ const orderItemSchema = new mongoose.Schema({
     required: true, 
     min: 1 
   },
+  price: { 
+    type: Number, 
+    required: true, 
+    min: 0 
+  },
+  subtotal: { 
+    type: Number, 
+    required: true, 
+    min: 0 
+  }
 });
 
 const orderSchema = new mongoose.Schema({
@@ -76,31 +86,6 @@ const orderSchema = new mongoose.Schema({
     type: Date, 
     default: Date.now 
   },
-});
-
-orderSchema.pre('save', async function(next) {
-  try {
-    const Product = mongoose.model('Product');
-    let total = 0;
-
-    if (!this.items.length) return next(new Error('Order has no items'));
-
-    for (const item of this.items) {
-      const product = await Product.findById(item.productId);
-      if (!product) return next(new Error('Product not found'));
-      if (product.stock < item.quantity) return next(new Error(`Not enough stock for ${product.productName}`));
-
-      product.stock -= item.quantity;
-      await product.save();
-
-      total += product.price * item.quantity;
-    }
-
-    this.totalAmount = total;
-    next();
-  } catch (err) {
-    next(err);
-  }
 });
 
 module.exports = mongoose.models.Order || mongoose.model('Order', orderSchema);

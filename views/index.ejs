@@ -7,8 +7,13 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+    }
+
     .hero-section {
-      background-image: url('/images/background.avif');
+      background: url('/images/background.avif');
       background-size: cover;
       background-position: center;
       height: 100vh;
@@ -24,21 +29,15 @@
       content: "";
       position: absolute;
       top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.55);
       z-index: 0;
     }
-    .hero-section .container {
-      position: relative;
-      z-index: 1;
-    }
-    .hero-section h1 {
-      font-size: 2.2rem;
-    }
-    .hero-section p {
-      font-size: 1rem;
-    }
+    .hero-section .container { position: relative; z-index: 1; }
+    .hero-section h1 { font-size: 3rem; font-weight: 800; letter-spacing: 1px; }
+    .hero-section p { font-size: 1.2rem; max-width: 650px; margin: 15px auto; }
+    .hero-btn { border-radius: 30px; padding: 12px 30px; font-weight: 600; }
+
     .navbar-custom {
       background-color: transparent;
       transition: background-color 0.3s ease-in-out;
@@ -48,100 +47,81 @@
       max-width: 1200px;
       margin: 0 auto;
     }
-    .navbar-custom.scrolled {
-      background-color: rgba(0, 0, 0, 0.8);
+    .navbar-custom.scrolled { background-color: rgba(0, 0, 0, 0.85); }
+    .navbar-custom .nav-link { color: white; font-weight: 600; }
+    .navbar-custom .nav-link:hover { color: #a8aabd; }
+
+    .navbar-toggler {
+      border: 2px solid white;
+      border-radius: 8px;
     }
-    .navbar-custom .navbar-nav .nav-link {
-      color: white;
-      font-weight: 600;
+    .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='white' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
     }
-    .navbar-custom .navbar-nav .nav-link:hover {
-      color: #f8f9fa;
+
+    #menu h2, #reviews h2, #contact h2 { color: #1d3c5a; }
+    .nav-pills .nav-link { border-radius: 20px; font-weight: 600; }
+    .nav-pills .nav-link.active { background-color: #198754; }
+
+    #menu .card {
+      transition: transform 0.2s ease-in-out;
+      border-radius: 15px;
     }
+    #menu .card:hover { transform: translateY(-5px); }
     #menu .card-img-top {
-      width: 100%;
       height: 200px;
       object-fit: cover;
+      border-radius: 15px 15px 0 0;
     }
+
+    .reviews-section {
+      background: #f8f9fa;
+      padding: 80px 15px;
+    }
+    .review-card {
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px;
+      background: white;
+      transition: transform 0.2s;
+    }
+    .review-card:hover { transform: translateY(-3px); }
+    .review-rating { color: #ffc107; font-size: 1.1rem; }
+
     .contact-section {
-      background-color: #f8f9fa;
-      padding: 50px 15px;
-    }
-    .contact-section h2 {
-      text-align: center;
-      margin-bottom: 30px;
+      background: #fff;
+      padding: 70px 15px;
     }
     .contact-section .form-control {
       margin-bottom: 20px;
       border-radius: 10px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      box-shadow: 0 0 5px rgba(0,0,0,0.08);
     }
     .contact-section .btn {
       border-radius: 10px;
-      padding: 10px 20px;
+      padding: 12px 25px;
       font-weight: 600;
     }
+
     .footer {
-      background-color: #343a40;
+      background-color: #1d3c5a;
       color: white;
-      padding: 30px 15px;
+      padding: 40px 15px;
     }
-    .footer a {
-      color: white;
-      text-decoration: none;
+    .footer a { color: white; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+    .footer i { font-size: 1.5rem; margin: 0 10px; }
+
+    @media (max-width: 768px) {
+      .hero-section { height: auto; padding: 100px 15px;}
+      #menu .col-md-3 { flex: 0 0 50%; max-width: 50%; }
     }
-    .footer a:hover {
-      text-decoration: underline;
+    @media (max-width: 480px) {
+      .hero-section h1 { font-size: 2rem; }
+      .hero-section p { font-size: 1rem; }
+      #menu .col-md-3 { flex: 0 0 100%; max-width: 100%; }
+      .footer i { font-size: 1.2rem; margin: 0 5px; }
     }
-    .footer i {
-      font-size: 1.5rem;
-      margin: 0 10px;
-    }
-    .social-icons a {
-      margin: 0 10px;
-    }
-@media (max-width: 768px) {
-  .hero-section {
-    height: auto;
-    padding: 50px 15px;
-  }
-  .hero-section p {
-    font-size: 0.9rem;
-  }
-  .navbar-custom {
-    width: 95%;
-  }
-  #menu .col-md-3 {
-    flex: 0 0 50%;
-    max-width: 50%;
-  }
-}
-@media (max-width: 480px) {
-  .hero-section h1 {
-    font-size: 1.5rem;
-    margin-top: 50px;
-  }
-  .hero-section p {
-    font-size: 0.85rem;
-  }
-  #menu .card-img-top {
-    height: 180px;
-  }
-  #menu .col-md-3 {
-    flex: 0 0 50%;
-    max-width: 50%;
-  }
-  .footer i {
-    font-size: 1.2rem;
-    margin: 0 5px;
-  }
-}
-.navbar-custom .navbar-toggler-icon {
-  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28255,255,255,1%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
-}
-.navbar-custom .navbar-toggler {
-  border-color: rgba(255, 255, 255, 0.7);
-}
   </style>
 </head>
 <body>
@@ -154,37 +134,53 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link active" href="#"><i class="bi bi-house-door"></i> Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-house-door"></i> Home</a></li>
           <li class="nav-item"><a class="nav-link" href="#menu"><i class="bi bi-list-ul"></i> Menu</a></li>
+          <li class="nav-item"><a class="nav-link" href="#reviews"><i class="bi bi-star-fill"></i> Reviews</a></li>
           <li class="nav-item"><a class="nav-link" href="#contact"><i class="bi bi-envelope"></i> Contact</a></li>
           <li class="nav-item"><a class="nav-link" href="/login"><i class="bi bi-person-circle"></i> Sign In</a></li>
         </ul>
       </div>
     </div>
   </nav>
-  <section class="hero-section">
-    <div class="container">
-      <h1 class="fw-bold">Welcome to Zero Degree Café</h1>
-      <p class="lead">
-        Discover the art of coffee crafted with passion and warmth. At Zero Degree Café, we take pride in serving the finest blends. 
-      </p>
-      <p class="lead">
-        Whether you are in for a quick espresso, a leisurely latte, or a refreshing iced coffee, our menu is designed to cater to every coffee lover's taste. Enjoy a cozy ambiance perfect for work, meetings, or casual hangouts.
-      </p>
-      <p class="lead">
-        Join us in celebrating rich flavors, community, and the joy of sharing moments over a perfectly brewed cup of coffee. We invite you to explore our menu and experience coffee at its finest.
-      </p>
-      <a href="#menu" class="btn btn-light mt-3"><i class="bi bi-cup-fill"></i> Explore Menu</a>
-    </div>
-  </section>
+
+<section class="hero-section">
+  <div class="container">
+    <h1>Welcome to Zero Degree Café</h1>
+    <p class="lead">
+      A cozy corner where each cup tells a story. From rich espresso to sweet pastries, 
+      we serve moments of joy crafted with passion and warmth. Whether you're here to 
+      study, catch up with friends, or simply enjoy a quiet break, we’ve got the perfect 
+      ambiance waiting for you.
+    </p>
+    <p class="fw-semibold">
+      <i class="bi bi-geo-alt-fill text-success me-2"></i>
+      Visit us at Talavera, Nueva Ecija — your local spot for comfort food and coffee love.
+    </p>
+    <a href="#menu" class="btn btn-light hero-btn mt-3">
+      <i class="bi bi-cup-fill"></i> Explore Menu
+    </a>
+  </div>
+</section>
+
+
   <section id="menu" class="container my-5">
     <h2 class="text-center mb-4 fw-bold">What We Offer</h2>
-    <% if (noProducts) { %>
-      <div class="alert alert-warning text-center">No products yet. Please check back later!</div>
-    <% } else { %>
-      <div class="row">
+    <ul class="nav nav-pills justify-content-center mb-4" id="menuTabs">
+      <li class="nav-item"><button class="nav-link active" data-category="all">All</button></li>
+      <li class="nav-item"><button class="nav-link" data-category="Coffee">Coffee</button></li>
+      <li class="nav-item"><button class="nav-link" data-category="Drinks">Drinks</button></li>
+      <li class="nav-item"><button class="nav-link" data-category="Snacks">Snacks</button></li>
+      <li class="nav-item"><button class="nav-link" data-category="Light Bites">Light Bites</button></li>
+      <li class="nav-item"><button class="nav-link" data-category="Desserts">Desserts</button></li>
+    </ul>
+
+    <div class="row" id="productGrid">
+      <% if (noProducts) { %>
+        <div class="alert alert-warning text-center">No products yet. Please check back later!</div>
+      <% } else { %>
         <% products.forEach(product => { %>
-          <div class="col-md-3 mb-4">
+          <div class="col-md-3 mb-4 product-card" data-category="<%= product.category %>">
             <div class="card h-100 text-center shadow-sm">
               <img src="<%= product.productImage %>" class="card-img-top" alt="<%= product.productName %>">
               <div class="card-body">
@@ -195,52 +191,170 @@
             </div>
           </div>
         <% }) %>
-      </div>
-    <% } %>
+      <% } %>
+    </div>
+
+    <div id="noProductsMessage" class="alert alert-warning text-center mt-3 d-none">
+      No products found in this category.
+    </div>
   </section>
+
+  <section id="reviews" class="reviews-section py-5">
+    <div class="container">
+      <h2 class="text-center fw-bold mb-5">
+        <i class="bi bi-chat-square-quote text-primary me-2"></i> Customer Reviews
+      </h2>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <h4 class="mb-3">
+            Product Reviews 
+            <% if (productReviews.length > 0) { %>
+              <span class="text-warning ms-2">★ <%= productAvgRating %>/5</span>
+            <% } %>
+          </h4>
+          <div class="reviews-box p-3 border rounded shadow-sm bg-white" style="max-height: 600px; overflow-y: auto; scroll-behavior: smooth;">
+            <% if (productReviews.length === 0) { %>
+              <div class="alert alert-info">No product reviews yet.</div>
+            <% } else { %>
+              <div class="row g-4">
+                <% productReviews.forEach(review => { %>
+                  <div class="col-md-6">
+                    <div class="review-card h-100 p-3 border rounded shadow-sm">
+                      <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-person-circle fs-4 me-2 text-secondary"></i>
+                        <h6 class="fw-bold mb-0">
+                          <%= review.userId ? review.userId.firstName + ' ' + review.userId.lastName : 'Anonymous' %>
+                        </h6>
+                      </div>
+                      <% if (review.productId) { %>
+                        <img src="<%= review.productId?.productImage || '/images/default.jpg' %>" 
+                             alt="<%= review.productId?.productName || 'Product' %>" 
+                             class="rounded w-100 mb-2" 
+                             style="height: 150px; object-fit: cover;">
+                      <% } %>
+                      <p class="review-rating text-warning">
+                        <% for (let i = 0; i < review.rating; i++) { %> ★ <% } %>
+                        <% for (let i = review.rating; i < 5; i++) { %> ☆ <% } %>
+                        <span class="ms-2 fw-bold"><%= review.rating %>/5</span>
+                      </p>
+                      <p>"<%= review.comment %>"</p>
+                      <small class="text-muted">
+                        For <%= review.productId ? review.productId.productName : 'Unknown Product' %> • 
+                        <%= review.createdAt.toDateString() %>
+                      </small>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <h4 class="mb-3">
+            Order Reviews 
+            <% if (orderReviews.length > 0) { %>
+              <span class="text-warning ms-2">★ <%= orderAvgRating %>/5</span>
+            <% } %>
+          </h4>
+          <div class="reviews-box p-3 border rounded shadow-sm bg-white" style="max-height: 600px; overflow-y: auto; scroll-behavior: smooth;">
+            <% if (orderReviews.length === 0) { %>
+              <div class="alert alert-info">No order reviews yet.</div>
+            <% } else { %>
+              <% orderReviews.forEach(review => { %>
+                <div class="review-card mb-4 pb-3 border-bottom">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-person-circle fs-4 me-2 text-secondary"></i>
+                    <h6 class="fw-bold mb-0">
+                      <%= review.userId ? review.userId.firstName + ' ' + review.userId.lastName : 'Anonymous' %>
+                    </h6>
+                  </div>
+                  <p class="review-rating text-warning">
+                    <% for (let i = 0; i < review.rating; i++) { %> ★ <% } %>
+                    <% for (let i = review.rating; i < 5; i++) { %> ☆ <% } %>
+                    <span class="ms-2 fw-bold"><%= review.rating %>/5</span>
+                  </p>
+                  <p>"<%= review.comment %>"</p>
+                  <div class="mt-3">
+                    <% if (review.orderId && review.orderId.items) { %>
+                      <% review.orderId.items.forEach(item => { %>
+                        <% if (item.productId) { %>
+                          <div class="d-flex align-items-center mb-2 p-2 rounded bg-light">
+                            <img src="<%= item.productId.productImage %>" 
+                                 alt="<%= item.productId.productName %>" 
+                                 class="me-2 rounded" 
+                                 style="width: 60px; height: 60px; object-fit: cover;">
+                            <span><%= item.productId.productName %> (x<%= item.quantity %>)</span>
+                          </div>
+                        <% } %>
+                      <% }) %>
+                    <% } %>
+                  </div>
+                  <small class="text-muted">
+                    Order ID: <%= review.orderId ? review.orderId._id : 'Unknown Order' %> • 
+                    <%= review.createdAt.toDateString() %>
+                  </small>
+                </div>
+              <% }) %>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="contact" class="contact-section">
     <div class="container">
-      <h2 class="text-center fw-bold">Reach Out For Us</h2>
+      <h2 class="fw-bold text-center mb-5">Reach Out To Us</h2>
       <div class="row justify-content-center">
         <div class="col-md-6">
           <form>
-            <div class="mb-3">
-              <label for="name" class="form-label"><i class="bi bi-person"></i> Your Name</label>
-              <input type="text" id="name" class="form-control" placeholder="Your Name" required>
-            </div>
-            <div class="mb-3">
-              <label for="email" class="form-label"><i class="bi bi-envelope"></i> Your Email</label>
-              <input type="email" id="email" class="form-control" placeholder="Your Email" required>
-            </div>
-            <div class="mb-3">
-              <label for="message" class="form-label"><i class="bi bi-chat-dots"></i> Your Message</label>
-              <textarea id="message" class="form-control" rows="5" placeholder="Your Message" required></textarea>
-            </div>
+            <input type="text" class="form-control" placeholder="Your Name" required>
+            <input type="email" class="form-control" placeholder="Your Email" required>
+            <textarea class="form-control" rows="5" placeholder="Your Message" required></textarea>
             <button type="submit" class="btn btn-primary w-100">Send Message</button>
           </form>
         </div>
       </div>
     </div>
   </section>
-  <footer class="footer">
-    <div class="container text-center">
+
+  <footer class="footer text-center">
+    <div class="container">
       <div class="social-icons mb-3">
-        <a href="#" class="text-white"><i class="bi bi-facebook"></i></a>
-        <a href="#" class="text-white"><i class="bi bi-twitter"></i></a>
-        <a href="#" class="text-white"><i class="bi bi-instagram"></i></a>
+        <a href="#"><i class="bi bi-facebook"></i></a>
+        <a href="#"><i class="bi bi-twitter"></i></a>
+        <a href="#"><i class="bi bi-instagram"></i></a>
       </div>
       <p>&copy; 2025 Zero Degree Café. All rights reserved.</p>
     </div>
   </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', () => {
       const navbar = document.querySelector('.navbar-custom');
-      if (window.scrollY > 50) {
-        navbar.classList.add('scrolled');
-      } else {
-        navbar.classList.remove('scrolled');
-      }
+      navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    document.querySelectorAll('#menuTabs .nav-link').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#menuTabs .nav-link').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+
+        const category = btn.getAttribute('data-category');
+        let found = false;
+
+        document.querySelectorAll('.product-card').forEach(card => {
+          if (category === 'all' || card.getAttribute('data-category') === category) {
+            card.style.display = 'block';
+            found = true;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        document.getElementById('noProductsMessage').classList.toggle('d-none', found);
+      });
     });
   </script>
 </body>

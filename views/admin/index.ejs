@@ -20,27 +20,116 @@
       overflow-y: auto;
       box-shadow: 4px 0px 10px rgba(0, 0, 0, 0.1);
     }
-    .sidebar h3 { text-align: center; font-size: 30px; font-weight: bold; margin-bottom: 30px; }
-    .sidebar a { color: white; text-decoration: none; padding: 12px 18px; display: block; border-radius: 25px; font-size: 16px; margin: 10px 0; transition: all 0.3s ease; }
-    .sidebar a:hover { background-color: #f1f1f1; color: #1d3c5a; transform: translateX(10px); }
-    .sidebar a.active { background-color: #3a5f7d; color: white; }
-    .sidebar .logout { position: absolute; bottom: 20px; width: 100%; text-align: center; }
-    .content { margin-left: 270px; padding: 20px; }
-    .card { border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
-    .most-bought-header { font-weight: 700; color: #1d3c5a; margin-bottom: 20px; }
-    .donut-wrap { position: relative; width: 100%; display:flex; justify-content:center; align-items:center; }
-    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
-    .donut-center .big { font-size: 22px; font-weight: 800; color: #1d3c5a; }
-    .donut-center .label { font-size: 12px; color: #6c757d; }
-    .product-list { max-height: 220px; overflow-y: auto; margin-top: 12px; border-top: 1px dashed #e9ecef; padding-top: 10px; }
-    .product-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(0,0,0,0.03); }
-    .product-item:last-child { border-bottom: none; }
-    .donut-wrap { position: relative; width: 280px; height: 280px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
-    .donut-wrap canvas { width: 100% !important; height: 100% !important; }
-    .donut-center { position: absolute; text-align: center; pointer-events: none; }
-    .donut-center .big { font-size: 1.5rem; font-weight: bold; }
-    .donut-center .label { font-size: 0.9rem; color: #666; }
-
+    .sidebar h3 {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      padding: 12px 18px;
+      display: block;
+      border-radius: 25px;
+      font-size: 16px;
+      margin: 10px 0;
+      transition: all 0.3s ease;
+    }
+    .sidebar a:hover {
+      background-color: #f1f1f1;
+      color: #1d3c5a;
+      transform: translateX(10px);
+    }
+    .sidebar a.active {
+      background-color: #3a5f7d;
+      color: white;
+    }
+    .sidebar .logout {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+    }
+    .content {
+      margin-left: 270px;
+      padding: 20px;
+    }
+    .card {
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    .most-bought-header {
+      font-weight: 700;
+      color: #1d3c5a;
+      margin-bottom: 20px;
+    }
+    .donut-wrap {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .donut-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .donut-center .big {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1d3c5a;
+    }
+    .donut-center .label {
+      font-size: 12px;
+      color: #6c757d;
+    }
+    .product-list {
+      max-height: 220px;
+      overflow-y: auto;
+      margin-top: 12px;
+      border-top: 1px dashed #e9ecef;
+      padding-top: 10px;
+    }
+    .product-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.03);
+    }
+    .product-item:last-child {
+      border-bottom: none;
+    }
+    .donut-wrap {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .donut-wrap canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .donut-center {
+      position: absolute;
+      text-align: center;
+      pointer-events: none;
+    }
+    .donut-center .big {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .donut-center .label {
+      font-size: 0.9rem;
+      color: #666;
+    }
     .top-products-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -56,7 +145,9 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       transition: transform 0.2s ease;
     }
-    .product-card:hover { transform: translateY(-3px); }
+    .product-card:hover {
+      transform: translateY(-3px);
+    }
     .product-card img {
       width: 50px;
       height: 50px;
@@ -64,10 +155,23 @@
       object-fit: cover;
       margin-right: 12px;
     }
-    .product-info { flex-grow: 1; }
-    .product-info .name { font-weight: 700; color: #0d3b57; font-size: 15px; }
-    .product-info .sold { font-size: 13px; color: #6c757d; }
-    .product-icon { font-size: 1.5rem; color: #0d6efd; margin-left: auto; }
+    .product-info {
+      flex-grow: 1;
+    }
+    .product-info .name {
+      font-weight: 700;
+      color: #0d3b57;
+      font-size: 15px;
+    }
+    .product-info .sold {
+      font-size: 13px;
+      color: #6c757d;
+    }
+    .product-icon {
+      font-size: 1.5rem;
+      color: #0d6efd;
+      margin-left: auto;
+    }
     .most-bought-header {
       font-weight: 700;
       color: #0d3b57;
@@ -76,7 +180,6 @@
       align-items: center;
       gap: 8px;
     }
-
     .most-bought-card {
       display: flex;
       align-items: center;
@@ -88,37 +191,34 @@
       transition: all 0.2s ease-in-out;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-
     .most-bought-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
-
     .most-bought-card img {
       width: 45px;
       height: 45px;
       border-radius: 8px;
       object-fit: cover;
     }
-
     .most-bought-card small {
       font-weight: 600;
       color: #495057;
     }
-
-    .pagination {
-      margin: 0;
+    .trend-card {
+      border-radius: 1rem;
+      overflow: hidden;
+      transition: all 0.3s ease;
     }
-
-    .pagination .page-link {
-      color: #0d3b57;
-      border-radius: 6px;
+    .trend-card .card-header {
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
     }
-
-    .pagination .page-item.active .page-link {
-      background-color: #0d3b57;
-      border-color: #0d3b57;
+    .badge.bg-gradient {
+      background: linear-gradient(135deg, #0d6efd, #4dabf7);
+      border-radius: 0.75rem;
     }
+    
   </style>
 </head>
 <body>
@@ -131,6 +231,7 @@
     <a href="/admin/sales"><i class="bi bi-bar-chart"></i> Sales Overview</a>
     <a href="/admin/users"><i class="bi bi-person"></i> Users</a>
     <a href="/admin/products"><i class="bi bi-box"></i> Inventory</a>
+    <a href="/admin/productMonitoring"><i class="bi bi-display"></i> Product Monitoring</a>
     <a href="/admin/orders"><i class="bi bi-file-earmark-text"></i> Orders</a>
     <a href="/admin/staff"><i class="bi bi-person-badge"></i> Staff</a>
     <a href="/admin/spoilage"><i class="bi bi-trash"></i> Spoilage</a>
@@ -164,7 +265,7 @@
           </div>
         <% } %>
       </div>
-
+      
       <div class="col-lg-6">
         <h3 class="most-bought-header">Daily Orders</h3>
         <% if (!dailyOrders || dailyOrders.length === 0) { %>
@@ -194,6 +295,7 @@
               <div style="min-width:75px; text-align:right; font-weight:800; color:#0d3b57;">₱<%= order.totalAmount %></div>
             </div>
           <% }); %>
+
           <div class="mt-3 d-flex justify-content-center">
             <nav aria-label="Daily Orders Pagination">
               <ul class="pagination">
@@ -202,7 +304,7 @@
                 </li>
                 <% for(let i = 1; i <= totalPages; i++) { %>
                   <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                    <a class="page-link text-white" href="?page=<%= i %>"><%= i %></a>
+                    <a class="page-link" href="?page=<%= i %>"><%= i %></a>
                   </li>
                 <% } %>
                 <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
@@ -214,8 +316,55 @@
         <% } %>
       </div>
     </div>
-
+    
     <hr class="my-4">
+    <div class="row g-3 mt-4 mb-3">
+      <div class="col-md-4 d-flex">
+        <div class="card text-center shadow-lg border-0 flex-fill">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+              <i class="bi bi-star-fill fs-3 text-warning me-2"></i>
+              <h5 class="card-title mb-0">Total Reviews</h5>
+            </div>
+            <h2 class="fw-bold text-warning"><%= reviewKpi.totalReviews %></h2>
+            <p class="text-muted mb-0">All products</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 d-flex">
+        <div class="card text-center shadow-lg border-0 flex-fill">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+              <i class="bi bi-star-half fs-3 text-primary me-2"></i>
+              <h5 class="card-title mb-0">Average Rating</h5>
+            </div>
+            <h2 class="fw-bold text-primary"><%= reviewKpi.avgRating %> / 5</h2>
+            <p class="text-muted mb-0">Across all reviews</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 d-flex">
+        <div class="card text-center shadow-lg border-0 flex-fill">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+              <i class="bi bi-award fs-3 text-success me-2"></i>
+              <h5 class="card-title mb-0">Top Rated Product</h5>
+            </div>
+            <% if (reviewKpi.topRatedProducts.length > 0) { %>
+              <div class="d-flex flex-column align-items-center">
+                <img src="<%= reviewKpi.topRatedProducts[0].image %>" class="rounded mb-1" style="width:50px; height:50px; object-fit:cover;">
+                <div style="font-weight:700; font-size:14px;"><%= reviewKpi.topRatedProducts[0].name %></div>
+                <div style="color:#495057; font-size:13px;">Rating: <%= reviewKpi.topRatedProducts[0].avg.toFixed(2) %> / 5</div>
+              </div>
+            <% } else { %>
+              <p class="text-muted mb-0">No reviews yet</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="row g-4 align-items-start">
       <div class="col-md-4">
@@ -280,15 +429,107 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
+      <div class="row g-3">
+        <div class="col-md-4 d-flex">
+          <div class="card text-center shadow-lg border-0 flex-fill">
+            <div class="card-body d-flex flex-column justify-content-center">
+              <div class="d-flex align-items-center justify-content-center mb-2">
+                <i class="bi bi-cash-stack fs-3 text-success me-2"></i>
+                <h5 class="card-title mb-0">Total Sales (All Time)</h5>
+              </div>
+              <h2 class="fw-bold text-success">₱ <%= totalSales.toLocaleString() %></h2>
+            </div>
+          </div>
+        </div>
+
+      <div class="col-md-4 d-flex">
+        <div class="card text-center shadow-lg border-0 flex-fill">
+          <div class="card-body d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-bar-chart-line fs-3 text-primary me-2"></i>
+                  <h5 class="card-title mb-0">Monthly Sales</h5>
+                </div>
+                <form method="GET" action="/admin/dashboard" class="d-flex gap-2">
+                  <select name="salesMonth" class="form-select form-select-sm">
+                    <% for (let m = 1; m <= 12; m++) { %>
+                      <option value="<%= m %>" <%= m === selectedSalesMonth ? "selected" : "" %>>
+                        <%= new Date(2024, m-1).toLocaleString("default", { month: "short" }) %>
+                      </option>
+                    <% } %>
+                  </select>
+                  <select name="salesYear" class="form-select form-select-sm">
+                    <% for (let y = new Date().getFullYear(); y >= 2020; y--) { %>
+                      <option value="<%= y %>" <%= y === selectedSalesYear ? "selected" : "" %>><%= y %></option>
+                    <% } %>
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-search"></i></button>
+                </form>
+              </div>
+              <h2 class="fw-bold text-primary">₱ <%= monthlySales.toLocaleString() %></h2>
+              <p class="text-muted mb-0">Sales in <%= salesMonth %> <%= salesYear %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 d-flex">
+        <div class="card text-center shadow-lg border-0 flex-fill">
+          <div class="card-body d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-receipt-cutoff fs-3 text-warning me-2"></i>
+                  <h5 class="card-title mb-0">Monthly Orders</h5>
+                </div>
+                <form method="GET" action="/admin/dashboard" class="d-flex gap-2">
+                  <select name="ordersMonth" class="form-select form-select-sm">
+                    <% for (let m = 1; m <= 12; m++) { %>
+                      <option value="<%= m %>" <%= m === selectedOrdersMonth ? "selected" : "" %>>
+                        <%= new Date(2024, m-1).toLocaleString("default", { month: "short" }) %>
+                      </option>
+                    <% } %>
+                  </select>
+                  <select name="ordersYear" class="form-select form-select-sm">
+                    <% for (let y = new Date().getFullYear(); y >= 2020; y--) { %>
+                      <option value="<%= y %>" <%= y === selectedOrdersYear ? "selected" : "" %>><%= y %></option>
+                    <% } %>
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-outline-warning"><i class="bi bi-search"></i></button>
+                </form>
+              </div>
+              <h2 class="fw-bold text-warning"><%= monthlyOrdersCount.toLocaleString() %></h2>
+              <p class="text-muted mb-0">Orders in <%= ordersMonth %> <%= ordersYear %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="card mt-4 shadow-lg border-0 trend-card">
+      <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between">
+        <h5 class="mb-0 fw-bold text-primary d-flex align-items-center">
+          <i class="bi bi-graph-up-arrow me-2"></i> Sales Trend (Last 6 Months)
+        </h5>
+        <span class="badge bg-gradient px-3 py-2">
+          <i class="bi bi-check-circle me-1"></i> Updated
+        </span>
+      </div>
+      <div class="card-body p-4" style="height:420px;">
+        <canvas id="salesTrendChart"></canvas>
+      </div>
+    </div>
+
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
     const usersBreakdown = <%- JSON.stringify(usersBreakdown) %>;
     const ordersBreakdown = <%- JSON.stringify(ordersBreakdown) %>;
     const stockBreakdown = <%- JSON.stringify(stockBreakdown) %>;
-
     function genColors(n) {
       const colors = [];
       for (let i = 0; i < n; i++) {
@@ -296,7 +537,6 @@
       }
       return colors;
     }
-
     const userChart = new Chart(document.getElementById('userDonutChart'), {
       type: 'doughnut',
       data: {
@@ -308,6 +548,7 @@
       },
       options: { cutout: '70%', plugins: { legend: { position: 'bottom' } } }
     });
+
     document.getElementById('userTypeSelect').addEventListener('change', function() {
       const v = this.value;
       const center = document.querySelector('#userCenter .big');
@@ -335,6 +576,7 @@
       },
       options: { cutout: '70%', plugins: { legend: { position: 'bottom' } } }
     });
+
     document.getElementById('orderTypeSelect').addEventListener('change', function() {
       const v = this.value;
       const center = document.querySelector('#orderCenter .big');
@@ -367,7 +609,6 @@
     const stockSelect = document.getElementById('stockProductSelect');
     const stockCenterBig = document.querySelector('#stockCenter .big');
     const stockCenterLabel = document.querySelector('#stockCenter .label');
-
     stockSelect.addEventListener('change', function() {
       const v = this.value;
       if (v === '__all__') {
@@ -384,6 +625,71 @@
       }
       stockChart.data.datasets[0].backgroundColor = genColors(stockChart.data.labels.length);
       stockChart.update();
+    });
+
+  </script>
+
+  <script>
+    const trendCtx = document.getElementById("salesTrendChart").getContext("2d");
+    const gradient = trendCtx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, "rgba(13, 110, 253, 0.4)");
+    gradient.addColorStop(1, "rgba(13, 110, 253, 0)");
+    new Chart(trendCtx, {
+      type: "line",
+      data: {
+        labels: <%- JSON.stringify(productTrendData.map(d => d.month)) %>,
+        datasets: [{
+          label: "Sales (₱)",
+          data: <%- JSON.stringify(productTrendData.map(d => d.sales)) %>,
+          borderColor: "#0d6efd",
+          backgroundColor: gradient,
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: "#fff",
+          pointBorderColor: "#0d6efd",
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          pointHoverBackgroundColor: "#0d6efd",
+          pointHoverBorderColor: "#fff"
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: "#0d6efd",
+            titleColor: "#fff",
+            bodyColor: "#fff",
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: false,
+            callbacks: {
+              label: function(context) {
+                return "₱ " + context.formattedValue;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false }
+          },
+          y: {
+            ticks: {
+              callback: function(value) {
+                return "₱ " + value.toLocaleString();
+              }
+            },
+            grid: { color: "rgba(0,0,0,0.05)" }
+          }
+        }
+      }
     });
   </script>
 </body>

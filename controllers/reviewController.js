@@ -1,74 +1,110 @@
 const Review = require('../models/Review');
-const Product = require('../models/Product');
 const Order = require('../models/Order');
+const Product = require('../models/Product');
+const User = require('../models/User');
 
-exports.showPage = (req, res) => {
-  res.render('reviews', {
-    product: { productName: 'Unknown Product' }, 
-    reviews: [],
-    userHasPurchased: false,
-    error: null,
-    success: null
-  });
-};
-
-exports.showReviews = async (req, res) => {
-  const productId = req.params.productId;
-  const userId = req.session.userId;
-
+exports.showUserReviews = async (req, res) => {
   try {
-    const hasCompletedOrder = await Order.findOne({
-      userId,
-      status: 'completed',
-      'products.productId': productId
-    });
+    const userId = req.session.userId;
+    if (!userId) {
+      return res.redirect('/login');
+    }
 
-    const product = await Product.findById(productId).lean();
-    const reviews = await Review.find({ productId }).populate('userId').lean();
+    const user = await User.findById(userId).lean();
 
-    if (!product) {
-      return res.status(404).send('Product not found');
+    const orders = await Order.find({ user: userId, status: 'Completed' })
+      .populate('items.productId')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    for (const order of orders) {
+      const orderReview = await Review.findOne({
+        orderId: order._id,
+        userId,
+        productId: null
+      });
+
+      order.orderReviewed = !!orderReview;
+
+      for (const item of order.items) {
+        if (item.productId) {
+          const productReview = await Review.findOne({
+            orderId: order._id,
+            productId: item.productId._id,
+            userId
+          });
+
+          item.productName = item.productId.productName || item.productId.name || "Unnamed Product";
+          item.productImage = item.productId.productImage || "/images/no-image.png";
+          item.reviewed = !!productReview;
+          item.productIdValue = item.productId._id;
+        } else {
+          item.productName = "Unknown Product";
+          item.productImage = "/images/no-image.png";
+          item.reviewed = false;
+          item.productIdValue = null;
+        }
+      }
     }
 
     res.render('reviews', {
-      product,
-      reviews,
-      userHasPurchased: !!hasCompletedOrder,
-      error: req.query.error || null,
-      success: req.query.success || null
+      user,   
+      orders,
+      success: req.query.success || null,
+      error: req.query.error || null
     });
   } catch (err) {
-    console.error(err);
+    console.error('Error loading user reviews:', err);
     res.status(500).send('Server error');
   }
 };
 
-exports.submitReview = async (req, res) => {
+
+exports.submitUserReview = async (req, res) => {
   try {
-    const { rating, comment } = req.body;
-    const productId = req.params.productId;
+    const { rating, comment, orderId, productId } = req.body;
     const userId = req.session.userId;
 
+    if (!rating || !comment || rating < 1 || rating > 5) {
+      return res.redirect(`/reviews?error=Invalid review input`);
+    }
+
     const order = await Order.findOne({
-      userId,
-      'products.productId': productId,
-      status: 'completed'
+      _id: orderId,
+      user: userId,
+      status: 'Completed'
     });
 
     if (!order) {
-      return res.redirect(`/product/${productId}/reviews?error=You must complete an order for this product to leave a review`);
+      return res.redirect(`/reviews?error=You cannot review this order`);
     }
 
-    if (!rating || !comment || rating < 1 || rating > 5 || comment.length < 5) {
-      return res.redirect(`/product/${productId}/reviews?error=Invalid input`);
+    const existingReview = await Review.findOne({
+      orderId,
+      productId: productId || null,
+      userId
+    });
+
+    if (existingReview) {
+      return res.redirect(`/reviews?error=You already reviewed this ${productId ? 'product' : 'order'}`);
     }
 
-    const review = new Review({ productId, userId, rating, comment });
+    const review = new Review({
+      orderId,
+      productId: productId || null,
+      userId,
+      rating,
+      comment
+    });
     await review.save();
 
-    res.redirect(`/product/${productId}/reviews?success=Review submitted successfully`);
+    if (productId) {
+      await Product.findByIdAndUpdate(productId, { $push: { reviews: review._id } });
+    }
+
+    res.redirect(`/reviews?success=Review submitted successfully`);
   } catch (error) {
-    console.error(error);
-    res.redirect(`/product/${req.params.productId}/reviews?error=Error submitting review`);
+    console.error('Error submitting review:', error);
+    res.redirect(`/reviews?error=Error submitting review`);
   }
 };

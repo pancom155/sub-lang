@@ -2,21 +2,12 @@ const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
   productName: { type: String, required: true },
-  productImage: {
-    type: String,  
-    required: true
-  },
+  productImage: { type: String, required: true },
   price: { type: Number, required: true, min: 0 },
   stock: { 
     type: Number, 
     required: true, 
-    min: 1, 
-    validate: {
-      validator: function(v) {
-        return v >= 1;
-      },
-      message: props => `${props.value} is not a valid stock quantity! Stock must be at least 1.`
-    }
+    min: 0, 
   },
   sold: { type: Number, default: 0 },
   category: {
@@ -34,8 +25,11 @@ const productSchema = new mongoose.Schema({
   ],
   createdAt: { type: Date, default: Date.now },
   damagedStock: { type: Number, default: 0 },
-  lostIncome: {type: Number,default: 0}
+  lostIncome: { type: Number, default: 0 }
 });
 
+productSchema.virtual("isOutOfStock").get(function() {
+  return this.stock === 0;
+});
 
 module.exports = mongoose.model('Product', productSchema);

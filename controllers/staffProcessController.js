@@ -73,6 +73,18 @@ exports.cancelOrder = async (req, res) => {
     const order = await Order.findById(req.params.orderId);
     if (!order) return res.status(404).send('Order not found');
 
+    if (order.status === 'Cancelled') {
+      return res.status(400).send('Order already cancelled');
+    }
+
+    for (const item of order.items) {
+      const product = await Product.findById(item.productId);
+      if (product) {
+        product.stock += item.quantity;
+        await product.save();
+      }
+    }
+
     order.status = 'Cancelled';
     await order.save();
 
@@ -118,25 +130,20 @@ exports.staffDashboard = async (req, res) => {
 
     const totalProducts = await Product.countDocuments();
     const outOfStockProducts = await Product.countDocuments({ stock: 0 });
-    const decreasingStock = await Product.countDocuments({ stock: { $lte: 5 } });
-    const soldCount = await Product.aggregate([
-      { $unwind: "$sold" },
-      { $group: { _id: null, totalSold: { $sum: "$sold" } } }
-    ]);
+    const lowStockProducts = await Product.countDocuments({ stock: { $lte: 5, $gt: 0 } });
 
-    res.render('staff/index', { 
-      user: req.session.user, 
-      pendingOrdersCount, 
-      processingOrdersCount, 
-      cancelledOrdersCount, 
-      completedOrdersCount, 
+    res.render("staff/index", {
+      user: req.session.user,
+      pendingOrdersCount,
+      processingOrdersCount,
+      cancelledOrdersCount,
+      completedOrdersCount,
+      totalProducts,
+      outOfStockProducts,
+      lowStockProducts
     });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Error retrieving data');
+    res.status(500).send("Error retrieving data");
   }
-};
-
-exports.staffReviews = (req, res) => {
-  res.render('staff/reviews', { user: req.session.user });
 };
