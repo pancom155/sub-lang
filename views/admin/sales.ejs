@@ -155,24 +155,30 @@
     const yearlySales = <%- JSON.stringify(yearlySales) %>;
     const yearlyLabels = <%- JSON.stringify(yearlyLabels) %>;
 
-    function getWeekdaySales(sales) {
-      const weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-      const grouped = { 'Monday':0,'Tuesday':0,'Wednesday':0,'Thursday':0,'Friday':0,'Saturday':0,'Sunday':0 };
-      Object.keys(sales).forEach(dateStr => {
-        const date = new Date(dateStr);
-        const dayIndex = date.getDay();
-        const dayName = weekdays[(dayIndex + 6) % 7];
-        grouped[dayName] += sales[dateStr];
-      });
-      return weekdays.map(day => grouped[day]);
+    function getLast7DaysSales(sales) {
+      const result = [];
+      const today = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        result.push(sales[key] || 0);
+      }
+      return result;
     }
 
-    const weeklyDailySales = getWeekdaySales(rawDailySales);
+    const last7DaysLabels = [...Array(7)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d.toLocaleDateString('en-US', { weekday: 'short' });
+    });
+
+    const weeklyDailySales = getLast7DaysSales(rawDailySales);
 
     new Chart(document.getElementById('dailyChart').getContext('2d'), {
       type: 'line',
       data: {
-        labels: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'],
+        labels: last7DaysLabels,
         datasets: [{
           label: 'Daily Sales',
           data: weeklyDailySales,

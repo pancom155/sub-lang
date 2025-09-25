@@ -426,13 +426,27 @@ exports.getSales = async (req, res) => {
     const completedOrders = await CompletedOrder.find().populate('items.productId');
     const totalOrders = await CompletedOrder.countDocuments();
     const totalSales = completedOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
     const dailyRevenue = {};
+    const today = moment().startOf('day');
+    const oneWeekAgo = today.clone().subtract(6, 'days'); 
+
     completedOrders.forEach(order => {
-      const day = moment(order.createdAt).format('YYYY-MM-DD');
-      dailyRevenue[day] = (dailyRevenue[day] || 0) + (order.totalAmount || 0);
+      const day = moment(order.createdAt).startOf('day');
+      if (day.isSameOrAfter(oneWeekAgo) && day.isSameOrBefore(today)) {
+        const key = day.format('YYYY-MM-DD');
+        dailyRevenue[key] = (dailyRevenue[key] || 0) + (order.totalAmount || 0);
+      }
     });
+
+    for (let i = 0; i < 7; i++) {
+      const d = oneWeekAgo.clone().add(i, 'days').format('YYYY-MM-DD');
+      if (!dailyRevenue[d]) dailyRevenue[d] = 0;
+    }
+
     const numDays = Object.keys(dailyRevenue).length || 1;
     const avgDaily = totalSales / numDays;
+
     let bestDay = null;
     let bestRevenue = 0;
     for (const [day, revenue] of Object.entries(dailyRevenue)) {
@@ -442,12 +456,14 @@ exports.getSales = async (req, res) => {
       }
     }
     const formattedBestDay = bestDay ? moment(bestDay).format('MMMM D, YYYY') : 'N/A';
+
     const customerTotals = {};
     completedOrders.forEach(order => {
       const name = `${order.userInfoSnapshot?.firstName || ''} ${order.userInfoSnapshot?.lastName || ''}`.trim() || 'Unknown';
       customerTotals[name] = (customerTotals[name] || 0) + order.totalAmount;
     });
     const topCustomer = Object.entries(customerTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+
     const weeklyTrends = await fetchWeeklyProductSalesTrends();
     const weeklyLabels = weeklyTrends.map(t => {
       const startOfWeek = moment(t.week, 'YYYY-[W]WW').startOf('week');
@@ -456,6 +472,7 @@ exports.getSales = async (req, res) => {
     });
     const weeklySales = {};
     weeklyTrends.forEach(t => weeklySales[t.week] = t.total);
+
     const monthlyTotals = await fetchMonthlyProductSalesTrends();
     const monthlyLabels = [...Array(12).keys()].map(m => moment().month(m).format('MMMM'));
     const monthlySales = {};
@@ -463,16 +480,18 @@ exports.getSales = async (req, res) => {
       const monthKey = moment().month(monthName).format('YYYY-MM');
       monthlySales[monthName] = monthlyTotals[monthKey] || 0;
     });
+
     const yearlySales = {};
     completedOrders.forEach(order => {
       const year = moment(order.createdAt).format('YYYY');
       yearlySales[year] = (yearlySales[year] || 0) + order.totalAmount;
     });
     const yearlyLabels = Object.keys(yearlySales);
+
     res.render('admin/sales', {
       title: 'Sales Management',
       totalSales,
-      dailySales: dailyRevenue,
+      dailySales: dailyRevenue, 
       avgDaily,
       totalOrders,
       bestDay: formattedBestDay,

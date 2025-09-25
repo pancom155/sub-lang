@@ -366,8 +366,29 @@
       </div>
     </div>
 
-    <div class="row g-4 align-items-start">
-      <div class="col-md-4">
+<div class="row g-4 mb-4">
+  <!-- Stock on top -->
+  <div class="col-12">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Stock</h5>
+        <select id="stockProductSelect" class="form-select form-select-sm w-auto">
+          <option value="__all__">All</option>
+          <% (stockBreakdown.products || []).forEach(p => { %>
+            <option value="<%- p.name.replace(/"/g, '&quot;') %>"><%- p.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="chart-container" style="height:250px;">
+        <canvas id="stockBarChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    <div class="row g-4 align-items-start mb-3">
+      <div class="col-md-6">
         <div class="card p-3">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="mb-0">Users</h5>
@@ -388,7 +409,7 @@
         </div>
       </div>
 
-      <div class="col-md-4">
+      <div class="col-md-6">
         <div class="card p-3">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="mb-0">Orders</h5>
@@ -402,33 +423,15 @@
           <div class="donut-wrap">
             <canvas id="orderStatusDonutChart"></canvas>
             <div class="donut-center" id="orderCenter">
-              <div class="big"><%= ordersBreakdown.pending + ordersBreakdown.completed + ordersBreakdown.cancelled %></div>
+              <div class="big">
+                <%= ordersBreakdown.pending + ordersBreakdown.completed + ordersBreakdown.cancelled %>
+              </div>
               <div class="label">Total Orders</div>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="col-md-4">
-        <div class="card p-3">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="mb-0">Stock</h5>
-            <select id="stockProductSelect" class="form-select form-select-sm w-auto">
-              <option value="__all__">All</option>
-              <% (stockBreakdown.products || []).forEach(p => { %>
-                <option value="<%- p.name.replace(/"/g, '&quot;') %>"><%- p.name %></option>
-              <% }) %>
-            </select>
-          </div>
-          <div class="donut-wrap">
-            <canvas id="stockDonutChart"></canvas>
-            <div class="donut-center" id="stockCenter">
-              <div class="big"><%= stockBreakdown.total %></div>
-              <div class="label">Total Stock</div>
-            </div>
-          </div>
-        </div>
-      </div>
+    </div>
 
       <div class="row g-3">
         <div class="col-md-4 d-flex">
@@ -525,6 +528,7 @@
 
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
   <script>
     const usersBreakdown = <%- JSON.stringify(usersBreakdown) %>;
@@ -594,34 +598,45 @@
     });
 
     const stockProducts = stockBreakdown.products || [];
-    const stockChart = new Chart(document.getElementById('stockDonutChart'), {
-      type: 'doughnut',
+
+    const stockChart = new Chart(document.getElementById('stockBarChart'), {
+      type: 'bar',
       data: {
         labels: stockProducts.map(p => p.name),
         datasets: [{
+          label: "Stock",
           data: stockProducts.map(p => p.stock),
           backgroundColor: genColors(stockProducts.length),
         }]
       },
-      options: { cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Stock Count' }
+          },
+          x: {
+            title: { display: true, text: 'Products' }
+          }
+        }
+      }
     });
 
     const stockSelect = document.getElementById('stockProductSelect');
-    const stockCenterBig = document.querySelector('#stockCenter .big');
-    const stockCenterLabel = document.querySelector('#stockCenter .label');
     stockSelect.addEventListener('change', function() {
       const v = this.value;
       if (v === '__all__') {
         stockChart.data.labels = stockProducts.map(p => p.name);
         stockChart.data.datasets[0].data = stockProducts.map(p => p.stock);
-        stockCenterBig.textContent = stockBreakdown.total;
-        stockCenterLabel.textContent = "Total Stock";
       } else {
         const p = stockProducts.find(x => x.name === v);
         stockChart.data.labels = [p ? p.name : v];
         stockChart.data.datasets[0].data = [p ? p.stock : 0];
-        stockCenterBig.textContent = p ? p.stock : 0;
-        stockCenterLabel.textContent = p ? p.name : v;
       }
       stockChart.data.datasets[0].backgroundColor = genColors(stockChart.data.labels.length);
       stockChart.update();
