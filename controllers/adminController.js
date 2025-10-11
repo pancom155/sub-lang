@@ -746,17 +746,19 @@ exports.addStaff = async (req, res) => {
   try {
     const { s_username, s_fname, s_lname, s_email, s_password } = req.body;
 
+    // Validate all fields
     if (!s_username || !s_fname || !s_lname || !s_email || !s_password) {
       req.flash('error', 'All fields are required.');
       return res.redirect('/admin/staff');
     }
 
+    // Ensure @staff.com domain
     if (!s_email.endsWith('@staff.com')) {
       req.flash('error', 'Email must end with @staff.com');
       return res.redirect('/admin/staff');
     }
 
-    // ✅ FIX: check by s_email not email
+    // Check if email or username already exists
     const existingEmail = await Staff.findOne({ s_email });
     if (existingEmail) {
       req.flash('error', 'Email already exists.');
@@ -769,18 +771,22 @@ exports.addStaff = async (req, res) => {
       return res.redirect('/admin/staff');
     }
 
-    // ✅ FIX: use s_email field name here
+    // ✅ Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(s_password, salt);
+
+    // ✅ Create and save new staff
     const newStaff = new Staff({
       s_username,
       s_fname,
       s_lname,
       s_email,
-      s_password
+      s_password: hashedPassword,
     });
 
     await newStaff.save();
 
-    req.flash('success', 'Staff account added successfully.');
+    req.flash('success', 'Staff account created successfully.');
     res.redirect('/admin/staff');
   } catch (error) {
     console.error('Error adding staff:', error);

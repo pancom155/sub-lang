@@ -492,34 +492,38 @@ exports.login = async (req, res) => {
       return res.redirect('/admin/index');
     }
 
-    const staffDomains = [
-      { domain: '@staff.com', model: Staff, role: 'staff' },
-      { domain: '@kitchen.com', model: KitchenStaff, role: 'kitchen' }
-    ];
+    if (email.endsWith('@staff.com')) {
+      const staff = await Staff.findOne({ s_email: email });
+      if (!staff) return res.render('login', { error: 'Invalid email or password.' });
 
-    for (const { domain, model, role } of staffDomains) {
-      if (email.endsWith(domain)) {
-        const staff = await model.findOne({ email });
-        if (!staff) {
-          return res.render('login', { error: 'Invalid email or password.' });
-        }
+      const match = await bcrypt.compare(password, staff.s_password);
+      if (!match) return res.render('login', { error: 'Invalid email or password.' });
 
-        const staffPassword = staff.password || staff.s_password;
-        const match = await bcrypt.compare(password, staffPassword);
-        if (!match) return res.render('login', { error: 'Invalid email or password.' });
+      req.session.user = {
+        id: staff._id,
+        role: 'staff',
+        name: `${staff.s_fname} ${staff.s_lname}`,
+        email: staff.s_email,
+      };
 
-        const firstName = staff.firstName || staff.s_fname || '';
-        const lastName = staff.lastName || staff.s_lname || '';
+      return res.redirect('/staff/index');
+    }
 
-        req.session.user = {
-          id: staff._id,
-          role,
-          name: `${firstName} ${lastName}`.trim(),
-          email
-        };
+    if (email.endsWith('@kitchen.com')) {
+      const kitchenStaff = await KitchenStaff.findOne({ email });
+      if (!kitchenStaff) return res.render('login', { error: 'Invalid email or password.' });
 
-        return res.redirect(role === 'staff' ? '/staff/index' : '/kitchen/index');
-      }
+      const match = await bcrypt.compare(password, kitchenStaff.password);
+      if (!match) return res.render('login', { error: 'Invalid email or password.' });
+
+      req.session.user = {
+        id: kitchenStaff._id,
+        role: 'kitchen',
+        name: `${kitchenStaff.firstName} ${kitchenStaff.lastName}`,
+        email: kitchenStaff.email,
+      };
+
+      return res.redirect('/kitchen/index');
     }
 
     const user = await User.findOne({ email });
@@ -534,14 +538,14 @@ exports.login = async (req, res) => {
 
     req.session.userId = user._id;
     req.session.user = user;
-    res.redirect('/dashboard');
+
+    return res.redirect('/dashboard');
 
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).render('login', { error: 'Login error: ' + error.message });
   }
 };
-
 
 exports.dashboard = async (req, res) => {
   if (!req.session.user) return res.redirect('/login');
