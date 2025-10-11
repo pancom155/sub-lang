@@ -745,23 +745,41 @@ exports.decreaseStock = async (req, res) => {
 exports.addStaff = async (req, res) => {
   try {
     const { s_username, s_fname, s_lname, s_email, s_password } = req.body;
+
+    if (!s_username || !s_fname || !s_lname || !s_email || !s_password) {
+      req.flash('error', 'All fields are required.');
+      return res.redirect('/admin/staff');
+    }
+
     if (!s_email.endsWith('@staff.com')) {
       req.flash('error', 'Email must end with @staff.com');
       return res.redirect('/admin/staff');
     }
-    const existingStaff = await Staff.findOne({ email: s_email });
-    if (existingStaff) {
+
+    // ✅ FIX: check by s_email not email
+    const existingEmail = await Staff.findOne({ s_email });
+    if (existingEmail) {
       req.flash('error', 'Email already exists.');
       return res.redirect('/admin/staff');
     }
+
+    const existingUsername = await Staff.findOne({ s_username });
+    if (existingUsername) {
+      req.flash('error', 'Username already exists.');
+      return res.redirect('/admin/staff');
+    }
+
+    // ✅ FIX: use s_email field name here
     const newStaff = new Staff({
       s_username,
       s_fname,
       s_lname,
-      email: s_email,
+      s_email,
       s_password
     });
+
     await newStaff.save();
+
     req.flash('success', 'Staff account added successfully.');
     res.redirect('/admin/staff');
   } catch (error) {

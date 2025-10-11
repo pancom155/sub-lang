@@ -208,7 +208,7 @@
           <h5 class="modal-title" id="addProductModalLabel">Add New Staff</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <form action="/admin/staff/add" method="POST">
+        <form action="/admin/staff/add" id="addStaffForm" method="POST">
           <div class="modal-body">
             <div class="mb-3 input-group">
               <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
@@ -223,8 +223,9 @@
               <input type="text" class="form-control" name="s_lname" placeholder="Last Name" required>
             </div>
             <div class="mb-3 input-group">
-              <input type="text" class="form-control" name="s_email" placeholder="Email" required>
+              <input type="text" class="form-control" id="s_email_input" placeholder="Email username" required>
               <span class="input-group-text">@staff.com</span>
+              <input type="hidden" name="s_email" id="s_email_hidden">
             </div>
             <div class="mb-3 input-group">
               <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
@@ -330,6 +331,12 @@
       showConfirmButton: true
     });
   <% } %>
+</script>
+<script>
+  document.getElementById('addStaffForm').addEventListener('submit', function () {
+    const usernamePart = document.getElementById('s_email_input').value.trim();
+    document.getElementById('s_email_hidden').value = usernamePart + '@staff.com';
+  });
 </script>
 </body>
 </html>

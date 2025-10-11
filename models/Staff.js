@@ -1,27 +1,40 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 
-const staffSchema = new mongoose.Schema({
-  s_username: { type: String, required: true, unique: true, trim: true },
-  s_fname: { type: String, required: true, trim: true },
-  s_lname: { type: String, required: true, trim: true },
-  email: { type: String, required: true, unique: true, match: /@staff\.com$/ },
-  s_password: { type: String, required: true }
-}, { timestamps: true });
+const StaffSchema = new mongoose.Schema(
+  {
+    s_username: {
+      type: String,
+      required: true,
+      unique: true,    
+      trim: true,
+    },
+    s_fname: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    s_lname: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    s_email: {
+      type: String,
+      required: true,
+      unique: true,     
+      trim: true,
+      lowercase: true,
+    },
+    s_password: {
+      type: String,
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-staffSchema.pre('save', async function (next) {
-  if (!this.isModified('s_password')) return next();
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.s_password = await bcrypt.hash(this.s_password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
+StaffSchema.index({ s_username: 1 }, { unique: true });
+StaffSchema.index({ s_email: 1 }, { unique: true });
 
-staffSchema.methods.comparePassword = function (inputPassword) {
-  return bcrypt.compare(inputPassword, this.s_password);
-};
 
-module.exports = mongoose.model('Staff', staffSchema);
+module.exports = mongoose.model('Staff', StaffSchema);
