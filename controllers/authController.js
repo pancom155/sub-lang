@@ -9,7 +9,7 @@ const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const axios = require('axios');
 const { sendEmail, otpTemplate } = require("../utils/emailService");
-const RECAPTCHA_SECRET_KEY = '6LfAuMQrAAAAAJeLSw-bey7KxfyHFj3Zd9UKg5gN';
+const RECAPTCHA_SECRET_KEY = '6LcCL-YrAAAAAJ_rF1Ty13PPRABq3hMGwyC2XP_R';
 
 // domain 6LcCL-YrAAAAAJ_rF1Ty13PPRABq3hMGwyC2XP_R
 // localhost 6LfAuMQrAAAAAJeLSw-bey7KxfyHFj3Zd9UKg5gN
