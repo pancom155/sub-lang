@@ -746,19 +746,19 @@ exports.addStaff = async (req, res) => {
   try {
     const { s_username, s_fname, s_lname, s_email, s_password } = req.body;
 
-    // Validate all fields
+    // Validate required fields
     if (!s_username || !s_fname || !s_lname || !s_email || !s_password) {
       req.flash('error', 'All fields are required.');
       return res.redirect('/admin/staff');
     }
 
-    // Ensure @staff.com domain
+    // Check valid staff domain
     if (!s_email.endsWith('@staff.com')) {
       req.flash('error', 'Email must end with @staff.com');
       return res.redirect('/admin/staff');
     }
 
-    // Check if email or username already exists
+    // Check duplicates
     const existingEmail = await Staff.findOne({ s_email });
     if (existingEmail) {
       req.flash('error', 'Email already exists.');
@@ -771,11 +771,11 @@ exports.addStaff = async (req, res) => {
       return res.redirect('/admin/staff');
     }
 
-    // ✅ Hash password
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(s_password, salt);
 
-    // ✅ Create and save new staff
+    // Save new staff
     const newStaff = new Staff({
       s_username,
       s_fname,
@@ -788,6 +788,7 @@ exports.addStaff = async (req, res) => {
 
     req.flash('success', 'Staff account created successfully.');
     res.redirect('/admin/staff');
+
   } catch (error) {
     console.error('Error adding staff:', error);
     req.flash('error', 'Internal Server Error');

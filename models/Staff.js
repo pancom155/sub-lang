@@ -8,4 +8,7 @@ const StaffSchema = new mongoose.Schema({
   s_password: { type: String, required: true },
 }, { timestamps: true });
 
+StaffSchema.index({ s_email: 1 }, { unique: true });
+StaffSchema.index({ s_username: 1 }, { unique: true });
+
 module.exports = mongoose.model('Staff', StaffSchema);
