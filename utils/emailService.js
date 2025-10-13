@@ -7,7 +7,7 @@ if (!process.env.BREVO_USER || !process.env.BREVO_PASS) {
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
   port: 587,
-  secure: false, // STARTTLS
+  secure: false,
   auth: {
     user: process.env.BREVO_USER,
     pass: process.env.BREVO_PASS,
@@ -42,15 +42,15 @@ const otpTemplate = (otp, type = "register") => {
 const sendEmail = async (to, subject, html) => {
   try {
     const info = await transporter.sendMail({
-      from: `"Zero Degree Café" <no-reply@zerodegreecafe.com>`,
+      from: `"Zero Degree Café" <generalaguilar1007@gmail.com>`,
       to,
       subject,
       html,
     });
-    console.log(`Email sent to ${to}: ${info.response}`);
+    console.log(`✅ Email sent to ${to}: ${info.response}`);
     return info;
   } catch (error) {
-    console.error("Email send failed:", error);
+    console.error("❌ Email send failed:", error);
     throw error;
   }
 };
