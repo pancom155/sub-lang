@@ -1,22 +1,28 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
-if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
-  throw new Error('GMAIL_USER and GMAIL_PASS must be set in .env');
+if (!process.env.BREVO_USER || !process.env.BREVO_PASS) {
+  throw new Error("BREVO_USER and BREVO_PASS must be set in .env");
 }
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false, // STARTTLS
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS,
+    user: process.env.BREVO_USER,
+    pass: process.env.BREVO_PASS,
   },
 });
 
-const otpTemplate = (otp, type = 'register') => {
-  const title = type === 'register' ? 'Verify Your Zero Degree Account' : 'Reset Your Password';
-  const message = type === 'register'
-    ? 'Use the following OTP to complete your registration:'
-    : 'Use the following OTP to reset your password:';
+const otpTemplate = (otp, type = "register") => {
+  const title =
+    type === "register"
+      ? "Verify Your Zero Degree Account"
+      : "Reset Your Password";
+  const message =
+    type === "register"
+      ? "Use the following OTP to complete your registration:"
+      : "Use the following OTP to reset your password:";
 
   return `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -36,7 +42,7 @@ const otpTemplate = (otp, type = 'register') => {
 const sendEmail = async (to, subject, html) => {
   try {
     const info = await transporter.sendMail({
-      from: `"Zero Degree Café" <${process.env.GMAIL_USER}>`,
+      from: `"Zero Degree Café" <no-reply@zerodegreecafe.com>`,
       to,
       subject,
       html,
@@ -44,7 +50,7 @@ const sendEmail = async (to, subject, html) => {
     console.log(`Email sent to ${to}: ${info.response}`);
     return info;
   } catch (error) {
-    console.error('Email send failed:', error);
+    console.error("Email send failed:", error);
     throw error;
   }
 };
