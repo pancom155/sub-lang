@@ -213,17 +213,17 @@
           
           <div class="mb-3 input-group">
             <span class="input-group-text"><i class="bi bi-box"></i></span>
-            <input type="text" class="form-control" id="productName" name="productName" placeholder="Product Name" required>
+            <input type="text" class="form-control" id="productName" name="productName" maxlength="30" placeholder="Product Name" required>
           </div>
 
           <div class="mb-3 input-group">
             <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
-            <input type="number" class="form-control" id="price" name="price" placeholder="Price" required>
+            <input type="number" class="form-control" id="price" name="price" min="1" max="9999" placeholder="Price" required>
           </div>
 
           <div class="mb-3 input-group">
             <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
-            <input type="number" class="form-control" id="stock" name="stock" placeholder="Stock" required>
+            <input type="number" class="form-control" id="stock" name="stock" min="1" max="100" placeholder="Stock" required>
           </div>
 
           <div class="mb-3 input-group">
@@ -273,17 +273,17 @@
 
           <div class="mb-3 input-group">
             <span class="input-group-text"><i class="bi bi-box"></i></span>
-            <input type="text" class="form-control" id="editProductName" name="productName" required>
+            <input type="text" class="form-control" id="editProductName" maxlength="30" name="productName" required>
           </div>
 
           <div class="mb-3 input-group">
             <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
-            <input type="number" class="form-control" id="editPrice" name="price" required>
+            <input type="number" class="form-control" id="editPrice" name="price" min="1" max="" required>
           </div>
 
           <div class="mb-3 input-group">
             <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
-            <input type="number" class="form-control" id="editStock" name="stock" required>
+            <input type="number" class="form-control" id="editStock" min="1" max="100" name="stock" required>
           </div>
 
           <div class="mb-3 input-group">
@@ -405,5 +405,42 @@
   });
 
 </script>
+
+<% if (success && success.length > 0) { %>
+<script>
+  Swal.fire({
+    icon: 'success',
+    title: 'Success',
+    text: '<%= success %>',
+    showConfirmButton: false,
+    timer: 2000
+  });
+</script>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+<script>
+  let errorMsg = '<%= error %>';
+
+  // Handle specific message for duplicate product name
+  if (errorMsg.includes('exists') || errorMsg.includes('duplicate')) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Duplicate Product Name',
+      text: errorMsg,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'OK'
+    });
+  } else {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: errorMsg,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'OK'
+    });
+  }
+</script>
+<% } %>
 </body>
 </html>

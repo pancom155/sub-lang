@@ -38,11 +38,11 @@
 
       <div class="text-start mb-4" data-aos="fade-up" data-aos-delay="200">
         <p><strong>Order ID:</strong> <span class="text-primary"><%= order._id %></span></p>
-        <p><strong>Payment Mode:</strong> 
-          <span class="badge bg-info text-dark">
-            <%= order.paymentMode === 'cod' ? 'Cash on Delivery' : order.paymentMode %>
-          </span>
-        </p>
+      <p><strong>Payment Mode:</strong> 
+        <span class="badge bg-info text-dark">
+          <%= order.paymentMode === 'Pay at the Counter' ? 'Pay at the Counter' : order.paymentMode %>
+        </span>
+      </p>
       </div>
 
       <div class="text-start mb-4" data-aos="fade-up" data-aos-delay="300">

@@ -63,9 +63,9 @@
           </thead>
           <tbody class="text-center">
             <% if (orders && orders.length > 0) { %>
-              <% orders.forEach(order => { %>
+              <% orders.forEach((order, index) => { %>
                 <tr>
-                  <td><span class="badge bg-secondary"><%= order._id %></span></td>
+                  <td><span class="text-dark"><%= index + 1 %></span></td>
                   <td><%= order.userInfoSnapshot?.firstName || 'N/A' %> <%= order.userInfoSnapshot?.lastName || '' %></td>
                   <td>
                     <span class="badge <%= order.status === 'Pending' ? 'bg-warning text-dark' : 'bg-info' %>">
@@ -151,90 +151,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Completed Orders -->
-  <h2 class="fw-bold mb-4 mt-5">Completed Orders</h2>
-  <div class="card shadow-lg border-0">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover table-striped align-middle mb-0">
-          <thead class="text-center">
-            <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th>Status</th>
-              <th>Payment</th>
-              <th>Total</th>
-              <th>Placed</th>
-            </tr>
-          </thead>
-          <tbody class="text-center">
-            <% if (completedOrders && completedOrders.length > 0) { %>
-              <% completedOrders.forEach(order => { %>
-                <tr>
-                  <td><span class="badge bg-secondary"><%= order._id %></span></td>
-                  <td><%= order.userInfoSnapshot?.firstName || 'N/A' %> <%= order.userInfoSnapshot?.lastName || '' %></td>
-                  <td><span class="badge bg-success"><%= order.status %></span></td>
-                  <td>
-                    <span class="badge bg-dark"><%= order.paymentMode %></span>
-                    <% if ((order.paymentMode === 'Pickup' || order.paymentMode === 'GCash') && order.proofImage) { %>
-                      <button class="btn btn-sm btn-outline-light ms-2" data-bs-toggle="modal" data-bs-target="#proofModal-<%= order._id %>">
-                        View Proof
-                      </button>
-                    <% } %>
-                  </td>
-                  <td>₱<%= order.totalAmount.toFixed(2) %></td>
-                  <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
-                </tr>
-
-                <% if ((order.paymentMode === 'Pickup' || order.paymentMode === 'GCash') && order.proofImage) { %>
-                  <div class="modal fade" id="proofModal-<%= order._id %>" tabindex="-1">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title">Payment Proof - Order <%= order._id %></h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body text-center">
-                          <img 
-                          src="<%= item.productId?.productImage 
-                                ? '/uploads/' + item.productId.productImage 
-                                : '/images/no-image.jpg' %>" 
-                          class="me-2 rounded" 
-                          style="width:35px;height:35px;object-fit:cover;">
-                          <p class="mb-1"><strong>Sender:</strong> <%= order.senderName || 'N/A' %></p>
-                          <p><strong>Reference #:</strong> <%= order.referenceNumber || 'N/A' %></p>
-                          <p><strong>Note to Cashier:</strong> <%= order.noteToCashier || 'None' %></p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                <% } %>
-              <% }) %>
-            <% } else { %>
-              <tr>
-                <td colspan="7" class="text-center text-muted">No completed orders</td>
-              </tr>
-            <% } %>
-          </tbody>
-        </table>
-
-        <% if (typeof totalPagesCompleted !== 'undefined' && totalPagesCompleted > 1) { %>
-          <nav class="mt-3">
-            <ul class="pagination justify-content-center">
-              <% for(let i = 1; i <= totalPagesCompleted; i++) { %>
-                <li class="page-item <%= currentCompletedPage === i ? 'active' : '' %>">
-                  <a class="page-link" href="?pendingPage=<%= currentPendingPage %>&completedPage=<%= i %>"><%= i %></a>
-                </li>
-              <% } %>
-            </ul>
-          </nav>
-        <% } %>
-
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

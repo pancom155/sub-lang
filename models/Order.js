@@ -44,10 +44,10 @@ const orderSchema = new mongoose.Schema({
     enum: ['Pending', 'Processing', 'Cancelled', 'Completed'], 
     default: 'Pending' 
   },
-
+  
   paymentMode: { 
     type: String, 
-    enum: ['COD', 'Pickup', 'GCash'],
+    enum: ['Pay at the Counter', 'Pickup', 'GCash'], 
     required: true 
   },
 

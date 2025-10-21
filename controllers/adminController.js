@@ -514,36 +514,41 @@ exports.getOrders = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 5;
     const skip = (page - 1) * limit;
+
     const totalOrders = await CompletedOrder.countDocuments();
     const totalPages = Math.ceil(totalOrders / limit);
+
     const completedOrders = await CompletedOrder.find()
       .populate('items.productId')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
+
     const prepared = completedOrders.map(o => {
-      const items = o.items.map(it => {
-        return {
-          productName: it.productId?.productName || it.productId?.name || 'Unknown',
-          quantity: it.quantity,
-          productImage: resolveImageUrl(req, it.productId?.productImage)
-        };
-      });
+      const items = o.items.map(it => ({
+        productName: it.productId?.productName || it.productId?.name || 'Unknown',
+        quantity: it.quantity,
+        productImage: resolveImageUrl(req, it.productId?.productImage)
+      }));
+
       return {
         ...o.toObject(),
         items,
       };
     });
+
     res.render('admin/orders', {
       orders: prepared,
       currentPage: page,
-      totalPages: totalPages,
+      totalPages,
+      itemsPerPage: limit, // ✅ added
     });
   } catch (error) {
     console.error('Error loading completed orders:', error);
     res.status(500).send('Server error');
   }
 };
+
 
 exports.getStaff = async (req, res) => {
   try {
@@ -629,6 +634,13 @@ exports.createProduct = async (req, res) => {
       return res.redirect('/admin/products');
     }
 
+    // 🔍 Check for duplicate product name
+    const existingProduct = await Product.findOne({ productName: { $regex: new RegExp(`^${productName}$`, 'i') } });
+    if (existingProduct) {
+      req.flash('error', 'Product name already exists. Please use a different name.');
+      return res.redirect('/admin/products');
+    }
+
     const newProduct = new Product({
       productName,
       price,
@@ -668,6 +680,16 @@ exports.editProduct = async (req, res) => {
 
     if (!product) {
       req.flash('error', 'Product not found');
+      return res.redirect('/admin/products');
+    }
+
+    const duplicate = await Product.findOne({
+      _id: { $ne: id },
+      productName: { $regex: new RegExp(`^${productName}$`, 'i') },
+    });
+
+    if (duplicate) {
+      req.flash('error', 'Product name already exists. Please use a different name.');
       return res.redirect('/admin/products');
     }
 

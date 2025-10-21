@@ -54,13 +54,19 @@ exports.addToCart = async (req, res) => {
   try {
     let cartItem = await CartItem.findOne({ user_id: userId, product_id: productId });
 
+    // if product already exists in cart
     if (cartItem) {
-      cartItem.quantity += quantity;
-      if (cartItem.quantity > stock) {
+      const newQuantity = cartItem.quantity + quantity;
+      if (newQuantity > stock) {
         return res.status(400).json({ message: 'Not enough stock available' });
       }
+      cartItem.quantity = newQuantity;
       await cartItem.save();
     } else {
+      // new item in cart
+      if (quantity > stock) {
+        return res.status(400).json({ message: 'Not enough stock available' });
+      }
       cartItem = new CartItem({
         user_id: userId,
         product_id: productId,
@@ -71,12 +77,27 @@ exports.addToCart = async (req, res) => {
       });
       await cartItem.save();
     }
-    const cartCount = await CartItem.countDocuments({ user_id: userId });
 
+    const cartCount = await CartItem.countDocuments({ user_id: userId });
     res.json({ message: 'Product added to cart', cartCount });
   } catch (error) {
     console.error('Error adding product to cart:', error);
     res.status(500).json({ message: 'Failed to add product to cart' });
+  }
+};
+
+exports.getCartItem = async (req, res) => {
+  const userId = req.session.userId;
+  const { productId } = req.params;
+
+  if (!userId) return res.status(401).json({ message: 'Not logged in' });
+
+  try {
+    const cartItem = await CartItem.findOne({ user_id: userId, product_id: productId });
+    res.json({ quantity: cartItem ? cartItem.quantity : 0 });
+  } catch (error) {
+    console.error('Error fetching cart item:', error);
+    res.status(500).json({ message: 'Error fetching cart item' });
   }
 };
 
@@ -217,7 +238,7 @@ exports.placeOrder = async (req, res) => {
 
     if (!cartItems || cartItems.length === 0) return res.redirect('/cart');
 
-    const paymentMode = req.body.paymentMode || 'COD';
+    const paymentMode = req.body.paymentMode || 'Pay at the Counter';
     const paymentInfo = req.file
       ? {
           senderName: req.body.senderName,

@@ -352,6 +352,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 function filterProducts() {
   var input = document.getElementById("search");
@@ -375,27 +376,70 @@ function showCartFeedback(feedbackId, productName){
   setTimeout(()=>feedback.classList.remove('show'), 1500);
 }
 
-function addToCart(productId, productName, price, stock, productImage){
-  fetch('/cart/add',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({productId, productName, price, stock, productImage, quantity:1})
-  })
-  .then(res=>res.json())
-  .then(data=>{
-    if(data.message==='Product added to cart'){
-      document.getElementById('cart-count').textContent = data.cartCount;
-      document.getElementById('cart-count-desktop').textContent = data.cartCount;
-      showCartFeedback('cart-feedback', productName);
-      showCartFeedback('cart-feedback-desktop', productName);
-      const cartIconMobile = document.getElementById('cart-icon');
-      const cartIconDesktop = document.getElementById('cart-icon-desktop');
-      [cartIconMobile, cartIconDesktop].forEach(icon=>{
-        icon.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 300 });
-      });
-    }
-  })
-  .catch(err=>console.error(err));
+function addToCart(productId, productName, price, stock, productImage) {
+  fetch(`/cart/get/${productId}`)
+    .then(res => res.json())
+    .then(data => {
+      const existingQuantity = data.quantity || 0;
+      if (existingQuantity + 1 > stock) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Stock Limit Reached',
+          text: `Only ${stock} items available.`,
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
+
+      fetch('/cart/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, productName, price, stock, productImage, quantity: 1 })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.message === 'Product added to cart') {
+          // Update cart counts
+          document.getElementById('cart-count').textContent = data.cartCount;
+          document.getElementById('cart-count-desktop').textContent = data.cartCount;
+
+          // Show success alert
+          Swal.fire({
+            icon: 'success',
+            title: 'Added to Cart',
+            text: `${productName} has been added to your cart.`,
+            timer: 1500,
+            showConfirmButton: false
+          });
+
+          // 🔹 Cart icon animation (mobile & desktop)
+          const icons = [
+            document.getElementById('cart-icon'),
+            document.getElementById('cart-icon-desktop')
+          ];
+          icons.forEach(icon => {
+            if (icon) {
+              icon.animate(
+                [
+                  { transform: 'scale(1)' },
+                  { transform: 'scale(1.3)' },
+                  { transform: 'scale(1)' }
+                ],
+                { duration: 300, easing: 'ease-in-out' }
+              );
+            }
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops',
+            text: data.message
+          });
+        }
+      })
+      .catch(err => console.error(err));
+    })
+    .catch(err => console.error('Error checking cart item:', err));
 }
 </script>
 </body>

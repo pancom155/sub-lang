@@ -10,6 +10,7 @@ router.get('/cart', authMiddleware, authController.showCart);
 router.post('/cart/add', authMiddleware, authController.addToCart);
 router.post('/cart/update', authMiddleware, authController.updateCartItem);
 router.post('/cart/remove', authMiddleware, authController.removeCartItem);
+router.get('/cart/get/:productId', authController.getCartItem);
 
 router.get('/cart/checkout', authMiddleware, authController.showCheckout);
 router.post('/cart/checkout', authMiddleware, uploadProof.single('proofImage'), authController.checkout);
