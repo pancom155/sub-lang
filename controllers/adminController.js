@@ -294,7 +294,51 @@ exports.dashboard = async (req, res) => {
       return sum;
     }, 0);
 
+    let totalProfit = 0;
+    allCompletedOrders.forEach(order => {
+      order.items.forEach(item => {
+        const product = item.productId;
+        if (product && typeof product.investmentCost === "number" && typeof item.price === "number") {
+          totalProfit += (item.price - product.investmentCost) * item.quantity;
+        }
+      });
+    });
+
     const products = await Product.find();
+
+const monthlyOrders = allCompletedOrders.filter(o => {
+  const d = new Date(o.createdAt);
+  return d.getMonth() + 1 === selectedSalesMonth && d.getFullYear() === selectedSalesYear;
+});
+
+const productProfitMap = {};
+
+monthlyOrders.forEach(order => {
+  order.items.forEach(item => {
+    const product = item.productId;
+    if (!product) return;
+    const pid = product._id.toString();
+    const productName = product.productName || product.name || "Unknown Product";
+    
+    const price = Number(item.price);
+    const cost = Number(product.investmentCost);
+    
+    if (isNaN(price) || isNaN(cost)) return; 
+    
+    const itemProfit = (price - cost) * item.quantity;
+    
+    if (!productProfitMap[pid]) {
+      productProfitMap[pid] = { name: productName, profit: 0 };
+    }
+    productProfitMap[pid].profit += itemProfit;
+  });
+});
+
+const productProfitData = Object.values(productProfitMap)
+  .filter(p => p.profit > 0) 
+  .map(p => ({ ...p, price: products.find(prod => (prod.productName || prod.name) === p.name)?.price || 0 }))
+  .sort((a, b) => b.profit - a.profit);
+
     const productStockChartData = products.map((p) => ({
       name: p.productName || p.name,
       stock: p.stock,
@@ -323,7 +367,7 @@ exports.dashboard = async (req, res) => {
         productImage: p.productImage || "/images/default.jpg",
         totalQuantity: productSalesMap[p._id.toString()] || 0,
       }))
-      .filter(p => p.totalQuantity > 0) // ✅ remove products with 0 sales
+      .filter(p => p.totalQuantity > 0)
       .sort((a, b) => b.totalQuantity - a.totalQuantity)
       .slice(0, 6);
 
@@ -384,6 +428,8 @@ exports.dashboard = async (req, res) => {
     const totalPages = Math.ceil(totalDailyOrders / limit);
 
     res.render("admin/index", {
+      totalProfit,
+      productProfitData, // ✅ added product profit chart data
       salesMonth: salesMonthName,
       salesYear: selectedSalesYear,
       selectedSalesMonth,
@@ -415,6 +461,7 @@ exports.dashboard = async (req, res) => {
       dailyOrders: paginatedDailyOrders,
       successMessage: res.locals.successMessage || null,
     });
+
   } catch (error) {
     console.error("Dashboard error:", error);
     res.status(500).send("Server error");
@@ -541,7 +588,7 @@ exports.getOrders = async (req, res) => {
       orders: prepared,
       currentPage: page,
       totalPages,
-      itemsPerPage: limit, // ✅ added
+      itemsPerPage: limit,
     });
   } catch (error) {
     console.error('Error loading completed orders:', error);
@@ -627,14 +674,13 @@ exports.getProducts = async (req, res) => {
 };
 
 exports.createProduct = async (req, res) => {
-  const { productName, price, stock, category } = req.body;
+  const { productName, price, stock, category, investmentCost } = req.body;
   try {
     if (!req.file) {
       req.flash('error', 'Product image is required');
       return res.redirect('/admin/products');
     }
 
-    // 🔍 Check for duplicate product name
     const existingProduct = await Product.findOne({ productName: { $regex: new RegExp(`^${productName}$`, 'i') } });
     if (existingProduct) {
       req.flash('error', 'Product name already exists. Please use a different name.');
@@ -645,8 +691,9 @@ exports.createProduct = async (req, res) => {
       productName,
       price,
       stock,
-      productImage: `/uploads/${req.file.filename}`,
       category,
+      investmentCost,
+      productImage: `/uploads/${req.file.filename}`,
       reviews: [],
     });
 
@@ -674,7 +721,7 @@ exports.editProductForm = async (req, res) => {
 
 exports.editProduct = async (req, res) => {
   try {
-    const { productName, price, stock, category } = req.body;
+    const { productName, price, stock, category, investmentCost } = req.body;
     const { id } = req.params;
     const product = await Product.findById(id);
 
@@ -697,6 +744,7 @@ exports.editProduct = async (req, res) => {
     product.price = price || product.price;
     product.stock = stock || product.stock;
     product.category = category || product.category;
+    product.investmentCost = investmentCost || product.investmentCost;
 
     if (req.file) {
       product.productImage = `/uploads/${req.file.filename}`;

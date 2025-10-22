@@ -22,19 +22,26 @@ exports.completeOrder = async (req, res) => {
     const order = await Order.findById(req.params.id).populate('items.productId');
     if (!order) return res.status(404).send('Order not found');
 
-    if (order.status !== 'Processing') return res.status(400).send('Only processing orders can be completed');
+    if (order.status !== 'Processing')
+      return res.status(400).send('Only processing orders can be completed');
 
     for (const item of order.items) {
       const product = item.productId;
       if (product) {
         product.stock -= item.quantity;
-        product.totalSold = (product.totalSold || 0) + item.quantity;
+        product.sold = (product.sold || 0) + item.quantity;
+
+        const cost = product.investmentCost || 0;
+        const itemProfit = (product.price - cost) * item.quantity;
+        product.totalProfit = (product.totalProfit || 0) + itemProfit;
+
         await product.save();
       }
     }
 
     order.status = 'Completed';
     await order.save();
+
     res.redirect('/staff/orders');
   } catch (err) {
     console.error(err);

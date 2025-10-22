@@ -218,6 +218,15 @@
       background: linear-gradient(135deg, #0d6efd, #4dabf7);
       border-radius: 0.75rem;
     }
+  #profitChart {
+    max-height: 300px;
+  }
+  .total-profit {
+    font-size: 0.95rem;
+  }
+  #monthFilterForm select {
+    min-width: 140px;
+  }
     
   </style>
 </head>
@@ -318,122 +327,101 @@
     </div>
     
     <hr class="my-4">
-    <div class="row g-3 mt-4 mb-3">
-      <div class="col-md-4 d-flex">
-        <div class="card text-center shadow-lg border-0 flex-fill">
-          <div class="card-body d-flex flex-column justify-content-center">
-            <div class="d-flex align-items-center justify-content-center mb-2">
-              <i class="bi bi-star-fill fs-3 text-warning me-2"></i>
-              <h5 class="card-title mb-0">Total Reviews</h5>
+
+    <div class="col-12 mt-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title">Top Products by Profit (<%= salesMonth %> <%= selectedSalesYear %>)</h5>
+            <form method="get" id="monthFilterForm">
+              <select name="salesMonth" class="form-select form-select-sm" onchange="document.getElementById('monthFilterForm').submit()">
+                <% 
+                  const months = [
+                    "January","February","March","April","May","June",
+                    "July","August","September","October","November","December"
+                  ];
+                  months.forEach((m, i) => { 
+                %>
+                  <option value="<%= i + 1 %>" <%= selectedSalesMonth === i + 1 ? "selected" : "" %>><%= m %></option>
+                <% }) %>
+              </select>
+            </form>
+          </div>
+
+          <% if (productProfitData.length > 0) { %>
+            <div class="mb-3 text-end fw-bold total-profit">
+              Total Profit: ₱ <%= Number(productProfitData.reduce((sum, p) => sum + p.profit, 0)).toLocaleString() %>
             </div>
-            <h2 class="fw-bold text-warning"><%= reviewKpi.totalReviews %></h2>
-            <p class="text-muted mb-0">All products</p>
-          </div>
-        </div>
-      </div>
 
-      <div class="col-md-4 d-flex">
-        <div class="card text-center shadow-lg border-0 flex-fill">
-          <div class="card-body d-flex flex-column justify-content-center">
-            <div class="d-flex align-items-center justify-content-center mb-2">
-              <i class="bi bi-star-half fs-3 text-primary me-2"></i>
-              <h5 class="card-title mb-0">Average Rating</h5>
+            <canvas id="profitChart" height="80"></canvas>
+
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+              const ctx = document.getElementById('profitChart').getContext('2d');
+
+              const data = {
+                labels: <%- JSON.stringify(productProfitData.map(p => p.name)) %>,
+                datasets: [{
+                  label: 'Profit (₱)',
+                  data: <%- JSON.stringify(productProfitData.map(p => Number(p.profit))) %>,
+                  backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                  borderRadius: 10,
+                  borderSkipped: false
+                }]
+              };
+
+              const config = {
+                type: 'bar',
+                data: data,
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: { 
+                      callbacks: { 
+                        label: function(context) {
+                          const p = <%- JSON.stringify(productProfitData) %>[context.dataIndex];
+                          return 'Profit: ₱ ' + context.raw.toLocaleString() + ' | Price: ₱ ' + p.price.toLocaleString();
+                        } 
+                      } 
+                    }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: {
+                        callback: function(value) {
+                          return '₱ ' + value.toLocaleString();
+                        }
+                      },
+                      title: {
+                        display: true,
+                        text: 'Profit (₱)'
+                      }
+                    },
+                    x: {
+                      title: {
+                        display: true,
+                        text: 'Products'
+                      }
+                    }
+                  }
+                }
+              };
+
+              new Chart(ctx, config);
+            </script>
+          <% } else { %>
+            <div class="text-center text-muted fw-bold mt-3">
+              No profit data for <%= salesMonth %> <%= selectedSalesYear %>.
             </div>
-            <h2 class="fw-bold text-primary"><%= reviewKpi.avgRating %> / 5</h2>
-            <p class="text-muted mb-0">Across all reviews</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-4 d-flex">
-        <div class="card text-center shadow-lg border-0 flex-fill">
-          <div class="card-body d-flex flex-column justify-content-center">
-            <div class="d-flex align-items-center justify-content-center mb-2">
-              <i class="bi bi-award fs-3 text-success me-2"></i>
-              <h5 class="card-title mb-0">Top Rated Product</h5>
-            </div>
-            <% if (reviewKpi.topRatedProducts.length > 0) { %>
-              <div class="d-flex flex-column align-items-center">
-                <img src="<%= reviewKpi.topRatedProducts[0].image %>" class="rounded mb-1" style="width:50px; height:50px; object-fit:cover;">
-                <div style="font-weight:700; font-size:14px;"><%= reviewKpi.topRatedProducts[0].name %></div>
-                <div style="color:#495057; font-size:13px;">Rating: <%= reviewKpi.topRatedProducts[0].avg.toFixed(2) %> / 5</div>
-              </div>
-            <% } else { %>
-              <p class="text-muted mb-0">No reviews yet</p>
-            <% } %>
-          </div>
-        </div>
-      </div>
-    </div>
-
-<div class="row g-4 mb-4">
-  <!-- Stock on top -->
-  <div class="col-12">
-    <div class="card p-3">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h5 class="mb-0">Stock</h5>
-        <select id="stockProductSelect" class="form-select form-select-sm w-auto">
-          <option value="__all__">All</option>
-          <% (stockBreakdown.products || []).forEach(p => { %>
-            <option value="<%- p.name.replace(/"/g, '&quot;') %>"><%- p.name %></option>
-          <% }) %>
-        </select>
-      </div>
-      <div class="chart-container" style="height:250px;">
-        <canvas id="stockBarChart"></canvas>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-    <div class="row g-4 align-items-start mb-3">
-      <div class="col-md-6">
-        <div class="card p-3">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="mb-0">Users</h5>
-            <select id="userTypeSelect" class="form-select form-select-sm w-auto">
-              <option value="total">Total</option>
-              <option value="user">Users</option>
-              <option value="staff">Staff</option>
-              <option value="kitchen">Kitchen Staff</option>
-            </select>
-          </div>
-          <div class="donut-wrap">
-            <canvas id="userDonutChart"></canvas>
-            <div class="donut-center" id="userCenter">
-              <div class="big"><%= usersBreakdown.total %></div>
-              <div class="label">Total Users</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-6">
-        <div class="card p-3">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="mb-0">Orders</h5>
-            <select id="orderTypeSelect" class="form-select form-select-sm w-auto">
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-          <div class="donut-wrap">
-            <canvas id="orderStatusDonutChart"></canvas>
-            <div class="donut-center" id="orderCenter">
-              <div class="big">
-                <%= ordersBreakdown.pending + ordersBreakdown.completed + ordersBreakdown.cancelled %>
-              </div>
-              <div class="label">Total Orders</div>
-            </div>
-          </div>
+          <% } %>
         </div>
       </div>
     </div>
 
-      <div class="row g-3">
+     <div class="row g-3 mt-3">
         <div class="col-md-4 d-flex">
           <div class="card text-center shadow-lg border-0 flex-fill">
             <div class="card-body d-flex flex-column justify-content-center">
@@ -510,6 +498,120 @@
         </div>
       </div>
 
+    </div>
+
+    <div class="row g-3 mt-1 mb-3">
+      <div class="col-md-4 d-flex">
+        <div class="card text-center shadow-lg border-0 flex-fill">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+              <i class="bi bi-star-fill fs-3 text-warning me-2"></i>
+              <h5 class="card-title mb-0">Total Reviews</h5>
+            </div>
+            <h2 class="fw-bold text-warning"><%= reviewKpi.totalReviews %></h2>
+            <p class="text-muted mb-0">All products</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 d-flex">
+        <div class="card text-center shadow-lg border-0 flex-fill">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+              <i class="bi bi-star-half fs-3 text-primary me-2"></i>
+              <h5 class="card-title mb-0">Average Rating</h5>
+            </div>
+            <h2 class="fw-bold text-primary"><%= reviewKpi.avgRating %> / 5</h2>
+            <p class="text-muted mb-0">Across all reviews</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 d-flex">
+        <div class="card text-center shadow-lg border-0 flex-fill">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <div class="d-flex align-items-center justify-content-center mb-2">
+              <i class="bi bi-award fs-3 text-success me-2"></i>
+              <h5 class="card-title mb-0">Top Rated Product</h5>
+            </div>
+            <% if (reviewKpi.topRatedProducts.length > 0) { %>
+              <div class="d-flex flex-column align-items-center">
+                <img src="<%= reviewKpi.topRatedProducts[0].image %>" class="rounded mb-1" style="width:50px; height:50px; object-fit:cover;">
+                <div style="font-weight:700; font-size:14px;"><%= reviewKpi.topRatedProducts[0].name %></div>
+                <div style="color:#495057; font-size:13px;">Rating: <%= reviewKpi.topRatedProducts[0].avg.toFixed(2) %> / 5</div>
+              </div>
+            <% } else { %>
+              <p class="text-muted mb-0">No reviews yet</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-12">
+      <div class="card p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="mb-0">Stock</h5>
+          <select id="stockProductSelect" class="form-select form-select-sm w-auto">
+            <option value="__all__">All</option>
+            <% (stockBreakdown.products || []).forEach(p => { %>
+              <option value="<%- p.name.replace(/"/g, '&quot;') %>"><%- p.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="chart-container" style="height:250px;">
+          <canvas id="stockBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+    <div class="row g-4 align-items-start mb-3">
+      <div class="col-md-6">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Users</h5>
+            <select id="userTypeSelect" class="form-select form-select-sm w-auto">
+              <option value="total">Total</option>
+              <option value="user">Users</option>
+              <option value="staff">Staff</option>
+              <option value="kitchen">Kitchen Staff</option>
+            </select>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="userDonutChart"></canvas>
+            <div class="donut-center" id="userCenter">
+              <div class="big"><%= usersBreakdown.total %></div>
+              <div class="label">Total Users</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Orders</h5>
+            <select id="orderTypeSelect" class="form-select form-select-sm w-auto">
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="donut-wrap">
+            <canvas id="orderStatusDonutChart"></canvas>
+            <div class="donut-center" id="orderCenter">
+              <div class="big">
+                <%= ordersBreakdown.pending + ordersBreakdown.completed + ordersBreakdown.cancelled %>
+              </div>
+              <div class="label">Total Orders</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="card mt-4 shadow-lg border-0 trend-card">

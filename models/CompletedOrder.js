@@ -12,7 +12,8 @@ const completedOrderSchema = new mongoose.Schema({
   },
   items: [{
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-    quantity: Number
+    quantity: Number,
+    price: Number
   }],
   totalAmount: {
     type: Number,

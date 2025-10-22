@@ -210,29 +210,46 @@
 
       <form action="/admin/products/add" method="POST" enctype="multipart/form-data">
         <div class="modal-body">
-          
-          <div class="mb-3 input-group">
-            <span class="input-group-text"><i class="bi bi-box"></i></span>
-            <input type="text" class="form-control" id="productName" name="productName" maxlength="30" placeholder="Product Name" required>
+
+          <div class="mb-3">
+            <label for="productName" class="form-label">
+              <i class="bi bi-box"></i> Product Name
+            </label>
+            <input type="text" class="form-control" id="productName" name="productName" maxlength="30" placeholder="Enter product name" required>
           </div>
 
-          <div class="mb-3 input-group">
-            <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
-            <input type="number" class="form-control" id="price" name="price" min="1" max="9999" placeholder="Price" required>
+          <div class="mb-3">
+            <label for="price" class="form-label">
+              <i class="bi bi-currency-dollar"></i> Price
+            </label>
+            <input type="number" class="form-control" id="price" name="price" min="1" max="9999" placeholder="Enter product price" required>
           </div>
 
-          <div class="mb-3 input-group">
-            <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
-            <input type="number" class="form-control" id="stock" name="stock" min="1" max="100" placeholder="Stock" required>
+          <div class="mb-3">
+            <label for="investmentCost" class="form-label">
+              <i class="bi bi-coin"></i> Investment Cost
+            </label>
+            <input type="number" class="form-control" id="investmentCost" name="investmentCost" min="0" max="9999" placeholder="Enter investment cost" required>
           </div>
 
-          <div class="mb-3 input-group">
-            <span class="input-group-text"><i class="bi bi-image"></i></span>
+          <div class="mb-3">
+            <label for="stock" class="form-label">
+              <i class="bi bi-journal-text"></i> Stock
+            </label>
+            <input type="number" class="form-control" id="stock" name="stock" min="1" max="100" placeholder="Enter stock quantity" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="productImage" class="form-label">
+              <i class="bi bi-image"></i> Product Image
+            </label>
             <input type="file" class="form-control" id="productImage" name="productImage" accept="image/*" required>
           </div>
 
-          <div class="mb-3 input-group">
-            <span class="input-group-text"><i class="bi bi-tags"></i></span>
+          <div class="mb-3">
+            <label for="category" class="form-label">
+              <i class="bi bi-tags"></i> Category
+            </label>
             <select class="form-select" id="category" name="category" required>
               <option value="" disabled selected>Select a Category</option>
               <option value="Coffee">Coffee</option>
@@ -259,7 +276,6 @@
   </div>
 </div>
 
-
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -268,34 +284,53 @@
           <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+
         <div class="modal-body">
           <input type="hidden" id="editProductId" name="productId">
 
-          <div class="mb-3 input-group">
-            <span class="input-group-text"><i class="bi bi-box"></i></span>
-            <input type="text" class="form-control" id="editProductName" maxlength="30" name="productName" required>
+          <div class="mb-3">
+            <label for="editProductName" class="form-label">
+              <i class="bi bi-box"></i> Product Name
+            </label>
+            <input type="text" class="form-control" id="editProductName" name="productName" maxlength="30" required>
           </div>
 
-          <div class="mb-3 input-group">
-            <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
-            <input type="number" class="form-control" id="editPrice" name="price" min="1" max="" required>
+          <div class="mb-3">
+            <label for="editPrice" class="form-label">
+              <i class="bi bi-currency-dollar"></i> Price
+            </label>
+            <input type="number" class="form-control" id="editPrice" name="price" min="1" max="9999" required>
           </div>
 
-          <div class="mb-3 input-group">
-            <span class="input-group-text"><i class="bi bi-journal-text"></i></span>
-            <input type="number" class="form-control" id="editStock" min="1" max="100" name="stock" required>
+          <div class="mb-3">
+            <label for="editInvestmentCost" class="form-label">
+              <i class="bi bi-coin"></i> Investment Cost
+            </label>
+            <input type="number" class="form-control" id="editInvestmentCost" name="investmentCost" min="0" max="9999" required>
           </div>
 
-          <div class="mb-3 input-group">
-            <span class="input-group-text"><i class="bi bi-image"></i></span>
+          <div class="mb-3">
+            <label for="editStock" class="form-label">
+              <i class="bi bi-journal-text"></i> Stock
+            </label>
+            <input type="number" class="form-control" id="editStock" name="stock" min="1" max="100" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="editProductImage" class="form-label">
+              <i class="bi bi-image"></i> Product Image
+            </label>
             <input type="file" class="form-control" id="editProductImage" name="productImage" accept="image/*">
           </div>
+
           <div class="text-center mb-3">
-            <img id="currentProductImage" src="" alt="Current Product Image" class="img-fluid rounded" style="max-height: 150px;">
+            <img id="currentProductImage" src="" alt="Current Product Image" class="img-fluid rounded shadow-sm" style="max-height: 150px;">
           </div>
 
-          <div class="mb-3 input-group">
-            <span class="input-group-text"><i class="bi bi-tags"></i></span>
+          <div class="mb-3">
+            <label for="editCategory" class="form-label">
+              <i class="bi bi-tags"></i> Category
+            </label>
             <select class="form-select" id="editCategory" name="category" required>
               <option value="Coffee">Coffee</option>
               <option value="Drinks">Drinks</option>
@@ -305,9 +340,14 @@
             </select>
           </div>
         </div>
+
         <div class="modal-footer">
-          <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Cancel</button>
-          <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Changes</button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Save Changes
+          </button>
         </div>
       </form>
     </div>
@@ -365,6 +405,7 @@
     document.getElementById('editProductId').value = product._id;
     document.getElementById('editProductName').value = product.productName;
     document.getElementById('editPrice').value = product.price;
+    document.getElementById('editInvestmentCost').value = product.investmentCost || 0; 
     document.getElementById('editStock').value = product.stock;
     document.getElementById('editCategory').value = product.category;
     document.getElementById('currentProductImage').src = product.productImage;
@@ -422,7 +463,6 @@
 <script>
   let errorMsg = '<%= error %>';
 
-  // Handle specific message for duplicate product name
   if (errorMsg.includes('exists') || errorMsg.includes('duplicate')) {
     Swal.fire({
       icon: 'error',
