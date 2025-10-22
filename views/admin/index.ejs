@@ -707,5 +707,36 @@
       }
     });
   </script>
+<script>
+  (function() {
+    sessionStorage.setItem("currentPage", "admin");
+
+    async function autoLogout() {
+      try {
+        await fetch("/logout", { method: "POST" });
+        window.location.replace("/login");
+      } catch (err) {
+        console.error("Auto logout failed:", err);
+      }
+    }
+
+    window.addEventListener("popstate", async () => {
+      console.log("Detected back/forward navigation → logging out");
+      await autoLogout();
+    });
+
+    history.pushState(null, "", location.href);
+    window.onpopstate = function() {
+      history.pushState(null, "", location.href);
+      autoLogout(); 
+    };
+
+    window.addEventListener("pageshow", function(event) {
+      if (event.persisted) {
+        autoLogout();
+      }
+    });
+  })();
+</script>
 </body>
 </html>

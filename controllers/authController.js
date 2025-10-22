@@ -706,7 +706,25 @@ exports.cancelOrder = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  req.session.destroy(() => {
+  if (req.session && req.session.user) {
+    const userEmail = req.session.user.email;
+
+    if (userEmail === 'zerodegreecafe@gmail.com') {
+      console.log('Super Admin logged out (manual or via back/forward navigation)');
+    }
+  }
+
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Session destruction error:', err);
+      return res.status(500).send('Error while logging out');
+    }
+
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.status(200).json({ message: 'Logged out' });
+    }
+
     res.redirect('/login');
   });
 };
+
