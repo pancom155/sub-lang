@@ -6,21 +6,26 @@ exports.index = async (req, res) => {
   startOfToday.setHours(0, 0, 0, 0);
 
   try {
-    const pendingCount = await Order.countDocuments({ status: 'Pending', createdAt: { $gte: startOfToday } });
-    const processingCount = await Order.countDocuments({ status: 'Processing', createdAt: { $gte: startOfToday } });
-    const completedCount = await Order.countDocuments({ status: 'Completed', createdAt: { $gte: startOfToday } });
+    const [pendingCount, processingCount, completedCount, processingOrders] = await Promise.all([
+      Order.countDocuments({ status: 'Pending', createdAt: { $gte: startOfToday } }),
+      Order.countDocuments({ status: 'Processing', createdAt: { $gte: startOfToday } }),
+      Order.countDocuments({ status: 'Completed', createdAt: { $gte: startOfToday } }),
+      Order.find({ status: 'Processing', createdAt: { $gte: startOfToday } })
+        .populate('items.productId')
+        .lean()
+    ]);
 
     res.render('kitchen/index', {
       pendingCount,
       processingCount,
-      completedCount
+      completedCount,
+      processingOrders
     });
   } catch (error) {
     console.error('Error loading kitchen dashboard:', error);
     res.status(500).send('Server error');
   }
 };
-
 
 exports.viewKitchenOrders = (req, res) => {
   const startOfToday = new Date();
