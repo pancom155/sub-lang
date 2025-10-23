@@ -54,7 +54,6 @@ exports.addToCart = async (req, res) => {
   try {
     let cartItem = await CartItem.findOne({ user_id: userId, product_id: productId });
 
-    // if product already exists in cart
     if (cartItem) {
       const newQuantity = cartItem.quantity + quantity;
       if (newQuantity > stock) {
@@ -63,7 +62,6 @@ exports.addToCart = async (req, res) => {
       cartItem.quantity = newQuantity;
       await cartItem.save();
     } else {
-      // new item in cart
       if (quantity > stock) {
         return res.status(400).json({ message: 'Not enough stock available' });
       }

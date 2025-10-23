@@ -228,6 +228,42 @@
     min-width: 140px;
   }
     
+    #monthFilterForm select {
+    min-width: 150px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+  }
+
+  #monthFilterForm select:hover {
+    border-color: #3a5f7d;
+    background-color: #e9f0f8;
+  }
+
+  .card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1d3c5a;
+  }
+
+  .total-profit {
+    font-size: 1rem;
+    color: #28a745;
+  }
+
+  #profitChart {
+    background-color: #fefefe;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+  }
+
+  .text-muted.fw-bold {
+    font-size: 0.95rem;
+    margin-top: 20px;
+  }
+
   </style>
 </head>
 <body>
@@ -356,22 +392,33 @@
             <canvas id="profitChart" height="80"></canvas>
 
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
             <script>
               const ctx = document.getElementById('profitChart').getContext('2d');
 
+              const productData = <%- JSON.stringify(productProfitData.map(p => ({
+                name: p.name,
+                profit: Number(p.profit),
+                price: Number(p.price)
+              }))) %>;
+
               const data = {
-                labels: <%- JSON.stringify(productProfitData.map(p => p.name)) %>,
+                labels: productData.map(p => p.name),
                 datasets: [{
                   label: 'Profit (₱)',
-                  data: <%- JSON.stringify(productProfitData.map(p => Number(p.profit))) %>,
-                  backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                  borderRadius: 10,
-                  borderSkipped: false
+                  data: productData.map(p => p.profit),
+                  fill: false,
+                  borderColor: 'rgba(54, 162, 235, 0.8)',
+                  backgroundColor: 'rgba(54, 162, 235, 0.4)',
+                  tension: 0.3,
+                  pointRadius: 6,
+                  pointHoverRadius: 8,
+                  pointBackgroundColor: 'rgba(54, 162, 235, 1)',
                 }]
               };
 
               const config = {
-                type: 'bar',
+                type: 'line',
                 data: data,
                 options: {
                   responsive: true,
@@ -381,10 +428,19 @@
                     tooltip: { 
                       callbacks: { 
                         label: function(context) {
-                          const p = <%- JSON.stringify(productProfitData) %>[context.dataIndex];
-                          return 'Profit: ₱ ' + context.raw.toLocaleString() + ' | Price: ₱ ' + p.price.toLocaleString();
+                          const p = productData[context.dataIndex];
+                          return 'Profit: ₱ ' + p.profit.toLocaleString() + ' | Price: ₱ ' + p.price.toLocaleString();
                         } 
                       } 
+                    },
+                    datalabels: {
+                      anchor: 'end',
+                      align: 'top',
+                      color: '#1d3c5a',
+                      font: { weight: 'bold', size: 12 },
+                      formatter: function(value) {
+                        return '₱ ' + value.toLocaleString();
+                      }
                     }
                   },
                   scales: {
@@ -407,7 +463,8 @@
                       }
                     }
                   }
-                }
+                },
+                plugins: [ChartDataLabels]
               };
 
               new Chart(ctx, config);
@@ -420,6 +477,145 @@
         </div>
       </div>
     </div>
+
+    <div class="col-12 mt-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title">Sales Trend (<%= salesMonth %> <%= selectedSalesYear %>)</h5>
+            <form method="get" id="salesMonthFilterForm">
+              <% const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"]; %>
+              <select name="salesMonth" class="form-select form-select-sm" onchange="document.getElementById('salesMonthFilterForm').submit()">
+                <% monthNames.forEach((m, i) => { %>
+                  <option value="<%= i + 1 %>" <%= selectedSalesMonth === i + 1 ? "selected" : "" %>><%= m %></option>
+                <% }) %>
+              </select>
+            </form>
+          </div>
+
+          <% if (productSalesData.length > 0) { %>
+            <div class="mb-3 text-end fw-bold total-sales">
+              Total Sales: <%= productSalesData.reduce((sum, p) => sum + p.sales, 0) %> units
+            </div>
+
+          <div style="overflow-x:auto;">
+            <canvas id="salesTrendChart" height="300"></canvas>
+          </div>
+
+          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+          <script>
+            const salesCtx = document.getElementById('salesTrendChart').getContext('2d');
+            const salesData = <%- JSON.stringify(productSalesData) %>;
+
+            const salesChartData = {
+              labels: salesData.map(p => p.name),
+              datasets: [{
+                label: 'Units Sold',
+                data: salesData.map(p => p.sales),
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+                borderRadius: 5
+              }]
+            };
+
+            const salesConfig = {
+              type: 'bar', 
+              data: salesChartData,
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: { 
+                    callbacks: { 
+                      label: function(context) { return context.raw + " units sold"; } 
+                    } 
+                  },
+                  datalabels: {
+                    anchor: 'end',
+                    align: 'end',
+                    color: '#1d3c5a',
+                    font: { weight: 'bold', size: 12 },
+                    formatter: function(value) { return value + " units"; }
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Units Sold' }
+                  },
+                  x: {
+                    title: { display: true, text: 'Products' },
+                    ticks: {
+                      autoSkip: false,
+                      maxRotation: 45,
+                      minRotation: 0,
+                      callback: function(value) {
+                        const label = this.getLabelForValue(value);
+                        return label.length > 15 ? label.substring(0, 12) + '…' : label;
+                      }
+                    }
+                  }
+                }
+              },
+              plugins: [ChartDataLabels]
+            };
+
+            new Chart(salesCtx, salesConfig);
+          </script>
+            <% } else { %>
+              <div class="text-center text-muted fw-bold mt-3">
+                No sales data for <%= salesMonth %> <%= selectedSalesYear %>.
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mt-1 mb-3">
+        <div class="col-md-4 d-flex">
+          <div class="card text-center shadow-lg border-0 flex-fill">
+            <div class="card-body d-flex flex-column justify-content-center">
+              <div class="d-flex align-items-center justify-content-center mb-2">
+                <i class="bi bi-graph-up-arrow fs-3 text-info me-2"></i>
+                <h5 class="card-title mb-0">Investment Cost Total</h5>
+              </div>
+              <h2 class="fw-bold text-info">₱ <%= investmentCostTotal.toLocaleString() %></h2>
+              <p class="text-muted mb-0">Overall initial investment</p>
+            </div>
+          </div>
+        </div>
+
+      <div class="col-md-4">
+        <div class="card shadow-lg text-center p-4 rounded text-white kpi-card" 
+            style="background: linear-gradient(135deg, #b02a37, #e4606d);">
+          <div class="mb-2">
+            <i class="bi bi-exclamation-triangle-fill fs-2"></i>
+          </div>
+          <h5>Total Damages</h5>
+          <h3 class="fw-bold">₱<%= totalLostIncome ? totalLostIncome.toFixed(2) : "0.00" %></h3>
+          <p class="mb-0 small">Most Wasted: <%= mostWasted || "-" %></p>
+        </div>
+      </div>
+
+        <div class="col-md-4 d-flex">
+          <div class="card text-center shadow-lg border-0 flex-fill">
+            <div class="card-body d-flex flex-column justify-content-center">
+              <div class="d-flex align-items-center justify-content-center mb-2">
+                <i class="bi bi-clipboard-data fs-3 text-secondary me-2"></i>
+                <h5 class="card-title mb-0">Summary of Reviews</h5>
+              </div>
+              <h2 class="fw-bold text-secondary"><%= reviewKpi.totalReviews %></h2>
+              <p class="text-muted mb-0">
+                Avg Rating: <strong><%= reviewKpi.avgRating %></strong> / 5 |
+                Top Product: <strong><%= reviewKpi.topRatedProducts.length > 0 ? reviewKpi.topRatedProducts[0].name : "N/A" %></strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
      <div class="row g-3 mt-3">
         <div class="col-md-4 d-flex">
@@ -614,24 +810,9 @@
       </div>
     </div>
 
-    <div class="card mt-4 shadow-lg border-0 trend-card">
-      <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between">
-        <h5 class="mb-0 fw-bold text-primary d-flex align-items-center">
-          <i class="bi bi-graph-up-arrow me-2"></i> Sales Trend (Last 6 Months)
-        </h5>
-        <span class="badge bg-gradient px-3 py-2">
-          <i class="bi bi-check-circle me-1"></i> Updated
-        </span>
-      </div>
-      <div class="card-body p-4" style="height:420px;">
-        <canvas id="salesTrendChart"></canvas>
-      </div>
-    </div>
-
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-
   <script>
     const usersBreakdown = <%- JSON.stringify(usersBreakdown) %>;
     const ordersBreakdown = <%- JSON.stringify(ordersBreakdown) %>;

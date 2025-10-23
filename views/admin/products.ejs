@@ -6,85 +6,20 @@
   <title>Admin Dashboard | Zero Degree Café</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    .sidebar {
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 250px;
-      background: linear-gradient(145deg, #1d3c5a, #3a5f7d); 
-      color: white;
-      padding-top: 30px;
-      overflow-y: auto;
-      box-shadow: 4px 0px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .sidebar h3 {
-      text-align: center;
-      font-size: 30px;
-      font-weight: bold;
-      margin-bottom: 30px;
-    }
-
-    .sidebar a {
-      color: white;
-      text-decoration: none;
-      padding: 12px 18px;
-      display: block;
-      border-radius: 25px;
-      font-size: 16px;
-      margin: 10px 0;
-      transition: all 0.3s ease;
-    }
-
-    .sidebar a:hover {
-      background-color: #f1f1f1;
-      color: #1d3c5a;
-      transform: translateX(10px);
-    }
-    
-    .sidebar a.active {
-      background-color: #3a5f7d;
-      color: white;
-    }
-    .sidebar .logout {
-      position: absolute;
-      bottom: 20px;
-      width: 100%;
-      text-align: center;
-    }
-    .content {
-      margin-left: 270px;
-      padding: 20px;
-    }
-    .sidebar a.active {
-      background-color: #3a5f7d;
-    }
-    h2 {
-      margin-bottom: 30px;
-      color: #1d3c5a;
-      margin-bottom: 25px;
-    }
-    .product-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 1.5rem;
-    }
-
-    .product-grid .card {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .product-grid .card-img-top {
-      height: 180px;
-      object-fit: cover;
-      border-radius: 10px;
-    }
+    .sidebar { height: 100vh; position: fixed; top: 0; left: 0; width: 250px; background: linear-gradient(145deg, #1d3c5a, #3a5f7d); color: white; padding-top: 30px; overflow-y: auto; box-shadow: 4px 0px 10px rgba(0,0,0,0.1); }
+    .sidebar h3 { text-align: center; font-size: 30px; font-weight: bold; margin-bottom: 30px; }
+    .sidebar a { color:white; text-decoration:none; padding:12px 18px; display:block; border-radius:25px; font-size:16px; margin:10px 0; transition:all 0.3s ease; }
+    .sidebar a:hover { background-color:#f1f1f1; color:#1d3c5a; transform:translateX(10px); }
+    .sidebar a.active { background-color:#3a5f7d; color:white; }
+    .sidebar .logout { position:absolute; bottom:20px; width:100%; text-align:center; }
+    .content { margin-left:270px; padding:20px; }
+    h2 { margin-bottom:25px; color:#1d3c5a; }
+    #searchInput, #categoryFilter { border-radius:25px; border:2px solid #3a5f7d; padding:10px 15px; font-size:15px; transition:0.3s; box-shadow: inset 0 0 5px rgba(0,0,0,0.1); }
+    #searchInput:focus, #categoryFilter:focus { border-color:#28a745; box-shadow:0 0 8px rgba(40,167,69,0.3); }
+    .table thead { background-color: #3a5f7d; color:white; }
+    .table tbody tr:hover { background-color:#f9fbff; }
+    .no-product-msg { display:none; color:#999; font-weight:bold; text-align:center; margin-top:20px; }
   </style>
 </head>
 <body>
@@ -92,7 +27,7 @@
     <div class="d-flex justify-content-center mb-3">
       <img src="/images/zicon.jpg" style="width: 75px;" class="rounded-circle" alt="">
     </div>
-    <h3 class="text-center text-white mb-4 fw-bold">Admin Panel</h3>
+    <h3>Admin Panel</h3>
     <a href="/admin/index"><i class="bi bi-house-door"></i> Dashboard</a>
     <a href="/admin/sales"><i class="bi bi-bar-chart"></i> Sales Overview</a>
     <a href="/admin/users"><i class="bi bi-person"></i> Users</a>
@@ -103,384 +38,229 @@
     <a href="/admin/spoilage"><i class="bi bi-trash"></i> Spoilage</a>
     <a href="/admin/reviews"><i class="bi bi-star"></i> Reviews</a>
     <div class="logout">
-      <a href="/logout" style="width: 150px;" class="btn btn-danger btn-sm mx-auto"><i class="bi bi-box-arrow-right"></i> Logout</a>
+      <a href="/logout" style="width:150px;" class="btn btn-danger btn-sm mx-auto"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
   </div>
 
   <div class="content">
-    <div class="d-flex justify-content-between align-items-center mb-4" style="border-bottom: 2px solid #3a5f7d; padding-bottom: 8px; margin-top: 10px;">
+    <div class="d-flex justify-content-between align-items-center mb-4" style="border-bottom:2px solid #3a5f7d; padding-bottom:8px;">
       <h2 class="fw-bold mb-0">Products Inventory</h2>
       <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">
         <i class="bi bi-plus-lg"></i> Add Product
       </button>
     </div>
-    <% if (products.length === 0) { %>
-      <div class="alert alert-warning text-center" role="alert">
-        No products to show.
-      </div>
-    <% } else { %>
-      <div class="product-grid">
-        <% products.slice(0, 25).forEach((product) => { %>
-          <div>
-            <div class="card h-100">
-              <a href="<%= product.productImage %>" target="_blank">
-                <img src="<%= product.productImage %>" alt="<%= product.productName %>" class="card-img-top">
-              </a>
-              <div class="card-body">
-                <h5 class="card-title text-center" 
-                    style="font-size: 1.1rem; font-weight: bold; color: #333;">
-                  <%= product.productName %>
-                </h5>
-                <p class="card-text text-center" style="font-size: 0.9rem; color: #555;">
-                  <span class="text-success fw-semibold">₱<%= product.price %></span><br>
-                  <span class="badge bg-primary"><%= product.category %></span>
-                </p>
 
-                <% if (product.stock > 0) { %>
-                  <p class="text-center fw-semibold">
-                    Stock: <span><%= product.stock %></span>
-                  </p>
-                <% } else { %>
-                  <p class="text-center fw-semibold text-danger">
-                    <i class="bi bi-x-circle"></i> No Stocks Left
-                  </p>
-                <% } %>
-              </div>
-              <div class="card-footer text-center" style="background-color: #f8f9fa;">
-                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editProductModal" 
-                  onclick='populateEditModal(<%= JSON.stringify(product) %>)' style="border-radius: 20px;">
-                  <i class="bi bi-pen"></i> Edit
-                </button>
-                <form action="/admin/products/delete/<%= product._id %>" method="POST" 
-                  onsubmit="return confirm('Are you sure you want to delete this product?')" style="display:inline;">
-                  <button type="submit" class="btn btn-danger btn-sm" style="border-radius: 20px;">
-                    <i class="bi bi-trash3"></i> Delete
-                  </button>
+    <div class="d-flex flex-wrap justify-content-center gap-3 mb-3">
+      <input type="text" id="searchInput" placeholder="Search product name..." class="form-control" style="max-width:350px;">
+      <select id="categoryFilter" class="form-select" style="max-width:250px;">
+        <option value="all">All Categories</option>
+        <option value="Coffee">Coffee</option>
+        <option value="Drinks">Drinks</option>
+        <option value="Snacks">Snacks</option>
+        <option value="Light Bites">Light Bites</option>
+        <option value="Desserts">Desserts</option>
+      </select>
+    </div>
+
+    <div id="noProductMsg" class="no-product-msg">
+      <i class="bi bi-exclamation-circle"></i> No product record found.
+    </div>
+
+    <div class="table-responsive mt-3">
+      <table class="table table-hover align-middle table-bordered shadow-sm">
+        <thead class="text-center">
+          <tr>
+            <th>#</th>
+            <th>Image</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>Stock</th>
+            <th>Investment Cost (₱)</th>
+            <th>Price (₱)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="productTableBody">
+          <% products.forEach((product, index) => { %>
+            <tr>
+              <td class="text-center fw-bold"><%= index + 1 %></td>
+              <td class="text-center">
+                <a href="<%= product.productImage %>" target="_blank">
+                  <img src="<%= product.productImage %>" style="width:70px;height:70px;object-fit:cover;" class="rounded">
+                </a>
+              </td>
+              <td><%= product.productName %></td>
+              <td class="text-center"><span class="badge bg-info text-dark"><%= product.category %></span></td>
+              <td class="text-center <%= product.stock > 0 ? 'text-success' : 'text-danger fw-bold' %>">
+                <%= product.stock > 0 ? product.stock : 'Out of Stock' %>
+              </td>
+              <td class="text-center">₱<%= product.investmentCost.toFixed(2) %></td>
+              <td class="text-center">₱<%= product.price.toFixed(2) %></td>
+              <td class="text-center">
+                <button class="btn btn-warning btn-sm me-1" data-bs-toggle="modal" data-bs-target="#editProductModal"
+                  onclick='populateEditModal(<%= JSON.stringify(product) %>)'><i class="bi bi-pencil-square"></i> Edit</button>
+                <form action="/admin/products/delete/<%= product._id %>" method="POST" style="display:inline;">
+                  <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Delete</button>
                 </form>
-                <button class="btn btn-outline-danger mt-3 btn-sm" data-bs-toggle="modal"
-                  data-bs-target="#reportDamageModal<%= product._id %>">
+                <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#reportDamageModal<%= product._id %>">
                   <i class="bi bi-exclamation-triangle"></i> Report Damage
                 </button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <% products.forEach(product => { %>
+    <div class="modal fade" id="reportDamageModal<%= product._id %>" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form class="report-damage-form" data-product-name="<%= product.productName %>" data-product-id="<%= product._id %>" method="POST" action="/admin/products/report-damage">
+          <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title">Report Damaged Stock for <%= product.productName %></h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" name="productId" value="<%= product._id %>">
+              <div class="alert alert-info"><strong>Current Total Stock:</strong> <%= product.stock %></div>
+              <div class="mb-3">
+                <label for="damagedQuantity<%= product._id %>" class="form-label">Damaged Quantity</label>
+                <input type="number" min="1" max="<%= product.stock %>" class="form-control" name="damaged" id="damagedQuantity<%= product._id %>" placeholder="Enter damaged quantity" required>
               </div>
             </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-danger w-100">Report Damage</button>
+            </div>
           </div>
-        <% }) %>
+        </form>
       </div>
-    <% } %>    
-  </div>
+    </div>
+  <% }) %>
 
-<% products.forEach(product => { %>
-  <div class="modal fade" id="reportDamageModal<%= product._id %>" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-      <form class="report-damage-form" data-product-name="<%= product.productName %>" data-product-id="<%= product._id %>" method="POST" action="/admin/products/report-damage">
-        <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title">Report Damaged Stock for <%= product.productName %></h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-content">
+        <form action="/admin/products/add" method="POST" enctype="multipart/form-data">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <input type="hidden" name="productId" value="<%= product._id %>">
-
-            <div class="alert alert-info">
-              <strong>Current Total Stock:</strong> <%= product.stock %>
-            </div>
-
-            <div class="mb-3">
-              <label for="damagedQuantity<%= product._id %>" class="form-label">Damaged Quantity</label>
-              <input type="number" min="1" max="<%= product.stock %>" class="form-control" name="damaged" id="damagedQuantity<%= product._id %>" placeholder="Enter damaged quantity" required>
-            </div>
+            <div class="mb-3"><label for="productName" class="form-label"><i class="bi bi-box"></i> Product Name</label>
+              <input type="text" class="form-control" id="productName" name="productName" maxlength="30" required></div>
+            <div class="mb-3"><label for="price" class="form-label"><i class="bi bi-currency-dollar"></i> Price</label>
+              <input type="number" class="form-control" id="price" name="price" min="1" max="9999" required></div>
+            <div class="mb-3"><label for="investmentCost" class="form-label"><i class="bi bi-coin"></i> Investment Cost</label>
+              <input type="number" class="form-control" id="investmentCost" name="investmentCost" min="0" max="9999" required></div>
+            <div class="mb-3"><label for="stock" class="form-label"><i class="bi bi-journal-text"></i> Stock</label>
+              <input type="number" class="form-control" id="stock" name="stock" min="1" max="100" required></div>
+            <div class="mb-3"><label for="productImage" class="form-label"><i class="bi bi-image"></i> Product Image</label>
+              <input type="file" class="form-control" id="productImage" name="productImage" accept="image/*" required></div>
+            <div class="mb-3"><label for="category" class="form-label"><i class="bi bi-tags"></i> Category</label>
+              <select class="form-select" id="category" name="category" required>
+                <option value="" disabled selected>Select a Category</option>
+                <option value="Coffee">Coffee</option>
+                <option value="Drinks">Drinks</option>
+                <option value="Snacks">Snacks</option>
+                <option value="Light Bites">Light Bites</option>
+                <option value="Desserts">Desserts</option>
+              </select></div>
           </div>
           <div class="modal-footer">
-            <button type="submit" class="btn btn-danger w-100">Report Damage</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Close</button>
+            <button type="submit" class="btn btn-success"><i class="bi bi-plus-circle"></i> Add Product</button>
           </div>
-        </div>
-      </form>
-    </div>
-  </div>
-<% }) %>
-
-<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      
-      <div class="modal-header">
-        <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </form>
       </div>
-
-      <form action="/admin/products/add" method="POST" enctype="multipart/form-data">
-        <div class="modal-body">
-
-          <div class="mb-3">
-            <label for="productName" class="form-label">
-              <i class="bi bi-box"></i> Product Name
-            </label>
-            <input type="text" class="form-control" id="productName" name="productName" maxlength="30" placeholder="Enter product name" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="price" class="form-label">
-              <i class="bi bi-currency-dollar"></i> Price
-            </label>
-            <input type="number" class="form-control" id="price" name="price" min="1" max="9999" placeholder="Enter product price" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="investmentCost" class="form-label">
-              <i class="bi bi-coin"></i> Investment Cost
-            </label>
-            <input type="number" class="form-control" id="investmentCost" name="investmentCost" min="0" max="9999" placeholder="Enter investment cost" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="stock" class="form-label">
-              <i class="bi bi-journal-text"></i> Stock
-            </label>
-            <input type="number" class="form-control" id="stock" name="stock" min="1" max="100" placeholder="Enter stock quantity" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="productImage" class="form-label">
-              <i class="bi bi-image"></i> Product Image
-            </label>
-            <input type="file" class="form-control" id="productImage" name="productImage" accept="image/*" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="category" class="form-label">
-              <i class="bi bi-tags"></i> Category
-            </label>
-            <select class="form-select" id="category" name="category" required>
-              <option value="" disabled selected>Select a Category</option>
-              <option value="Coffee">Coffee</option>
-              <option value="Drinks">Drinks</option>
-              <option value="Snacks">Snacks</option>
-              <option value="Light Bites">Light Bites</option>
-              <option value="Desserts">Desserts</option>
-            </select>
-          </div>
-
-        </div> 
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
-            <i class="bi bi-x-lg"></i> Close
-          </button>
-          <button type="submit" class="btn btn-success">
-            <i class="bi bi-plus-circle"></i> Add Product
-          </button>
-        </div>
-      </form>
-
     </div>
   </div>
-</div>
 
-<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form id="editProductForm" method="POST" enctype="multipart/form-data">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-
-        <div class="modal-body">
-          <input type="hidden" id="editProductId" name="productId">
-
-          <div class="mb-3">
-            <label for="editProductName" class="form-label">
-              <i class="bi bi-box"></i> Product Name
-            </label>
-            <input type="text" class="form-control" id="editProductName" name="productName" maxlength="30" required>
+  <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="editProductForm" method="POST" enctype="multipart/form-data">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
-
-          <div class="mb-3">
-            <label for="editPrice" class="form-label">
-              <i class="bi bi-currency-dollar"></i> Price
-            </label>
-            <input type="number" class="form-control" id="editPrice" name="price" min="1" max="9999" required>
+          <div class="modal-body">
+            <input type="hidden" id="editProductId" name="productId">
+            <div class="mb-3"><label for="editProductName" class="form-label"><i class="bi bi-box"></i> Product Name</label>
+              <input type="text" class="form-control" id="editProductName" name="productName" maxlength="30" required></div>
+            <div class="mb-3"><label for="editPrice" class="form-label"><i class="bi bi-currency-dollar"></i> Price</label>
+              <input type="number" class="form-control" id="editPrice" name="price" min="1" max="9999" required></div>
+            <div class="mb-3"><label for="editInvestmentCost" class="form-label"><i class="bi bi-coin"></i> Investment Cost</label>
+              <input type="number" class="form-control" id="editInvestmentCost" name="investmentCost" min="0" max="9999" required></div>
+            <div class="mb-3"><label for="editStock" class="form-label"><i class="bi bi-journal-text"></i> Stock</label>
+              <input type="number" class="form-control" id="editStock" name="stock" min="1" max="100" required></div>
+            <div class="mb-3"><label for="editProductImage" class="form-label"><i class="bi bi-image"></i> Product Image</label>
+              <input type="file" class="form-control" id="editProductImage" name="productImage" accept="image/*"></div>
+            <div class="text-center mb-3"><img id="currentProductImage" src="" alt="Current Product Image" class="img-fluid rounded" style="max-height:150px;"></div>
+            <div class="mb-3"><label for="editCategory" class="form-label"><i class="bi bi-tags"></i> Category</label>
+              <select class="form-select" id="editCategory" name="category" required>
+                <option value="Coffee">Coffee</option>
+                <option value="Drinks">Drinks</option>
+                <option value="Snacks">Snacks</option>
+                <option value="Light Bites">Light Bites</option>
+                <option value="Desserts">Desserts</option>
+              </select></div>
           </div>
-
-          <div class="mb-3">
-            <label for="editInvestmentCost" class="form-label">
-              <i class="bi bi-coin"></i> Investment Cost
-            </label>
-            <input type="number" class="form-control" id="editInvestmentCost" name="investmentCost" min="0" max="9999" required>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Changes</button>
           </div>
-
-          <div class="mb-3">
-            <label for="editStock" class="form-label">
-              <i class="bi bi-journal-text"></i> Stock
-            </label>
-            <input type="number" class="form-control" id="editStock" name="stock" min="1" max="100" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="editProductImage" class="form-label">
-              <i class="bi bi-image"></i> Product Image
-            </label>
-            <input type="file" class="form-control" id="editProductImage" name="productImage" accept="image/*">
-          </div>
-
-          <div class="text-center mb-3">
-            <img id="currentProductImage" src="" alt="Current Product Image" class="img-fluid rounded shadow-sm" style="max-height: 150px;">
-          </div>
-
-          <div class="mb-3">
-            <label for="editCategory" class="form-label">
-              <i class="bi bi-tags"></i> Category
-            </label>
-            <select class="form-select" id="editCategory" name="category" required>
-              <option value="Coffee">Coffee</option>
-              <option value="Drinks">Drinks</option>
-              <option value="Snacks">Snacks</option>
-              <option value="Light Bites">Light Bites</option>
-              <option value="Desserts">Desserts</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
-            <i class="bi bi-x-lg"></i> Cancel
-          </button>
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-save"></i> Save Changes
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   </div>
-</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<% if (success && success.length > 0) { %>
-<script>
-  Swal.fire({
-    icon: 'success',
-    title: 'Success',
-    text: '<%= success %>',
-    showConfirmButton: false,
-    timer: 2000
-  });
-</script>
-<% } %>
-
-<% if (error && error.length > 0) { %>
-<script>
-  Swal.fire({
-    icon: 'error',
-    title: 'Error',
-    text: '<%= error %>',
-    confirmButtonText: 'OK'
-  });
-</script>
-<% } %>
-
-<script>
-  document.querySelectorAll('.delete-product-form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      Swal.fire({
-        title: 'Are you sure?',
-        text: "This action cannot be undone!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          form.submit();
-        }
-      });
-    });
-  });
-</script>
-
-<script>
-  function populateEditModal(product) {
-    document.getElementById('editProductId').value = product._id;
-    document.getElementById('editProductName').value = product.productName;
-    document.getElementById('editPrice').value = product.price;
-    document.getElementById('editInvestmentCost').value = product.investmentCost || 0; 
-    document.getElementById('editStock').value = product.stock;
-    document.getElementById('editCategory').value = product.category;
-    document.getElementById('currentProductImage').src = product.productImage;
-    document.getElementById('editProductForm').action = `/admin/products/edit/${product._id}`;
-  }
-</script>
   <script>
-  document.querySelectorAll('.report-damage-form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const tableBody = document.getElementById('productTableBody');
+    const rows = tableBody.querySelectorAll('tr');
+    const noMsg = document.getElementById('noProductMsg');
 
-      const damagedInput = this.querySelector('input[name="damaged"]');
-      const damagedQty = parseInt(damagedInput.value);
-      const maxStock = parseInt(damagedInput.max);
-      const productName = this.dataset.productName;
+    function filterTable() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const selectedCategory = categoryFilter.value;
+      let visibleCount = 0;
+      let num = 1;
 
-      if (damagedQty <= 0 || damagedQty > maxStock) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Invalid Quantity',
-          text: `Please enter a damaged quantity between 1 and ${maxStock}.`
-        });
-        return;
-      }
+      rows.forEach(row => {
+        const name = row.cells[2].textContent.toLowerCase();
+        const category = row.cells[3].textContent.trim();
+        const matchesSearch = name.includes(searchTerm);
+        const matchesCategory = selectedCategory === 'all' || category === selectedCategory;
 
-      Swal.fire({
-        title: `Report ${damagedQty} damaged item(s) for "${productName}"?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, report it!',
-        cancelButtonText: 'Cancel'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.submit();
+        if (matchesSearch && matchesCategory) {
+          row.style.display = '';
+          row.cells[0].textContent = num++;
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
         }
       });
-    });
-  });
 
-</script>
+      noMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
 
-<% if (success && success.length > 0) { %>
-<script>
-  Swal.fire({
-    icon: 'success',
-    title: 'Success',
-    text: '<%= success %>',
-    showConfirmButton: false,
-    timer: 2000
-  });
-</script>
-<% } %>
+    searchInput.addEventListener('input', filterTable);
+    categoryFilter.addEventListener('change', filterTable);
 
-<% if (error && error.length > 0) { %>
-<script>
-  let errorMsg = '<%= error %>';
-
-  if (errorMsg.includes('exists') || errorMsg.includes('duplicate')) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Duplicate Product Name',
-      text: errorMsg,
-      confirmButtonColor: '#d33',
-      confirmButtonText: 'OK'
-    });
-  } else {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: errorMsg,
-      confirmButtonColor: '#d33',
-      confirmButtonText: 'OK'
-    });
-  }
-</script>
-<% } %>
+    function populateEditModal(product) {
+      document.getElementById('editProductId').value = product._id;
+      document.getElementById('editProductName').value = product.productName;
+      document.getElementById('editPrice').value = product.price;
+      document.getElementById('editInvestmentCost').value = product.investmentCost || 0;
+      document.getElementById('editStock').value = product.stock;
+      document.getElementById('editCategory').value = product.category;
+      document.getElementById('currentProductImage').src = product.productImage;
+      document.getElementById('editProductForm').action = `/admin/products/edit/${product._id}`;
+    }
+  </script>
 </body>
 </html>

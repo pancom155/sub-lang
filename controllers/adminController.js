@@ -257,17 +257,25 @@ const getMostBoughtProducts = async (limit = 5) => {
 exports.dashboard = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 3;
+    const limit = parseInt(req.query.limit) || 6;
     const skip = (page - 1) * limit;
     const now = new Date();
+
+    const searchQuery = req.query.search ? req.query.search.trim() : "";
+    const categoryFilter =
+      req.query.category && req.query.category !== "All"
+        ? req.query.category
+        : null;
 
     const selectedSalesMonth = parseInt(req.query.salesMonth) || now.getMonth() + 1;
     const selectedSalesYear = parseInt(req.query.salesYear) || now.getFullYear();
     const selectedOrdersMonth = parseInt(req.query.ordersMonth) || now.getMonth() + 1;
     const selectedOrdersYear = parseInt(req.query.ordersYear) || now.getFullYear();
 
-    const salesMonthName = new Date(selectedSalesYear, selectedSalesMonth - 1).toLocaleString("default", { month: "long" });
-    const ordersMonthName = new Date(selectedOrdersYear, selectedOrdersMonth - 1).toLocaleString("default", { month: "long" });
+    const salesMonthName = new Date(selectedSalesYear, selectedSalesMonth - 1)
+      .toLocaleString("default", { month: "long" });
+    const ordersMonthName = new Date(selectedOrdersYear, selectedOrdersMonth - 1)
+      .toLocaleString("default", { month: "long" });
 
     const [totalUsers, totalStaff, totalKitchenStaff] = await Promise.all([
       User.countDocuments(),
@@ -280,6 +288,7 @@ exports.dashboard = async (req, res) => {
       Order.countDocuments({ status: "Completed" }),
       Order.countDocuments({ status: "Cancelled" }),
     ]);
+
     const totalOrders = pendingOrdersCount + completedOrdersCount + cancelledOrdersCount;
 
     const allCompletedOrders = await CompletedOrder.find().populate("items.productId");
@@ -287,12 +296,16 @@ exports.dashboard = async (req, res) => {
     const totalSales = allCompletedOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
     const monthlySales = allCompletedOrders.reduce((sum, o) => {
-      const orderDate = new Date(o.createdAt);
-      if (orderDate.getMonth() + 1 === selectedSalesMonth && orderDate.getFullYear() === selectedSalesYear) {
-        return sum + (o.totalAmount || 0);
-      }
-      return sum;
+      const d = new Date(o.createdAt);
+      return d.getMonth() + 1 === selectedSalesMonth && d.getFullYear() === selectedSalesYear
+        ? sum + (o.totalAmount || 0)
+        : sum;
     }, 0);
+
+    const monthlyOrdersCount = allCompletedOrders.filter(o => {
+      const d = new Date(o.createdAt);
+      return d.getMonth() + 1 === selectedOrdersMonth && d.getFullYear() === selectedOrdersYear;
+    }).length;
 
     let totalProfit = 0;
     allCompletedOrders.forEach(order => {
@@ -304,57 +317,57 @@ exports.dashboard = async (req, res) => {
       });
     });
 
-    const products = await Product.find();
+    const query = {};
+    if (searchQuery) query.productName = { $regex: searchQuery, $options: "i" };
+    if (categoryFilter) query.category = categoryFilter;
 
-const monthlyOrders = allCompletedOrders.filter(o => {
-  const d = new Date(o.createdAt);
-  return d.getMonth() + 1 === selectedSalesMonth && d.getFullYear() === selectedSalesYear;
-});
+    const products = await Product.find(query);
+    const allProducts = await Product.find();
 
-const productProfitMap = {};
+    const investmentCostTotal = allProducts.reduce((sum, p) => sum + (p.investmentCost || 0), 0);
+    const totalSpoilage = allProducts.reduce((sum, p) => sum + (p.spoilageQty || 0), 0);
+    const totalLostIncome = allProducts.reduce((sum, p) => sum + (p.lostIncome || 0), 0);
+    const mostWasted = allProducts.reduce((prev, curr) => (curr.lostIncome > prev.lostIncome ? curr : prev), { lostIncome: 0 });
+    const damagesTotal = totalLostIncome || 0;
 
-monthlyOrders.forEach(order => {
-  order.items.forEach(item => {
-    const product = item.productId;
-    if (!product) return;
-    const pid = product._id.toString();
-    const productName = product.productName || product.name || "Unknown Product";
-    
-    const price = Number(item.price);
-    const cost = Number(product.investmentCost);
-    
-    if (isNaN(price) || isNaN(cost)) return; 
-    
-    const itemProfit = (price - cost) * item.quantity;
-    
-    if (!productProfitMap[pid]) {
-      productProfitMap[pid] = { name: productName, profit: 0 };
-    }
-    productProfitMap[pid].profit += itemProfit;
-  });
-});
+    const monthlyOrders = allCompletedOrders.filter(o => {
+      const d = new Date(o.createdAt);
+      return d.getMonth() + 1 === selectedSalesMonth && d.getFullYear() === selectedSalesYear;
+    });
 
-const productProfitData = Object.values(productProfitMap)
-  .filter(p => p.profit > 0) 
-  .map(p => ({ ...p, price: products.find(prod => (prod.productName || prod.name) === p.name)?.price || 0 }))
-  .sort((a, b) => b.profit - a.profit);
+    const productProfitMap = {};
+    monthlyOrders.forEach(order => {
+      order.items.forEach(item => {
+        const product = item.productId;
+        if (!product) return;
+        const pid = product._id.toString();
+        const productName = product.productName || "Unknown Product";
+        const price = Number(item.price);
+        const cost = Number(product.investmentCost);
+        if (isNaN(price) || isNaN(cost)) return;
+        const itemProfit = (price - cost) * item.quantity;
+        if (!productProfitMap[pid]) productProfitMap[pid] = { name: productName, profit: 0 };
+        productProfitMap[pid].profit += itemProfit;
+      });
+    });
 
-    const productStockChartData = products.map((p) => ({
-      name: p.productName || p.name,
-      stock: p.stock,
-    }));
+    const productProfitData = Object.values(productProfitMap)
+      .filter(p => p.profit > 0)
+      .sort((a, b) => b.profit - a.profit);
 
     let totalStocks = 0;
     let lowStockWarning = [];
-    products.forEach((p) => {
+    const productStockChartData = products.map(p => {
       totalStocks += p.stock;
-      if (p.stock < 20) lowStockWarning.push(p.productName || p.name);
+      if (p.stock < 20) lowStockWarning.push(p.productName);
+      return { name: p.productName, stock: p.stock };
     });
+
     const stockBreakdown = { total: totalStocks, products: productStockChartData };
 
     const productSalesMap = {};
-    allCompletedOrders.forEach((order) => {
-      order.items.forEach((item) => {
+    allCompletedOrders.forEach(order => {
+      order.items.forEach(item => {
         const pid = item.productId?._id?.toString();
         if (!pid) return;
         productSalesMap[pid] = (productSalesMap[pid] || 0) + item.quantity;
@@ -362,52 +375,58 @@ const productProfitData = Object.values(productProfitMap)
     });
 
     const mostBoughtProductsWithQty = products
-      .map((p) => ({
-        productName: p.productName || p.name,
+      .map(p => ({
+        productName: p.productName,
         productImage: p.productImage || "/images/default.jpg",
-        totalQuantity: productSalesMap[p._id.toString()] || 0,
+        totalQuantity: productSalesMap[p._id.toString()] || 0
       }))
       .filter(p => p.totalQuantity > 0)
       .sort((a, b) => b.totalQuantity - a.totalQuantity)
       .slice(0, 6);
 
+    const filteredOrders = allCompletedOrders.filter(order => {
+      const d = new Date(order.createdAt);
+      return d.getMonth() + 1 === selectedSalesMonth && d.getFullYear() === selectedSalesYear;
+    });
+
+    const productSalesData = {};
+    filteredOrders.forEach(order => {
+      order.items.forEach(item => {
+        const product = item.productId;
+        if (!product) return;
+        const pid = product._id.toString();
+        productSalesData[pid] = productSalesData[pid] || { name: product.productName, sales: 0 };
+        productSalesData[pid].sales += item.quantity;
+      });
+    });
+
+    const salesDataArray = Object.values(productSalesData).sort((a, b) => b.sales - a.sales);
+
     const productTrendData = [];
     for (let i = 5; i >= 0; i--) {
       const start = moment().subtract(i, "months").startOf("month").toDate();
       const end = moment().subtract(i, "months").endOf("month").toDate();
-      const monthOrders = allCompletedOrders.filter((o) => o.createdAt >= start && o.createdAt <= end);
+      const monthOrders = allCompletedOrders.filter(o => o.createdAt >= start && o.createdAt <= end);
       const monthlyTotal = monthOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-      productTrendData.push({ month: moment(start).format("MMM YYYY"), sales: monthlyTotal });
+      productTrendData.push({
+        month: moment(start).format("MMM YYYY"),
+        sales: monthlyTotal
+      });
     }
 
-    const monthlyOrdersCount = allCompletedOrders.filter((o) => {
-      const orderDate = new Date(o.createdAt);
-      return orderDate.getMonth() + 1 === selectedOrdersMonth && orderDate.getFullYear() === selectedOrdersYear;
-    }).length;
-
-    const startOfDay = moment().startOf("day").toDate();
-    const endOfDay = moment().endOf("day").toDate();
-    const todaysOrders = allCompletedOrders.filter(o => new Date(o.createdAt) >= startOfDay && new Date(o.createdAt) <= endOfDay);
-
-    const allDailyOrders = todaysOrders.map((order) => {
-      const productMap = {};
-      order.items.forEach((item) => {
-        const productName = item.productId?.productName || item.productId?.name || "Unknown Product";
-        productMap[productName] = (productMap[productName] || 0) + item.quantity;
+    const monthlySalesTrend = [];
+    for (let m = 0; m < 12; m++) {
+      const monthOrders = allCompletedOrders.filter(o => {
+        const d = new Date(o.createdAt);
+        return d.getMonth() === m && d.getFullYear() === selectedSalesYear;
       });
-      const productList = Object.entries(productMap).map(([name, qty]) => `${name} (x${qty})`).join(", ");
-      return {
-        orderId: order._id.toString(),
-        status: order.status || "Completed",
-        productList,
-        totalAmount: order.totalAmount || 0,
-        image: order.items[0]?.productId?.productImage || "/images/default.jpg",
-      };
-    });
+      const monthTotal = monthOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+      monthlySalesTrend.push(monthTotal);
+    }
 
     const reviews = await Review.find().populate("productId");
     const totalReviews = reviews.length;
-    const avgRating = reviews.length ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(2) : 0;
+    const avgRating = totalReviews ? (reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(2) : 0;
 
     const productRatingsMap = {};
     reviews.forEach(r => {
@@ -423,13 +442,43 @@ const productProfitData = Object.values(productProfitMap)
       .sort((a, b) => b.avg - a.avg)
       .slice(0, 5);
 
+    const startOfDay = moment().startOf("day").toDate();
+    const endOfDay = moment().endOf("day").toDate();
+
+    const todaysOrders = allCompletedOrders.filter(o => o.createdAt >= startOfDay && o.createdAt <= endOfDay);
+    const allDailyOrders = todaysOrders.map(order => {
+      const productMap = {};
+      order.items.forEach(item => {
+        const productName = item.productId?.productName || "Unknown Product";
+        productMap[productName] = (productMap[productName] || 0) + item.quantity;
+      });
+      const productList = Object.entries(productMap)
+        .map(([name, qty]) => `${name} (x${qty})`)
+        .join(", ");
+      return {
+        orderId: order._id.toString(),
+        status: order.status || "Completed",
+        productList,
+        totalAmount: order.totalAmount || 0,
+        image: order.items[0]?.productId?.productImage || "/images/default.jpg",
+      };
+    });
+
     const paginatedDailyOrders = allDailyOrders.slice(skip, skip + limit);
     const totalDailyOrders = allDailyOrders.length;
     const totalPages = Math.ceil(totalDailyOrders / limit);
 
+    const noProducts = products.length === 0;
+
     res.render("admin/index", {
       totalProfit,
-      productProfitData, // ✅ added product profit chart data
+      investmentCostTotal,
+      damagesTotal,
+      totalSpoilage,
+      totalLostIncome,
+      mostWasted: mostWasted.productName || "-",
+      monthlyOrdersCount,
+      productProfitData,
       salesMonth: salesMonthName,
       salesYear: selectedSalesYear,
       selectedSalesMonth,
@@ -440,11 +489,9 @@ const productProfitData = Object.values(productProfitMap)
       selectedOrdersYear,
       totalSales,
       monthlySales,
-      productTrendData,
-      monthlyOrdersCount,
-      currentPage: page,
-      totalPages,
-      limit,
+      productSalesData: salesDataArray,
+      monthlySalesTrend,
+      productTrendData,  
       totalUsers,
       totalStaff,
       totalKitchenStaff,
@@ -454,12 +501,18 @@ const productProfitData = Object.values(productProfitMap)
       usersBreakdown: { total: totalUsers, user: totalUsers, staff: totalStaff, kitchen: totalKitchenStaff },
       ordersBreakdown: { pending: pendingOrdersCount, completed: completedOrdersCount, cancelled: cancelledOrdersCount },
       stockBreakdown,
-      products: products.map(p => ({ ...p.toObject(), productImage: p.productImage || '/images/default.jpg' })),
-      lowStockWarning,
-      productStockChartData,
+      products: products.map(p => ({ ...p.toObject(), productImage: p.productImage || "/images/default.jpg" })),
       mostBoughtProducts: mostBoughtProductsWithQty,
       dailyOrders: paginatedDailyOrders,
+      currentPage: page,
+      totalPages,
+      limit,
+      lowStockWarning,
+      productStockChartData,
       successMessage: res.locals.successMessage || null,
+      searchQuery,
+      categoryFilter,
+      noProducts
     });
 
   } catch (error) {
