@@ -34,4 +34,7 @@ router.post('/forgot-password/request', authController.requestPasswordReset);
 router.post('/forgot-password/verify', authController.verifyResetOtp);
 router.post('/forgot-password/reset', authController.resetPassword);
 
+router.get('/api/product-stock/:id', authController.getProductStock);
+router.get('/loyalty', authController.viewLoyalty);
+
 module.exports = router;

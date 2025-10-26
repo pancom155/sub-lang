@@ -13,6 +13,7 @@ const ejs = require('ejs');
 const path = require('path');
 const fs = require('fs');
 const ExcelJS = require('exceljs');
+const DamageLog = require('../models/DamageLog');
 
 let puppeteer;
 let chromium;
@@ -424,7 +425,13 @@ exports.dashboard = async (req, res) => {
       monthlySalesTrend.push(monthTotal);
     }
 
-    const reviews = await Review.find().populate("productId");
+    // ✅ Include user + product data for reviews
+    const reviews = await Review.find()
+      .populate('userId', 'firstName lastName')
+      .populate('productId', 'productName productImage')
+      .sort({ createdAt: -1 })
+      .limit(10);
+
     const totalReviews = reviews.length;
     const avgRating = totalReviews ? (reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(2) : 0;
 
@@ -491,13 +498,14 @@ exports.dashboard = async (req, res) => {
       monthlySales,
       productSalesData: salesDataArray,
       monthlySalesTrend,
-      productTrendData,  
+      productTrendData,
       totalUsers,
       totalStaff,
       totalKitchenStaff,
       totalOrders,
       totalStocks,
       reviewKpi: { totalReviews, avgRating, topRatedProducts },
+      reviews, // ✅ Added reviews array for your EJS block
       usersBreakdown: { total: totalUsers, user: totalUsers, staff: totalStaff, kitchen: totalKitchenStaff },
       ordersBreakdown: { pending: pendingOrdersCount, completed: completedOrdersCount, cancelled: cancelledOrdersCount },
       stockBreakdown,
@@ -715,38 +723,85 @@ exports.getUsers = async (req, res) => {
 exports.getProducts = async (req, res) => {
   try {
     const products = await Product.find();
-    const prepared = products.map(p => ({ ...p.toObject ? p.toObject() : p, productImage: resolveImageUrl(req, p.productImage) }));
-    res.render('admin/products', {
-      products: prepared,
-      successMessage: res.locals.successMessage,
+    let expiredFound = false;
+
+    for (const product of products) {
+      const today = new Date();
+      const validBatches = [];
+      let expiredQty = 0;
+      let expiredLoss = 0;
+
+      // Separate expired from valid batches
+      for (const batch of product.batches || []) {
+        if (new Date(batch.expirationDate) < today) {
+          expiredQty += batch.quantity || 0;
+          expiredLoss += (batch.quantity || 0) * (product.price || 0);
+          expiredFound = true;
+        } else {
+          validBatches.push(batch);
+        }
+      }
+
+      // Update spoilage and remove expired batches
+      if (expiredQty > 0) {
+        product.spoilageQty = (product.spoilageQty || 0) + expiredQty;
+        product.lostIncome = (product.lostIncome || 0) + expiredLoss;
+        product.batches = validBatches;
+        product.stock = validBatches.reduce((sum, b) => sum + (b.quantity || 0), 0);
+        await product.save();
+      }
+    }
+
+    // If any expired products were found, redirect to Spoilage page
+    if (expiredFound) {
+      console.log("Redirecting due to expired products...");
+      return res.redirect("/admin/spoilage");
+    }
+
+    // If none expired, continue normal flow
+    res.render("admin/products", {
+      title: "Product Inventory",
+      products
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server Error');
+  } catch (error) {
+    console.error("Error loading products:", error);
+    res.status(500).render("error", { error: "Failed to load product inventory." });
   }
 };
 
 exports.createProduct = async (req, res) => {
-  const { productName, price, stock, category, investmentCost } = req.body;
+  const { productName, price, stock, category, investmentCost, expirationDate } = req.body;
+
   try {
     if (!req.file) {
       req.flash('error', 'Product image is required');
       return res.redirect('/admin/products');
     }
 
-    const existingProduct = await Product.findOne({ productName: { $regex: new RegExp(`^${productName}$`, 'i') } });
+    const existingProduct = await Product.findOne({
+      productName: { $regex: new RegExp(`^${productName}$`, 'i') },
+    });
+
     if (existingProduct) {
-      req.flash('error', 'Product name already exists. Please use a different name.');
+      req.flash('error', 'Product name already exists.');
       return res.redirect('/admin/products');
     }
 
     const newProduct = new Product({
       productName,
       price,
-      stock,
       category,
       investmentCost,
       productImage: `/uploads/${req.file.filename}`,
+      oldStock: stock ? parseInt(stock) : 0,
+      stockBatches: expirationDate
+        ? [
+            {
+              quantity: parseInt(stock) || 0,
+              expirationDate: new Date(expirationDate),
+            },
+          ]
+        : [],
       reviews: [],
     });
 
@@ -760,59 +815,112 @@ exports.createProduct = async (req, res) => {
   }
 };
 
+// ✅ Get Edit Product Form
 exports.editProductForm = async (req, res) => {
   const { id } = req.params;
   try {
     const product = await Product.findById(id);
     if (!product) return res.status(404).send('Product not found');
-    res.render('admin/editProduct', { product });
+
+    const now = new Date();
+    const activeBatches = product.stockBatches.filter(batch => batch.expirationDate > now);
+    const expiredBatches = product.stockBatches.filter(batch => batch.expirationDate <= now);
+
+    res.render('admin/editProduct', {
+      product,
+      oldStock: product.oldStock,
+      activeBatches,
+      expiredBatches,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 };
 
+// ✅ Edit Product (update fields, add stock batch if provided)
 exports.editProduct = async (req, res) => {
   try {
-    const { productName, price, stock, category, investmentCost } = req.body;
     const { id } = req.params;
-    const product = await Product.findById(id);
+    const { productName, price, investmentCost, stock, expirationDate, category } = req.body;
 
+    const product = await Product.findById(id);
+    if (!product) return res.status(404).send('Product not found');
+
+    // Update basic info
+    product.productName = productName;
+    product.price = price;
+    product.investmentCost = investmentCost;
+    product.category = category;
+
+    // Replace image if new one is uploaded
+    if (req.file) {
+      if (product.productImage && fs.existsSync(path.join(__dirname, '../public', product.productImage))) {
+        fs.unlinkSync(path.join(__dirname, '../public', product.productImage));
+      }
+      product.productImage = '/uploads/' + req.file.filename;
+    }
+
+    // ✅ Add new stock batch if provided
+    if (stock && expirationDate) {
+      const newBatch = {
+        quantity: parseInt(stock),
+        expirationDate: new Date(expirationDate)
+      };
+      if (!product.stockBatches) product.stockBatches = [];
+      product.stockBatches.push(newBatch);
+    }
+
+    // ✅ Recalculate total stock (old + non-expired batches)
+    const now = new Date();
+    const validBatches = product.stockBatches.filter(b => b.expirationDate > now);
+    const batchTotal = validBatches.reduce((sum, b) => sum + (b.quantity || 0), 0);
+    product.stock = (product.oldStock || 0) + batchTotal;
+
+    await product.save();
+    req.flash('success', 'Product updated successfully.');
+    res.redirect('/admin/products');
+  } catch (error) {
+    console.error('Error updating product:', error);
+    req.flash('error', 'Failed to update product.');
+    res.redirect('/admin/products');
+  }
+};
+
+// ✅ Add New Expiration Batch Only
+exports.addExpiration = async (req, res) => {
+  const { quantity, expirationDate } = req.body;
+  const { id } = req.params;
+
+  try {
+    const product = await Product.findById(id);
     if (!product) {
       req.flash('error', 'Product not found');
       return res.redirect('/admin/products');
     }
 
-    const duplicate = await Product.findOne({
-      _id: { $ne: id },
-      productName: { $regex: new RegExp(`^${productName}$`, 'i') },
+    product.stockBatches.push({
+      quantity: parseInt(quantity),
+      expirationDate: new Date(expirationDate),
     });
 
-    if (duplicate) {
-      req.flash('error', 'Product name already exists. Please use a different name.');
-      return res.redirect('/admin/products');
-    }
-
-    product.productName = productName || product.productName;
-    product.price = price || product.price;
-    product.stock = stock || product.stock;
-    product.category = category || product.category;
-    product.investmentCost = investmentCost || product.investmentCost;
-
-    if (req.file) {
-      product.productImage = `/uploads/${req.file.filename}`;
-    }
+    // ✅ Update total stock
+    const now = new Date();
+    const validBatches = product.stockBatches.filter(b => b.expirationDate > now);
+    const batchTotal = validBatches.reduce((sum, b) => sum + (b.quantity || 0), 0);
+    product.stock = (product.oldStock || 0) + batchTotal;
 
     await product.save();
-    req.flash('success', 'Product updated successfully!');
+    req.flash('success', 'New stock batch with expiration added!');
     res.redirect('/admin/products');
   } catch (err) {
     console.error(err);
-    req.flash('error', 'Error updating product');
+    req.flash('error', 'Error adding new stock batch');
     res.redirect('/admin/products');
   }
 };
 
+// ✅ Delete Product
 exports.deleteProduct = async (req, res) => {
   const { id } = req.params;
   try {
@@ -821,6 +929,11 @@ exports.deleteProduct = async (req, res) => {
       req.flash('error', 'Product not found');
       return res.redirect('/admin/products');
     }
+
+    if (product.productImage && fs.existsSync(path.join(__dirname, '../public', product.productImage))) {
+      fs.unlinkSync(path.join(__dirname, '../public', product.productImage));
+    }
+
     req.flash('success', 'Product deleted successfully!');
     res.redirect('/admin/products');
   } catch (err) {

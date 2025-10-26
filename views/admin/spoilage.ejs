@@ -29,6 +29,7 @@
     .card-custom { border-radius: 18px; border: none; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
     .lost-income-header { font-size: 1.2rem; font-weight: 600; color: #b02a37; }
     .lost-income-total { font-size: 1.3rem; font-weight: bold; color: #dc3545; }
+    pre.debug { max-height: 200px; overflow: auto; background: #f7f7f7; padding: 10px; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -53,23 +54,31 @@
 
   <div class="content">
     <div class="container">
+
+      <!-- Warning / Error message if controller passed one -->
+      <% if (typeof errorMessage !== 'undefined') { %>
+        <div class="alert alert-warning text-center mb-3">
+          <%= errorMessage %>
+        </div>
+      <% } %>
+
       <div class="row mb-4 justify-content-center">
         <div class="col-md-3">
           <div class="card card-custom text-center p-3">
             <h6 class="text-muted">Total Lost Income</h6>
-            <h4 class="fw-bold text-danger">₱<%= kpis.totalLostIncome.toFixed(2) %></h4>
+            <h4 class="fw-bold text-danger">₱<%= Number((kpis && kpis.totalLostIncome) || 0).toFixed(2) %></h4>
           </div>
         </div>
         <div class="col-md-3">
           <div class="card card-custom text-center p-3">
             <h6 class="text-muted">Most Wasted Product</h6>
-            <h5 class="fw-bold text-secondary"><%= kpis.mostWasted %></h5>
+            <h5 class="fw-bold text-secondary"><%= (kpis && kpis.mostWasted) || '-' %></h5>
           </div>
         </div>
         <div class="col-md-3">
           <div class="card card-custom text-center p-3">
             <h6 class="text-muted">% of Sales Lost</h6>
-            <h4 class="fw-bold text-warning"><%= kpis.salesLostPercent %>%</h4>
+            <h4 class="fw-bold text-warning"><%= Number((kpis && kpis.salesLostPercent) || 0).toFixed(1) %>%</h4>
           </div>
         </div>
       </div>
@@ -79,14 +88,17 @@
           <div class="card card-custom p-3">
             <h6 class="lost-income-header mb-3 text-center">Lost Income by Product</h6>
             <ul class="list-unstyled small" style="max-height: 250px; overflow-y: auto;">
-              <% products.sort((a, b) => (b.lostIncome || 0) - (a.lostIncome || 0)).forEach(p => { %>
+              <% (products || []).sort((a, b) => (Number(b.lostIncome || 0) - Number(a.lostIncome || 0))).forEach(p => { %>
                 <li>
-                  <%= p.productName %>: 
-                  <span class="fw-bold text-danger">₱<%= (p.lostIncome || 0).toFixed(2) %></span>
+                  <%= (p.productName || p.name || p.title || 'Unnamed Product') %>:
+                  <span class="fw-bold text-danger">₱<%= Number(p.lostIncome || 0).toFixed(2) %></span>
                 </li>
               <% }) %>
+              <% if (!products || products.length === 0) { %>
+                <li class="text-muted">No products to display.</li>
+              <% } %>
             </ul>
-            <div class="lost-income-total text-center mt-3">Total: ₱<%= kpis.totalLostIncome.toFixed(2) %></div>
+            <div class="lost-income-total text-center mt-3">Total: ₱<%= Number((kpis && kpis.totalLostIncome) || 0).toFixed(2) %></div>
           </div>
         </div>
 
@@ -107,44 +119,71 @@
         <canvas id="categoryBreakdownChart" style="max-height: 300px;"></canvas>
       </div>
 
+      <!-- Optional debug section (visible when `debugPayload` is passed) -->
+      <% if (typeof debugPayload !== 'undefined' && debugPayload) { %>
+        <div class="mt-4">
+          <h6>Debug Payload (server side)</h6>
+          <pre class="debug"><%= JSON.stringify({ products: products || [], kpis: kpis || {} }, null, 2) %></pre>
+        </div>
+      <% } %>
+
     </div>
   </div>
 
   <script>
-    const products = <%- JSON.stringify(products) %>;
-    const categoryTotals = <%- JSON.stringify(kpis.categoryTotals) %>;
+    // safe injection
+    const products = <%- JSON.stringify(products || []) %>;
+    const categoryTotals = <%- JSON.stringify((kpis && kpis.categoryTotals) || {}) %>;
 
-    const ctxDonut = document.getElementById('lostIncomeDonutChart').getContext('2d');
-    new Chart(ctxDonut, {
-      type: 'doughnut',
-      data: {
-        labels: products.map(p => p.productName),
-        datasets: [{
-          data: products.map(p => p.lostIncome || 0),
-          backgroundColor: ['#dc3545','#e4606d','#ee848a','#f5a2a8','#fabcc2','#fcd8d9','#ffebee'],
-          borderColor: '#fff',
-          borderWidth: 2,
-        }]
-      },
-      options: {
-        plugins: {
-          legend: { position: 'bottom' },
-          tooltip: { callbacks: { label: ctx => `₱${(ctx.parsed || 0).toFixed(2)}` } }
+    // DONUT: Lost Income Distribution
+    const ctxDonut = document.getElementById('lostIncomeDonutChart')?.getContext('2d');
+    if (ctxDonut) {
+      new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+          labels: products.map(p => (p.productName || p.name || p.title || 'Unnamed')),
+          datasets: [{
+            data: products.map(p => Number(p.lostIncome || 0)),
+            backgroundColor: ['#dc3545','#e4606d','#ee848a','#f5a2a8','#fabcc2','#fcd8d9','#ffebee'],
+            borderColor: '#fff',
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const v = context.parsed || 0;
+                  return '₱' + Number(v).toFixed(2);
+                }
+              }
+            }
+          }
         }
-      }
-    });
+      });
+    }
 
-    const ctxCategory = document.getElementById('categoryBreakdownChart').getContext('2d');
-    new Chart(ctxCategory, {
-      type: 'pie',
-      data: {
-        labels: Object.keys(categoryTotals),
-        datasets: [{
-          data: Object.values(categoryTotals),
-          backgroundColor: ['#f94144','#f3722c','#f9c74f','#90be6d','#577590'],
-        }]
-      }
-    });
+    // PIE: Category breakdown
+    const ctxCategory = document.getElementById('categoryBreakdownChart')?.getContext('2d');
+    if (ctxCategory) {
+      new Chart(ctxCategory, {
+        type: 'pie',
+        data: {
+          labels: Object.keys(categoryTotals),
+          datasets: [{
+            data: Object.values(categoryTotals).map(v => Number(v || 0)),
+            backgroundColor: ['#f94144','#f3722c','#f9c74f','#90be6d','#577590'],
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    }
   </script>
 </body>
 </html>

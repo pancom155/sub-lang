@@ -225,7 +225,18 @@
                     <% }) %>
                   </ul>
                 </td>
-                <td>₱<%= order.totalAmount.toFixed(2) %></td>
+                <td>
+                  <% if (order.finalAmount < order.totalAmount) { %>
+                    <span class="text-decoration-line-through text-danger me-2">
+                      ₱<%= order.totalAmount.toFixed(2) %>
+                    </span>
+                    <span class="fw-bold text-success">
+                      ₱<%= order.finalAmount.toFixed(2) %>
+                    </span>
+                  <% } else { %>
+                    ₱<%= order.totalAmount.toFixed(2) %>
+                  <% } %>
+                </td>
                 <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
                 <td><span class="badge bg-success">Completed</span></td>
               </tr>

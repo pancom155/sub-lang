@@ -51,6 +51,14 @@
         <p class="mb-1"><strong>Email:</strong> <%= order.userInfoSnapshot.email %></p>
         <p class="mb-1"><strong>Phone:</strong> <%= order.userInfoSnapshot.phone %></p>
         <p class="mb-0"><strong>Address:</strong> <%= order.userInfoSnapshot.address %></p>
+        <p><strong>Placed On:</strong> 
+          <%= new Date(order.createdAt).toLocaleString('en-PH', { 
+            timeZone: 'Asia/Manila',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }) %>
+        </p>
       </div>
 
       <div class="text-start" data-aos="fade-up" data-aos-delay="400">

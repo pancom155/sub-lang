@@ -209,12 +209,32 @@
                   <div class="col-md-6">
                     <h5><%= item.product_id.productName %></h5>
                     <p>₱<%= item.product_id.price.toFixed(2) %></p>
-                    <form action="/cart/update" method="POST" class="d-inline" data-stock="<%= item.product_id.stock %>">
-                      <input type="hidden" name="cartItemId" value="<%= item._id %>">
-                      <button type="submit" name="quantity" value="<%= item.quantity - 1 %>" class="btn btn-sm btn-primary" <%= item.quantity <=1 ? 'disabled' : '' %>>-</button>
-                      <span class="mx-2"><%= item.quantity %></span>
-                      <button type="submit" name="quantity" value="<%= item.quantity + 1 %>" class="btn btn-sm btn-primary">+</button>
-                    </form>
+                  <form action="/cart/update" method="POST" class="d-inline" data-stock="<%= item.product_id.stock || 0 %>">
+                    <input type="hidden" name="cartItemId" value="<%= item._id %>">
+                    <input type="hidden" name="productId" value="<%= item.product_id._id %>">
+
+                    <!-- Minus -->
+                    <button 
+                      type="submit" 
+                      name="quantity" 
+                      value="<%= item.quantity - 1 %>" 
+                      class="btn btn-sm btn-primary" 
+                      <%= item.quantity <= 1 ? 'disabled' : '' %>>
+                      -
+                    </button>
+
+                    <span class="mx-2"><%= item.quantity %></span>
+
+                    <!-- Plus -->
+                    <button 
+                      type="submit" 
+                      name="quantity" 
+                      value="<%= item.quantity + 1 %>" 
+                      class="btn btn-sm btn-primary" 
+                      <%= item.quantity >= item.product_id.stock ? 'disabled' : '' %>>
+                      +
+                    </button>
+                  </form>
                   </div>
                   <div class="col-md-3 text-end">
                     <form action="/cart/remove" method="POST">
@@ -258,33 +278,54 @@
 </body>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-  // Select all "increase quantity" buttons
-  const plusButtons = document.querySelectorAll('form button[value]');
+function updateQuantity(productId, change, stock) {
+  const quantityEl = document.getElementById(`quantity-${productId}`);
+  let currentQuantity = parseInt(quantityEl.textContent);
 
-  plusButtons.forEach(button => {
-    button.addEventListener('click', event => {
-      const form = event.target.closest('form');
-      const currentQuantityText = form.querySelector('span.mx-2').textContent.trim();
-      const currentQuantity = parseInt(currentQuantityText, 10);
+  // Calculate new quantity
+  const newQuantity = currentQuantity + change;
 
-      // Get max stock from a data attribute passed from the server
-      const stock = parseInt(form.dataset.stock, 10);
+  // Prevent less than 1
+  if (newQuantity < 1) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Minimum Reached',
+      text: 'You must have at least 1 item.',
+    });
+    return;
+  }
 
-      // The button's new quantity value
-      const newQuantity = parseInt(event.target.value, 10);
+  // Prevent exceeding stock
+  if (newQuantity > stock) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Stock Limit Reached',
+      text: `Only ${stock} items available.`,
+    });
+    return;
+  }
 
-      if (newQuantity > stock) {
-        event.preventDefault(); // stop form submit
+  // Send update request to backend
+  fetch(`/cart/update/${productId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quantity: newQuantity })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        quantityEl.textContent = newQuantity;
+        document.getElementById(`total-${productId}`).textContent = `₱${(data.newTotal).toFixed(2)}`;
+        document.getElementById('cart-total').textContent = `₱${(data.cartTotal).toFixed(2)}`;
+      } else {
         Swal.fire({
-          icon: 'warning',
-          title: 'Stock Limit Reached',
-          text: `Only ${stock} items available in stock.`,
-          confirmButtonColor: '#3085d6'
+          icon: 'error',
+          title: 'Error',
+          text: data.message || 'Failed to update quantity.'
         });
       }
-    });
-  });
-});
+    })
+    .catch(err => console.error('Error updating quantity:', err));
+}
 </script>
 </html>

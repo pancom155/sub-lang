@@ -33,6 +33,7 @@
   <h3>Staff Panel</h3>
   <a href="/staff/index"><i class="bi bi-house-door"></i> Dashboard</a>
   <a href="/staff/orders" class="active"><i class="bi bi-file-earmark-text"></i> Orders</a>
+  <a href="/staff/void"><i class="bi bi-x-circle"></i> Cancellation Requests</a>
   <div class="logout d-flex justify-content-center">
     <a href="/logout" class="btn btn-danger" style="width: 150px;"><i class="bi bi-box-arrow-right"></i> Logout</a>
   </div>
@@ -95,7 +96,15 @@
                     <% } %>
                   </td>
                   <td>₱<%= order.totalAmount.toFixed(2) %></td>
-                  <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                  <td><%= new Date(order.createdAt).toLocaleString('en-PH', { 
+                    timeZone: 'Asia/Manila', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    hour12: true 
+                  }) %></td>
                   <td class="text-muted"><%= order.noteToCashier || 'None' %></td>
                   <td>
                     <% if (order.status === 'Pending') { %>

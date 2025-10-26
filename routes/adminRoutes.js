@@ -21,6 +21,7 @@ router.post('/products/add', uploadGeneral.single('productImage'), AdminControll
 router.get('/products/edit/:id', AdminController.editProductForm); 
 router.post('/products/edit/:id', uploadGeneral.single('productImage'), AdminController.editProduct);
 router.post('/products/delete/:id', AdminController.deleteProduct);
+router.post('/products/add-expiration/:id', AdminController.addExpiration);
 
 router.post('/products/report-damage', AdminController.reportDamage);
 router.get('/spoilage', AdminController.getSpoilage);

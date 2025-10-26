@@ -8,6 +8,7 @@ const Review = require('../models/Review');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const axios = require('axios');
+const Loyalty = require('../models/Loyalty');
 const { sendEmail, otpTemplate } = require("../utils/emailService");
 const RECAPTCHA_SECRET_KEY = '6LecCekrAAAAAKiuavOZ5mf8yA1hwDu0NSq0jMmW';
 
@@ -19,6 +20,40 @@ let otpStore = {};
 
 exports.showLogin = (req, res) => {
   res.render('login', { error: null });
+};
+
+exports.viewLoyalty = async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.redirect('/login');
+    }
+
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.redirect('/login');
+
+    let loyalty = await Loyalty.findOne({ user: user._id });
+    if (!loyalty) {
+      loyalty = await Loyalty.create({
+        user: user._id,
+        points: 0,
+        discountPercent: 0,
+        tier: 'Bronze'
+      });
+    }
+
+    let nextTierPoints = 500;
+    switch (loyalty.tier) {
+      case 'Bronze': nextTierPoints = 500; break;
+      case 'Silver': nextTierPoints = 1000; break;
+      case 'Gold': nextTierPoints = 2000; break;
+      case 'Platinum': nextTierPoints = 'Max Tier'; break;
+    }
+
+    res.render('loyalty', { user, loyalty, nextTierPoints });
+  } catch (err) {
+    console.error('Loyalty view error:', err);
+    res.status(500).send('Error loading loyalty page');
+  }
 };
 
 exports.showCart = async (req, res) => {
@@ -84,6 +119,28 @@ exports.addToCart = async (req, res) => {
   }
 };
 
+exports.getProductStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ stock: 0, message: 'Product not found' });
+    }
+
+    // Count only unexpired stock
+    const now = new Date();
+    const validBatches = (product.stockBatches || []).filter(
+      (b) => new Date(b.expirationDate) > now
+    );
+    const totalStock = validBatches.reduce((sum, b) => sum + (b.quantity || 0), 0);
+
+    res.json({ stock: totalStock });
+  } catch (error) {
+    console.error('Error fetching product stock:', error);
+    res.status(500).json({ message: 'Unable to verify stock right now' });
+  }
+};
+
 exports.getCartItem = async (req, res) => {
   const userId = req.session.userId;
   const { productId } = req.params;
@@ -102,12 +159,33 @@ exports.getCartItem = async (req, res) => {
 exports.updateCartItem = async (req, res) => {
   try {
     const { cartItemId, quantity } = req.body;
-    const cartItem = await CartItem.findById(cartItemId);
+    const cartItem = await CartItem.findById(cartItemId).populate('product_id');
 
-    if (cartItem) {
-      cartItem.quantity = quantity;
-      await cartItem.save();
+    if (!cartItem) return res.status(404).send('Cart item not found');
+
+    const product = cartItem.product_id;
+    if (!product) return res.status(404).send('Product not found');
+
+    // 🔒 Calculate valid stock (same logic as getProductStock)
+    const now = new Date();
+    const validBatches = (product.stockBatches || []).filter(
+      (b) => new Date(b.expirationDate) > now
+    );
+    const totalStock = validBatches.reduce((sum, b) => sum + (b.quantity || 0), 0);
+
+    // 🔹 Check stock limit
+    if (quantity > totalStock) {
+      return res.status(400).send(`Only ${totalStock} items available in stock.`);
     }
+
+    // 🔹 Check minimum
+    if (quantity < 1) {
+      await CartItem.findByIdAndDelete(cartItemId);
+      return res.redirect('/cart');
+    }
+
+    cartItem.quantity = quantity;
+    await cartItem.save();
 
     res.redirect('/cart');
   } catch (error) {
@@ -115,6 +193,7 @@ exports.updateCartItem = async (req, res) => {
     res.status(500).send('Internal server error');
   }
 };
+
 
 exports.removeCartItem = async (req, res) => {
   try {
@@ -150,77 +229,82 @@ exports.showCheckout = async (req, res) => {
 exports.checkout = async (req, res) => {
   try {
     const userId = req.session.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'You must be logged in to checkout' });
-    }
+    if (!userId) return res.status(401).json({ error: 'You must be logged in to checkout' });
 
     const { noteToCashier, paymentMode, senderName, referenceNumber } = req.body;
     const user = await User.findById(userId);
 
     const cartItems = await CartItem.find({ user_id: userId }).populate('product_id');
-    if (!cartItems || cartItems.length === 0) {
+    if (!cartItems || cartItems.length === 0)
       return res.status(400).json({ error: 'Your cart is empty!' });
-    }
 
+    // 🔹 Calculate total
     let totalAmount = 0;
     const orderItems = cartItems.map(item => {
       const price = item.product_id.price || 0;
       const subtotal = price * item.quantity;
       totalAmount += subtotal;
-
-      return {
-        productId: item.product_id._id,
-        quantity: item.quantity,
-        price,
-        subtotal
-      };
+      return { productId: item.product_id._id, quantity: item.quantity, price, subtotal };
     });
 
+    // 🔹 Check loyalty discount
+    const loyalty = await Loyalty.findOne({ user: userId });
+    const discountPercent = loyalty?.discountPercent || 0;
+    const discountAmount = (totalAmount * discountPercent) / 100;
+    const netTotal = totalAmount - discountAmount;
+
+    // 🔹 Create order data
     const orderData = {
       user: userId,
       userInfoSnapshot: {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        address: user.address,
         phone: user.phone
       },
       noteToCashier: noteToCashier || '',
       paymentMode,
       items: orderItems,
-      totalAmount
+      totalAmount,
+      discountPercent,
+      discountAmount,
+      netTotal
     };
 
     if (paymentMode === 'Pickup' || paymentMode === 'GCash') {
       if (!req.file || !senderName || !referenceNumber) {
-        return res.status(400).json({ error: 'Sender Name, Reference Number, and Proof Image are required!' });
+        return res.status(400).json({
+          error: 'Sender Name, Reference Number, and Proof Image are required!'
+        });
       }
-
       orderData.senderName = senderName;
       orderData.referenceNumber = referenceNumber;
       orderData.proofImage = `/uploads/proofs/${req.file.filename}`;
     }
 
+    // ✅ Save order
     const order = new Order(orderData);
     await order.save();
 
+    // ✅ Update stock and clear cart
     for (const item of cartItems) {
       const product = await Product.findById(item.product_id._id);
-      if (product) {
-        product.stock -= item.quantity;
-        await product.save();
-      }
+      if (product) await product.decreaseStock(item.quantity);
     }
-
     await CartItem.deleteMany({ user_id: userId });
 
-    return res.json({
-      success: true,
-      redirectUrl: `/order-success/${order._id}`
-    });
+    // ✅ Optionally: add points for loyalty system
+    if (loyalty) {
+      loyalty.points += Math.floor(netTotal / 50); // e.g., 1 point per ₱50 spent
+      await loyalty.save();
+    }
+
+    res.json({ success: true, redirectUrl: `/order-success/${order._id}` });
 
   } catch (err) {
     console.error('Checkout error:', err);
-    return res.status(500).json({ error: 'Checkout failed!' });
+    res.status(500).json({ error: 'Checkout failed!' });
   }
 };
 
@@ -332,7 +416,6 @@ exports.showOrder = async (req, res) => {
     });
   }
 };
-
 exports.showProfile = async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -350,10 +433,20 @@ exports.showProfile = async (req, res) => {
     const limit = 5;
     const skip = (page - 1) * limit;
 
+    // Fetch orders with product details
     const orders = await Order.find({ user: userId })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .populate('items.productId')
+      .lean();
+
+    // Calculate netTotal if missing
+    orders.forEach(order => {
+      if (order.netTotal === undefined) {
+        order.netTotal = order.totalAmount - (order.discountAmount || 0);
+      }
+    });
 
     const totalOrders = await Order.countDocuments({ user: userId });
     const totalPages = Math.ceil(totalOrders / limit);
@@ -570,7 +663,7 @@ exports.dashboard = async (req, res) => {
   if (!req.session.user) return res.redirect('/login');
 
   try {
-    const products = await Product.find({ stock: { $gte: 5 } });
+    const allProducts = await Product.find({});
 
     const soldResults = await Order.aggregate([
       { $match: { status: 'Completed' } },
@@ -595,9 +688,7 @@ exports.dashboard = async (req, res) => {
     ]);
 
     const soldMap = {};
-    soldResults.forEach(r => {
-      soldMap[r._id.toString()] = r.totalSold;
-    });
+    soldResults.forEach(r => (soldMap[r._id.toString()] = r.totalSold));
 
     const ratingMap = {};
     ratingResults.forEach(r => {
@@ -607,19 +698,26 @@ exports.dashboard = async (req, res) => {
       };
     });
 
-    products.forEach(product => {
-      if (!product.productImage) {
-        product.productImage = '/images/default.jpg';
-      }
-      product.totalSold = soldMap[product._id.toString()] || 0;
-      product.avgRating = ratingMap[product._id.toString()]?.avgRating || 0;
-      product.totalReviews = ratingMap[product._id.toString()]?.totalReviews || 0;
-    });
+    const now = new Date();
 
-    res.render('dashboard', {
-      user: req.session.user,
-      products
-    });
+    const products = allProducts
+      .map(product => {
+        // Only fetch stockBatches that are not expired and quantity > 0
+        const activeBatches = (product.stockBatches || []).filter(
+          b => new Date(b.expirationDate) > now && b.quantity > 0
+        );
+
+        product.activeBatches = activeBatches; // pass to view
+        product.totalSold = soldMap[product._id.toString()] || 0;
+        product.avgRating = ratingMap[product._id.toString()]?.avgRating || 0;
+        product.totalReviews = ratingMap[product._id.toString()]?.totalReviews || 0;
+
+        return product;
+      })
+      // Only keep products with at least one active batch
+      .filter(product => product.activeBatches.length > 0);
+
+    res.render('dashboard', { user: req.session.user, products });
   } catch (error) {
     console.error('Error loading dashboard:', error);
     res.render('dashboard', {
@@ -674,34 +772,36 @@ exports.editProfile = async (req, res) => {
 
 exports.cancelOrder = async (req, res) => {
   try {
-    const { orderId } = req.params;
-    const order = await Order.findById(orderId);
+    const orderId = req.params.id;
+    const { reason } = req.body;
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+    if (!orderId || !orderId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid order ID' });
     }
 
-    if (order.status === 'Cancelled') {
-      return res.status(400).json({ message: 'Order is already cancelled' });
+    const order = await Order.findById(orderId).populate('items.productId');
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    if (!['Pending', 'Processing'].includes(order.status)) {
+      return res.status(400).json({ message: 'This order cannot be cancelled' });
     }
 
-    for (const item of order.items) {
-      const product = await Product.findById(item.productId);
-      if (product) {
-        product.stock += item.quantity;
-        await product.save();
-      }
+    if (order.status === 'Pending Cancellation') {
+      return res.status(400).json({ message: 'Cancellation already requested' });
     }
 
-    order.status = 'Cancelled';
+    order.status = 'Pending Cancellation';
+    order.cancellationReason = reason || 'No reason provided';
+    order.cancellationRequestedAt = new Date();
     await order.save();
 
-    res.json({ message: 'Order cancelled successfully and stock restored', order });
+    res.status(200).json({ message: 'Cancellation request submitted', order });
   } catch (err) {
-    console.error('Error cancelling order:', err);
-    res.status(500).json({ message: 'Server error while cancelling order' });
+    console.error('Error requesting order cancellation:', err);
+    res.status(500).json({ message: 'Server error while requesting cancellation' });
   }
 };
+
 
 exports.logout = (req, res) => {
   if (req.session && req.session.user) {

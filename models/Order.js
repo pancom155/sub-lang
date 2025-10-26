@@ -6,86 +6,46 @@ const orderItemSchema = new mongoose.Schema({
     ref: 'Product', 
     required: true 
   },
-  quantity: { 
-    type: Number, 
-    required: true, 
-    min: 1 
-  },
-  price: { 
-    type: Number, 
-    required: true, 
-    min: 0 
-  },
-  subtotal: { 
-    type: Number, 
-    required: true, 
-    min: 0 
-  }
+  quantity: { type: Number, required: true, min: 1 },
+  price: { type: Number, required: true, min: 0 },
+  subtotal: { type: Number, required: true, min: 0 }
 });
 
 const orderSchema = new mongoose.Schema({
-  user: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
-  },
-
-  userInfoSnapshot: { 
-    firstName: String, 
-    lastName: String, 
-    phone: String, 
-    address: String, 
-    email: String, 
-    username: String 
-  },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userInfoSnapshot: { firstName: String, lastName: String, phone: String, address: String, email: String, username: String },
 
   status: { 
     type: String, 
-    enum: ['Pending', 'Processing', 'Cancelled', 'Completed'], 
+    enum: ['Pending', 'Processing', 'Pending Cancellation', 'Cancelled', 'Completed'], 
     default: 'Pending' 
   },
-  
-  paymentMode: { 
-    type: String, 
-    enum: ['Pay at the Counter', 'Pickup', 'GCash'], 
-    required: true 
-  },
 
-  noteToCashier: {
-    type: String,
-    default: ''
-  },
-
-  proofImage: {
-    type: String, 
-    required: function() {
-      return this.paymentMode === 'Pickup' || this.paymentMode === 'GCash';
-    }
-  },
-  referenceNumber: {
-    type: String,
-    required: function() {
-      return this.paymentMode === 'Pickup' || this.paymentMode === 'GCash';
-    }
-  },
-  senderName: {
-    type: String,
-    required: function() {
-      return this.paymentMode === 'Pickup' || this.paymentMode === 'GCash';
-    }
-  },
+  paymentMode: { type: String, enum: ['Pay at the Counter', 'Pickup', 'GCash'], required: true },
+  noteToCashier: { type: String, default: '' },
+  proofImage: { type: String, required: function() { return this.paymentMode === 'Pickup' || this.paymentMode === 'GCash'; } },
+  referenceNumber: { type: String, required: function() { return this.paymentMode === 'Pickup' || this.paymentMode === 'GCash'; } },
+  senderName: { type: String, required: function() { return this.paymentMode === 'Pickup' || this.paymentMode === 'GCash'; } },
 
   items: [orderItemSchema],
 
-  totalAmount: { 
-    type: Number, 
-    required: true 
-  },
+  totalAmount: { type: Number, required: true },
+  discountPercent: { type: Number, default: 0, min: 0, max: 100 },
+  discountAmount: { type: Number, default: 0, min: 0 },
+  netTotal: { type: Number, required: true, min: 0 },
 
-  createdAt: { 
-    type: Date, 
-    default: Date.now 
-  },
+  cancellationReason: { type: String, default: '' },
+  cancellationRequestedAt: { type: Date },
+  cancellationApprovedAt: { type: Date },
+
+  createdAt: { type: Date, default: Date.now }
+});
+
+orderSchema.pre('save', function(next) {
+  this.totalAmount = this.items.reduce((acc, item) => acc + item.subtotal, 0);
+  this.discountAmount = (this.totalAmount * this.discountPercent) / 100;
+  this.netTotal = this.totalAmount - this.discountAmount;
+  next();
 });
 
 module.exports = mongoose.models.Order || mongoose.model('Order', orderSchema);
