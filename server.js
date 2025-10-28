@@ -7,7 +7,7 @@ const cookieParser = require("cookie-parser");
 const methodOverride = require("method-override");
 const flash = require("connect-flash");
 const path = require("path");
-
+const { authMiddleware, preventBackForward } = require("./middleware/authMiddleware");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const profileRoutes = require("./routes/profile");
@@ -16,6 +16,7 @@ const staffRoutes = require("./routes/staffRoutes");
 const indexRoutes = require("./routes/indexRoutes");
 const staffProcessRoutes = require("./routes/staffProcessRoutes");
 const kitchenRoutes = require("./routes/KitchenRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 require("./passportConfig");
 
@@ -26,8 +27,8 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB error:", err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB error:", err));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -53,10 +54,14 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/uploads/proofs", express.static(path.join(__dirname, "uploads/proofs")));
+
+app.use(preventBackForward);
+app.use(authMiddleware);
 
 app.use("/staff", staffProcessRoutes);
 app.use("/", profileRoutes);
@@ -66,7 +71,15 @@ app.use("/", reviewRoutes);
 app.use("/admin/staff", staffRoutes);
 app.use("/", indexRoutes);
 app.use("/kitchen", kitchenRoutes);
-app.use("/", authRoutes);
+app.use("/", notificationRoutes);
+
+app.use((req, res) => {
+  res.status(404).render("bypass", {
+    title: "Unauthorized Access",
+    message: "The page you’re trying to access doesn’t exist or has been modified.",
+    urlTried: req.originalUrl,
+  });
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

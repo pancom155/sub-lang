@@ -67,7 +67,17 @@ exports.showCart = async (req, res) => {
       .populate('product_id')
       .lean();
 
-    res.render('cart', { user, cartItems });
+    const now = new Date();
+
+    const updatedCartItems = cartItems.map(item => {
+      const validBatches = (item.product_id.stockBatches || []).filter(
+        b => new Date(b.expirationDate) > now
+      );
+      const totalStock = validBatches.reduce((sum, b) => sum + (b.quantity || 0), 0);
+      return { ...item, availableStock: totalStock };
+    });
+
+    res.render('cart', { user, cartItems: updatedCartItems });
   } catch (error) {
     console.error('Error loading cart:', error);
     res.render('cart', {
@@ -127,7 +137,6 @@ exports.getProductStock = async (req, res) => {
       return res.status(404).json({ stock: 0, message: 'Product not found' });
     }
 
-    // Count only unexpired stock
     const now = new Date();
     const validBatches = (product.stockBatches || []).filter(
       (b) => new Date(b.expirationDate) > now
@@ -158,42 +167,67 @@ exports.getCartItem = async (req, res) => {
 
 exports.updateCartItem = async (req, res) => {
   try {
-    const { cartItemId, quantity } = req.body;
-    const cartItem = await CartItem.findById(cartItemId).populate('product_id');
+    console.log('updateCartItem called');
+    console.log('Params:', req.params);
+    console.log('Body:', req.body);
+    console.log('Session user:', req.session.userId);
 
-    if (!cartItem) return res.status(404).send('Cart item not found');
+    const userId = req.session.userId;
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User not logged in' });
+    }
+
+    const cartItem = await CartItem.findOne({
+      user_id: new mongoose.Types.ObjectId(userId),
+      product_id: new mongoose.Types.ObjectId(productId),
+    }).populate('product_id');
+
+    if (!cartItem) {
+      console.log('Cart item not found');
+      return res.status(404).json({ success: false, message: 'Cart item not found' });
+    }
 
     const product = cartItem.product_id;
-    if (!product) return res.status(404).send('Product not found');
-
-    // 🔒 Calculate valid stock (same logic as getProductStock)
     const now = new Date();
+
     const validBatches = (product.stockBatches || []).filter(
       (b) => new Date(b.expirationDate) > now
     );
     const totalStock = validBatches.reduce((sum, b) => sum + (b.quantity || 0), 0);
 
-    // 🔹 Check stock limit
     if (quantity > totalStock) {
-      return res.status(400).send(`Only ${totalStock} items available in stock.`);
+      return res.status(400).json({
+        success: false,
+        message: `Only ${totalStock} item${totalStock > 1 ? 's' : ''} available.`,
+      });
     }
 
-    // 🔹 Check minimum
     if (quantity < 1) {
-      await CartItem.findByIdAndDelete(cartItemId);
-      return res.redirect('/cart');
+      await CartItem.findByIdAndDelete(cartItem._id);
+      return res.json({ success: true, message: 'Item removed from cart', newTotal: 0 });
     }
 
     cartItem.quantity = quantity;
     await cartItem.save();
 
-    res.redirect('/cart');
+    const newTotal = product.price * quantity;
+    const userCartItems = await CartItem.find({ user_id: userId }).populate('product_id');
+    const cartTotal = userCartItems.reduce(
+      (sum, item) => sum + item.product_id.price * item.quantity,
+      0
+    );
+
+    console.log('Successfully updated quantity');
+    res.json({ success: true, newTotal, cartTotal });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal server error');
+    console.error('Error in updateCartItem:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
-
 
 exports.removeCartItem = async (req, res) => {
   try {
@@ -238,7 +272,6 @@ exports.checkout = async (req, res) => {
     if (!cartItems || cartItems.length === 0)
       return res.status(400).json({ error: 'Your cart is empty!' });
 
-    // 🔹 Calculate total
     let totalAmount = 0;
     const orderItems = cartItems.map(item => {
       const price = item.product_id.price || 0;
@@ -247,13 +280,11 @@ exports.checkout = async (req, res) => {
       return { productId: item.product_id._id, quantity: item.quantity, price, subtotal };
     });
 
-    // 🔹 Check loyalty discount
     const loyalty = await Loyalty.findOne({ user: userId });
     const discountPercent = loyalty?.discountPercent || 0;
     const discountAmount = (totalAmount * discountPercent) / 100;
     const netTotal = totalAmount - discountAmount;
 
-    // 🔹 Create order data
     const orderData = {
       user: userId,
       userInfoSnapshot: {
@@ -283,20 +314,17 @@ exports.checkout = async (req, res) => {
       orderData.proofImage = `/uploads/proofs/${req.file.filename}`;
     }
 
-    // ✅ Save order
     const order = new Order(orderData);
     await order.save();
 
-    // ✅ Update stock and clear cart
     for (const item of cartItems) {
       const product = await Product.findById(item.product_id._id);
       if (product) await product.decreaseStock(item.quantity);
     }
     await CartItem.deleteMany({ user_id: userId });
 
-    // ✅ Optionally: add points for loyalty system
     if (loyalty) {
-      loyalty.points += Math.floor(netTotal / 50); // e.g., 1 point per ₱50 spent
+      loyalty.points += Math.floor(netTotal / 50); 
       await loyalty.save();
     }
 
@@ -416,6 +444,7 @@ exports.showOrder = async (req, res) => {
     });
   }
 };
+
 exports.showProfile = async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -433,7 +462,6 @@ exports.showProfile = async (req, res) => {
     const limit = 5;
     const skip = (page - 1) * limit;
 
-    // Fetch orders with product details
     const orders = await Order.find({ user: userId })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -441,7 +469,6 @@ exports.showProfile = async (req, res) => {
       .populate('items.productId')
       .lean();
 
-    // Calculate netTotal if missing
     orders.forEach(order => {
       if (order.netTotal === undefined) {
         order.netTotal = order.totalAmount - (order.discountAmount || 0);
@@ -468,6 +495,63 @@ exports.showProfile = async (req, res) => {
       totalPages: 1,
       error: 'Failed to load user profile.'
     });
+  }
+};
+
+exports.editProfile = async (req, res) => {
+  try {
+    const sessionUser = req.session.user;
+    if (!sessionUser) return res.redirect('/login');
+
+    const userId = sessionUser._id;
+    const { firstName, lastName, phone, address, username } = req.body;
+
+    const existingUser = await User.findOne({
+      $or: [{ username }, { phone }],
+      _id: { $ne: userId }
+    });
+
+    if (existingUser) {
+      req.flash('error', 'Username or phone already taken.');
+      return res.redirect('/profile');
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.redirect('/login');
+
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.phone = phone;
+    user.address = address;
+    user.username = username;
+
+    if (req.file) {
+      user.profilePicture = '/uploads/' + req.file.filename;
+    }
+
+    const updatedUser = await user.save();
+
+    req.session.user = {
+      _id: updatedUser._id.toString(),
+      username: updatedUser.username,
+      email: updatedUser.email,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      phone: updatedUser.phone,
+      address: updatedUser.address,
+      profilePicture: updatedUser.profilePicture
+    };
+
+    req.session.save(err => {
+      if (err) return res.redirect('/login');
+      req.flash('success', 'Profile updated successfully.');
+      res.redirect('/profile');
+    });
+
+  } catch (error) {
+    console.error(error);
+    req.flash('error', 'Something went wrong.');
+    return res.redirect('/profile');
   }
 };
 
@@ -702,19 +786,17 @@ exports.dashboard = async (req, res) => {
 
     const products = allProducts
       .map(product => {
-        // Only fetch stockBatches that are not expired and quantity > 0
         const activeBatches = (product.stockBatches || []).filter(
           b => new Date(b.expirationDate) > now && b.quantity > 0
         );
 
-        product.activeBatches = activeBatches; // pass to view
+        product.activeBatches = activeBatches; 
         product.totalSold = soldMap[product._id.toString()] || 0;
         product.avgRating = ratingMap[product._id.toString()]?.avgRating || 0;
         product.totalReviews = ratingMap[product._id.toString()]?.totalReviews || 0;
 
         return product;
       })
-      // Only keep products with at least one active batch
       .filter(product => product.activeBatches.length > 0);
 
     res.render('dashboard', { user: req.session.user, products });
@@ -725,48 +807,6 @@ exports.dashboard = async (req, res) => {
       products: [],
       error: 'Error loading products'
     });
-  }
-};
-
-exports.editProfile = async (req, res) => {
-  if (!req.user) {
-    return res.redirect('/login');
-  }
-  
-  const userId = req.user._id;
-  const { firstName, lastName, phone, address, email, username } = req.body;
-
-  try {
-    const existingUser = await User.findOne({
-      $or: [{ email }, { phone }, { username }],
-      _id: { $ne: userId }
-    });
-
-    if (existingUser) {
-      req.flash('error', 'Email, phone, or username already taken by another user.');
-      return res.redirect('/profile');
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.redirect('/login');
-    }
-
-    user.firstName = firstName;
-    user.lastName = lastName;
-    user.phone = phone;
-    user.address = address;
-    user.email = email;
-    user.username = username;
-
-    await user.save();
-
-    req.flash('success', 'Profile updated successfully.');
-    res.redirect('/profile');
-  } catch (error) {
-    console.error(error);
-    req.flash('error', 'Failed to update profile.');
-    res.redirect('/profile');
   }
 };
 
@@ -818,11 +858,21 @@ exports.logout = (req, res) => {
       return res.status(500).send('Error while logging out');
     }
 
+    res.clearCookie('connect.sid', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax'
+    });
+
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     if (req.xhr || req.headers.accept?.includes('application/json')) {
       return res.status(200).json({ message: 'Logged out' });
     }
 
-    res.redirect('/login');
+    return res.redirect('/login');
   });
 };
 

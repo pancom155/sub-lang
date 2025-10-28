@@ -6,14 +6,16 @@
   <title>Staff Dashboard | Zero Degree Café</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
   <style>
+    /* Sidebar */
     .sidebar {
       height: 100vh;
       position: fixed;
       top: 0;
       left: 0;
       width: 250px;
-      background: linear-gradient(145deg, #1d3c5a, #3a5f7d); 
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
       color: white;
       padding-top: 30px;
       overflow-y: auto;
@@ -60,37 +62,38 @@
       background-color: #e74c3c;
     }
 
+    /* Main content */
     .content {
       margin-left: 270px;
       padding: 20px;
     }
 
+    /* Stat cards */
     .stat-box {
-      background-color: #f0f8ff;
+      background: linear-gradient(145deg, #b3d9ff, #1d3c5a);
       border-radius: 20px;
       padding: 20px;
       text-align: center;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
       height: 150px;
-      background: linear-gradient(145deg, #b3d9ff, #1d3c5a);
     }
 
-    .stat-box h4 {
-      margin-bottom: 10px;
+    .stat-box h4,
+    .stat-box p,
+    .stat-box i {
       color: white;
     }
 
     .stat-box i {
       font-size: 30px;
-      color: #ffffff;
     }
 
     .stat-box p {
       font-size: 24px;
       font-weight: bold;
-      color: white;
     }
 
+    /* Responsive */
     @media (max-width: 768px) {
       .sidebar {
         width: 200px;
@@ -100,137 +103,180 @@
         margin-left: 220px;
       }
     }
+
+    #notifBtn {
+      background: #3470ac;
+      border: none;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    #notifBtn:hover {
+      background: #7ea9d5;
+    }
+
+    #notifBadge {
+      font-size: 0.75rem;
+      min-width: 18px;
+      min-height: 18px;
+      padding: 3px;
+    }
   </style>
 </head>
-<body>
 
-<div class="sidebar d-flex flex-column">
-  <div class="d-flex justify-content-center mb-3">
-    <img src="/images/zicon.jpg" style="width: 75px;" class="rounded-circle" alt="">
-  </div>
-  <h3 class="text-white mb-5">Staff Panel</h3>
-  <a href="/staff/index" class="active"><i class="bi bi-house-door"></i> Dashboard</a>
-  <a href="/staff/orders"><i class="bi bi-file-earmark-text"></i> Orders</a>
+<body>
+  <div class="sidebar d-flex flex-column">
+    <div class="d-flex justify-content-center mb-3">
+      <img src="/images/zicon.jpg" style="width: 75px;" class="rounded-circle" alt="">
+    </div>
+    <h3 class="text-white mb-5">Staff Panel</h3>
+    <a href="/staff/index" class="active"><i class="bi bi-house-door"></i> Dashboard</a>
+    <a href="/staff/orders"><i class="bi bi-file-earmark-text"></i> Orders</a>
     <a href="/staff/void"><i class="bi bi-x-circle"></i> Cancellation Requests</a>
 
-
-  <div class="logout d-flex justify-content-center mt-auto mb-3">
-    <a href="/logout" class="btn btn-danger" style="width: 150px;">
-      <i class="bi bi-box-arrow-right"></i> Logout
-    </a>
+    <div class="logout d-flex justify-content-center mt-auto mb-3">
+      <a href="/logout" class="btn btn-danger" style="width: 150px;">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </a>
+    </div>
   </div>
-</div>
-
 
   <div class="content">
-    <h1 class="mb-3 fw-bold">Dashboard <hr></h1>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="fw-bold mb-0">Dashboard</h1>
+
+      <div class="position-relative">
+        <button id="notifBtn" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#notifModal">
+          <span class="text-light"><i class="bi bi-bell-fill fs-4"></i></span>
+          <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+        </button>
+      </div>
+    </div>
+    <hr>
 
     <div class="row g-4">
       <div class="col-md-3">
         <div class="stat-box">
-          <i class="bi bi-clock"></i> 
+          <i class="bi bi-clock"></i>
           <h4>Pending Orders</h4>
-          <p id="pendingCount"><%= pendingOrdersCount %></p>
+          <p><%= pendingOrdersCount %></p>
         </div>
       </div>
       <div class="col-md-3">
         <div class="stat-box">
           <i class="bi bi-speedometer"></i>
           <h4>Processing Orders</h4>
-          <p id="processingCount"><%= processingOrdersCount %></p>
+          <p><%= processingOrdersCount %></p>
         </div>
       </div>
       <div class="col-md-3">
         <div class="stat-box">
-          <i class="bi bi-x-circle"></i> 
+          <i class="bi bi-x-circle"></i>
           <h4>Cancelled Orders</h4>
-          <p id="cancelledCount"><%= cancelledOrdersCount %></p>
+          <p><%= cancelledOrdersCount %></p>
         </div>
       </div>
       <div class="col-md-3">
         <div class="stat-box">
-          <i class="bi bi-check-circle"></i> 
+          <i class="bi bi-check-circle"></i>
           <h4>Completed Orders</h4>
-          <p id="completedCount"><%= completedOrdersCount %></p>
+          <p><%= completedOrdersCount %></p>
         </div>
       </div>
     </div>
-    <div class="row g-4 mt-3">
-  <div class="col-md-4">
-    <div class="stat-box">
-      <i class="bi bi-box-seam"></i>
-      <h4>Total Products</h4>
-      <p><%= totalProducts %></p>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="stat-box">
-      <i class="bi bi-exclamation-triangle"></i>
-      <h4>Low Stock</h4>
-      <p><%= lowStockProducts %></p>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="stat-box">
-      <i class="bi bi-x-octagon"></i>
-      <h4>Out of Stock</h4>
-      <p><%= outOfStockProducts %></p>
-    </div>
-  </div>
-</div>
 
-  <div class="row g-4 mt-4">
-    <div class="col-md-6">
-      <div class="card shadow-sm p-3">
-        <h5 class="fw-bold mb-3 text-center">Order Status Distribution</h5>
-        <canvas id="statusChart" height="120"></canvas>
+    <div class="row g-4 mt-3">
+      <div class="col-md-4">
+        <div class="stat-box">
+          <i class="bi bi-box-seam"></i>
+          <h4>Total Products</h4>
+          <p><%= totalProducts %></p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-box">
+          <i class="bi bi-exclamation-triangle"></i>
+          <h4>Low Stock</h4>
+          <p><%= lowStockProducts %></p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-box">
+          <i class="bi bi-x-octagon"></i>
+          <h4>Out of Stock</h4>
+          <p><%= outOfStockProducts %></p>
+        </div>
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="card shadow-sm p-3 text-center">
-        <h5 class="fw-bold mb-3">Stock Overview</h5>
-        <canvas id="stockChart" height="120"></canvas>
+
+    <!-- CHARTS -->
+    <div class="row g-4 mt-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm p-3">
+          <h5 class="fw-bold mb-3 text-center">Order Status Distribution</h5>
+          <canvas id="statusChart" height="120"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm p-3 text-center">
+          <h5 class="fw-bold mb-3">Stock Overview</h5>
+          <canvas id="stockChart" height="120"></canvas>
+        </div>
       </div>
     </div>
   </div>
+
+  <div class="modal fade" id="notifModal" tabindex="-1" aria-labelledby="notifModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content" 
+          style="border-radius:15px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.3); border:none;">
+
+        <div class="modal-header text-white" 
+            style="background:linear-gradient(145deg, #1d3c5a, #3a5f7d); border-bottom:none;">
+          <h5 class="modal-title fw-bold" id="notifModalLabel" style="font-size:1.25rem;">
+            <i class="bi bi-bell-fill me-2"></i> Notifications
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body" style="background-color:#f8fafc; max-height:400px; overflow-y:auto; padding:1.5rem;">
+          <div id="notifList" class="list-group" 
+              style="border-radius:10px; box-shadow:inset 0 0 5px rgba(0,0,0,0.05);">
+            <p class="text-center text-muted mb-0" style="font-style:italic;">No notifications yet.</p>
+          </div>
+        </div>
+
+        <div class="modal-footer" 
+            style="background-color:#f1f5f9; border-top:1px solid #dee2e6; justify-content:center;">
+          <button id="clearNotif" class="btn text-white fw-semibold px-4" data-bs-dismiss="modal"
+                  style="background:linear-gradient(145deg, #1d3c5a, #3a5f7d); border:none; border-radius:25px; transition:0.3s;">
+            <i class="bi bi-x-circle me-1"></i> Clear Notifications
+          </button>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script>
     const statusCtx = document.getElementById("statusChart").getContext("2d");
     new Chart(statusCtx, {
-      type: "bar", 
+      type: "bar",
       data: {
         labels: ["Pending", "Processing", "Cancelled", "Completed"],
         datasets: [{
           label: "Orders",
-          data: [
-            <%= pendingOrdersCount %>, 
-            <%= processingOrdersCount %>, 
-            <%= cancelledOrdersCount %>, 
-            <%= completedOrdersCount %>
-          ],
-          backgroundColor: [
-            "rgba(255, 206, 86, 0.6)",   
-            "rgba(54, 162, 235, 0.6)",   
-            "rgba(255, 99, 132, 0.6)",   
-            "rgba(75, 192, 192, 0.6)"    
-          ],
-          borderColor: [
-            "rgba(255, 206, 86, 1)",
-            "rgba(54, 162, 235, 1)",
-            "rgba(255, 99, 132, 1)",
-            "rgba(75, 192, 192, 1)"
-          ],
+          data: [<%= pendingOrdersCount %>, <%= processingOrdersCount %>, <%= cancelledOrdersCount %>, <%= completedOrdersCount %>],
+          backgroundColor: ["rgba(255,206,86,0.6)","rgba(54,162,235,0.6)","rgba(255,99,132,0.6)","rgba(75,192,192,0.6)"],
+          borderColor: ["rgba(255,206,86,1)","rgba(54,162,235,1)","rgba(255,99,132,1)","rgba(75,192,192,1)"],
           borderWidth: 1
         }]
       },
-      options: { 
-        scales: { 
-          y: { beginAtZero: true } 
-        } 
-      }
+      options: { scales: { y: { beginAtZero: true } } }
     });
 
     const stockCtx = document.getElementById("stockChart").getContext("2d");
@@ -240,26 +286,94 @@
         labels: ["Total Products", "Low Stock", "Out of Stock"],
         datasets: [{
           label: "Products",
-          data: [
-            <%= totalProducts %>, 
-            <%= lowStockProducts %>, 
-            <%= outOfStockProducts %>
-          ],
-          backgroundColor: [
-            "rgba(54, 162, 235, 0.6)",
-            "rgba(255, 206, 86, 0.6)",
-            "rgba(255, 99, 132, 0.6)"
-          ],
-          borderColor: [
-            "rgba(54, 162, 235, 1)",
-            "rgba(255, 206, 86, 1)",
-            "rgba(255, 99, 132, 1)"
-          ],
+          data: [<%= totalProducts %>, <%= lowStockProducts %>, <%= outOfStockProducts %>],
+          backgroundColor: ["rgba(54,162,235,0.6)","rgba(255,206,86,0.6)","rgba(255,99,132,0.6)"],
+          borderColor: ["rgba(54,162,235,1)","rgba(255,206,86,1)","rgba(255,99,132,1)"],
           borderWidth: 1
         }]
       },
       options: { scales: { y: { beginAtZero: true } } }
     });
+
+    const notifBadge = document.getElementById('notifBadge');
+    const notifList = document.getElementById('notifList');
+    let notifCount = 0;
+
+    async function loadPendingOrders() {
+      try {
+        const res = await fetch('/staff/notifications/pending');
+        const data = await res.json();
+
+        if (data.length > 0) {
+          notifList.innerHTML = '';
+          data.forEach(order => {
+            const type = order.status === 'Pending' ? 'info' : 'warning';
+            const title = order.status === 'Pending' ? 'New Order' : 'Cancellation Request';
+            const link = order.status === 'Pending' ? '/staff/orders' : '/staff/void';
+            addNotification(type, title, `Order #${order._id} from ${order.userInfoSnapshot?.firstName || 'Customer'}`, link, false);
+          });
+        }
+      } catch (err) {
+        console.error('Error loading pending orders:', err);
+      }
+    }
+
+    const eventSource = new EventSource('/staff/notifications');
+    eventSource.addEventListener('newOrder', e => {
+      const data = JSON.parse(e.data);
+      addNotification('info', 'New Order', data.message, '/staff/orders', true);
+    });
+    eventSource.addEventListener('cancelRequest', e => {
+      const data = JSON.parse(e.data);
+      addNotification('warning', 'Cancellation Request', data.message, '/staff/void', true);
+    });
+
+    function addNotification(type, title, message, link, showToastNow = true) {
+      notifCount++;
+      updateBadge();
+
+      const icon = type === 'info' ? 'bi-cart-check' : 'bi-x-circle';
+      const listItem = document.createElement('a');
+      listItem.href = link;
+      listItem.className = `list-group-item list-group-item-action list-group-item-${type === 'info' ? 'primary' : 'danger'} d-flex justify-content-between align-items-center`;
+      listItem.innerHTML = `
+        <div>
+          <i class="bi ${icon} me-2"></i>
+          <strong>${title}</strong> - ${message}
+        </div>
+        <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+      `;
+
+      if (notifList.querySelector('p')) notifList.innerHTML = '';
+      notifList.prepend(listItem);
+
+      if (showToastNow) showToast(type, title, message);
+    }
+
+    function updateBadge() {
+      notifBadge.textContent = notifCount;
+      notifBadge.classList.remove('d-none');
+    }
+
+    function showToast(icon, title, message) {
+      Swal.fire({
+        icon,
+        title,
+        text: message,
+        timer: 2500,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false
+      });
+    }
+
+    document.getElementById('clearNotif').addEventListener('click', () => {
+      notifCount = 0;
+      notifBadge.classList.add('d-none');
+      notifList.innerHTML = '<p class="text-center text-muted mb-0">No notifications yet.</p>';
+    });
+
+    loadPendingOrders();
   </script>
 </body>
 </html>

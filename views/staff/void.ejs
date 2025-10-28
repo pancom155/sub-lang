@@ -21,6 +21,23 @@
   .sidebar .logout a:hover { background-color: #e74c3c; }
   .content { margin-left: 270px; padding: 20px; }
   .product-img { width: 35px; height: 35px; object-fit: cover; border-radius: 5px; margin-right: 5px; }
+        #notifBtn {
+      background: #3470ac;
+      border: none;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    #notifBtn:hover {
+      background: #7ea9d5;
+    }
+
+    #notifBadge {
+      font-size: 0.75rem;
+      min-width: 18px;
+      min-height: 18px;
+      padding: 3px;
+    }
 </style>
 </head>
 <body>
@@ -41,7 +58,17 @@
 </div>
 
 <div class="content">
-  <h2 class="mb-4">Pending Cancellation Requests</h2>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="fw-bold mb-0">Pending Cancellation Requests</h1>
+
+      <div class="position-relative">
+        <button id="notifBtn" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#notifModal">
+          <span class="text-light"><i class="bi bi-bell-fill fs-4"></i></span>
+          <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+        </button>
+      </div>
+    </div><hr>
+
   <table class="table table-bordered table-hover">
     <thead>
       <tr>
@@ -88,12 +115,42 @@
   </table>
 </div>
 
+  <div class="modal fade" id="notifModal" tabindex="-1" aria-labelledby="notifModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content" 
+          style="border-radius:15px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.3); border:none;">
+
+        <div class="modal-header text-white" 
+            style="background:linear-gradient(145deg, #1d3c5a, #3a5f7d); border-bottom:none;">
+          <h5 class="modal-title fw-bold" id="notifModalLabel" style="font-size:1.25rem;">
+            <i class="bi bi-bell-fill me-2"></i> Notifications
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body" style="background-color:#f8fafc; max-height:400px; overflow-y:auto; padding:1.5rem;">
+          <div id="notifList" class="list-group" 
+              style="border-radius:10px; box-shadow:inset 0 0 5px rgba(0,0,0,0.05);">
+            <p class="text-center text-muted mb-0" style="font-style:italic;">No notifications yet.</p>
+          </div>
+        </div>
+
+        <div class="modal-footer" 
+            style="background-color:#f1f5f9; border-top:1px solid #dee2e6; justify-content:center;">
+          <button id="clearNotif" class="btn text-white fw-semibold px-4" data-bs-dismiss="modal"
+                  style="background:linear-gradient(145deg, #1d3c5a, #3a5f7d); border:none; border-radius:25px; transition:0.3s;">
+            <i class="bi bi-x-circle me-1"></i> Clear Notifications
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-
-  // Approve
   document.querySelectorAll('.btn-approve').forEach(btn => {
     btn.addEventListener('click', async () => {
       const orderId = btn.dataset.id;
@@ -122,7 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Reject
   document.querySelectorAll('.btn-reject').forEach(btn => {
     btn.addEventListener('click', async () => {
       const orderId = btn.dataset.id;
@@ -153,6 +209,86 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 </script>
+<script>
+    const notifBadge = document.getElementById('notifBadge');
+    const notifList = document.getElementById('notifList');
+    let notifCount = 0;
 
+    async function loadPendingOrders() {
+      try {
+        const res = await fetch('/staff/notifications/pending');
+        const data = await res.json();
+
+        if (data.length > 0) {
+          notifList.innerHTML = '';
+          data.forEach(order => {
+            const type = order.status === 'Pending' ? 'info' : 'warning';
+            const title = order.status === 'Pending' ? 'New Order' : 'Cancellation Request';
+            const link = order.status === 'Pending' ? '/staff/orders' : '/staff/void';
+            addNotification(type, title, `Order #${order._id} from ${order.userInfoSnapshot?.firstName || 'Customer'}`, link, false);
+          });
+        }
+      } catch (err) {
+        console.error('Error loading pending orders:', err);
+      }
+    }
+
+    const eventSource = new EventSource('/staff/notifications');
+    eventSource.addEventListener('newOrder', e => {
+      const data = JSON.parse(e.data);
+      addNotification('info', 'New Order', data.message, '/staff/orders', true);
+    });
+    eventSource.addEventListener('cancelRequest', e => {
+      const data = JSON.parse(e.data);
+      addNotification('warning', 'Cancellation Request', data.message, '/staff/void', true);
+    });
+
+    function addNotification(type, title, message, link, showToastNow = true) {
+      notifCount++;
+      updateBadge();
+
+      const icon = type === 'info' ? 'bi-cart-check' : 'bi-x-circle';
+      const listItem = document.createElement('a');
+      listItem.href = link;
+      listItem.className = `list-group-item list-group-item-action list-group-item-${type === 'info' ? 'primary' : 'danger'} d-flex justify-content-between align-items-center`;
+      listItem.innerHTML = `
+        <div>
+          <i class="bi ${icon} me-2"></i>
+          <strong>${title}</strong> - ${message}
+        </div>
+        <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+      `;
+
+      if (notifList.querySelector('p')) notifList.innerHTML = '';
+      notifList.prepend(listItem);
+
+      if (showToastNow) showToast(type, title, message);
+    }
+
+    function updateBadge() {
+      notifBadge.textContent = notifCount;
+      notifBadge.classList.remove('d-none');
+    }
+
+    function showToast(icon, title, message) {
+      Swal.fire({
+        icon,
+        title,
+        text: message,
+        timer: 2500,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false
+      });
+    }
+
+    document.getElementById('clearNotif').addEventListener('click', () => {
+      notifCount = 0;
+      notifBadge.classList.add('d-none');
+      notifList.innerHTML = '<p class="text-center text-muted mb-0">No notifications yet.</p>';
+    });
+
+    loadPendingOrders();
+  </script>
 </body>
 </html>

@@ -398,8 +398,7 @@
 
               const productData = <%- JSON.stringify(productProfitData.map(p => ({
                 name: p.name,
-                profit: Number(p.profit),
-                price: Number(p.price)
+                profit: Number(p.profit)
               }))) %>;
 
               const data = {
@@ -427,20 +426,14 @@
                     legend: { display: false },
                     tooltip: { 
                       callbacks: { 
+                        title: function(context) {
+                          return context[0].label; 
+                        },
                         label: function(context) {
                           const p = productData[context.dataIndex];
-                          return 'Profit: ₱ ' + p.profit.toLocaleString() + ' | Price: ₱ ' + p.price.toLocaleString();
+                          return 'Profit: ₱' + p.profit.toLocaleString();
                         } 
                       } 
-                    },
-                    datalabels: {
-                      anchor: 'end',
-                      align: 'top',
-                      color: '#1d3c5a',
-                      font: { weight: 'bold', size: 12 },
-                      formatter: function(value) {
-                        return '₱ ' + value.toLocaleString();
-                      }
                     }
                   },
                   scales: {
@@ -463,108 +456,100 @@
                       }
                     }
                   }
-                },
-                plugins: [ChartDataLabels]
+                }
               };
 
               new Chart(ctx, config);
             </script>
-          <% } else { %>
-            <div class="text-center text-muted fw-bold mt-3">
-              No profit data for <%= salesMonth %> <%= selectedSalesYear %>.
-            </div>
-          <% } %>
+            <% } else { %>
+              <div class="text-center text-muted fw-bold mt-3">
+                No sales data for <%= salesMonth %> <%= selectedSalesYear %>.
+              </div>
+            <% } %>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="col-12 mt-4">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title">Sales Trend (<%= salesMonth %> <%= selectedSalesYear %>)</h5>
-            <form method="get" id="salesMonthFilterForm">
-              <% const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"]; %>
-              <select name="salesMonth" class="form-select form-select-sm" onchange="document.getElementById('salesMonthFilterForm').submit()">
-                <% monthNames.forEach((m, i) => { %>
-                  <option value="<%= i + 1 %>" <%= selectedSalesMonth === i + 1 ? "selected" : "" %>><%= m %></option>
-                <% }) %>
-              </select>
-            </form>
-          </div>
-
-          <% if (productSalesData.length > 0) { %>
-            <div class="mb-3 text-end fw-bold total-sales">
-              Total Sales: <%= productSalesData.reduce((sum, p) => sum + p.sales, 0) %> units
+      <div class="col-12 mt-4">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title">Sales Trend (<%= salesMonth %> <%= selectedSalesYear %>)</h5>
+              <form method="get" id="salesMonthFilterForm">
+                <% const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"]; %>
+                <select name="salesMonth" class="form-select form-select-sm" onchange="document.getElementById('salesMonthFilterForm').submit()">
+                  <% monthNames.forEach((m, i) => { %>
+                    <option value="<%= i + 1 %>" <%= selectedSalesMonth === i + 1 ? "selected" : "" %>><%= m %></option>
+                  <% }) %>
+                </select>
+              </form>
             </div>
 
-          <div style="overflow-x:auto;">
-            <canvas id="salesTrendChart" height="500"></canvas>
-          </div>
+            <% if (productSalesData.length > 0) { %>
+              <div style="overflow-x:auto;">
+                <canvas id="salesTrendChart" height="300"></canvas>
+              </div>
 
-          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-          <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-          <script>
-            const salesCtx = document.getElementById('salesTrendChart').getContext('2d');
-            const salesData = <%- JSON.stringify(productSalesData) %>;
+              <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+              <script>
+                const salesCtx = document.getElementById('salesTrendChart').getContext('2d');
+                const salesData = <%- JSON.stringify(productSalesData) %>;
 
-            const salesChartData = {
-              labels: salesData.map(p => p.name),
-              datasets: [{
-                label: 'Units Sold',
-                data: salesData.map(p => p.sales),
-                backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1,
-                borderRadius: 5
-              }]
-            };
+                const salesChartData = {
+                  labels: salesData.map(p => p.name),
+                  datasets: [{
+                    label: '', 
+                    data: salesData.map(p => p.sales),
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    borderRadius: 5
+                  }]
+                };
 
-            const salesConfig = {
-              type: 'bar', 
-              data: salesChartData,
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: { display: false },
-                  tooltip: { 
-                    callbacks: { 
-                      label: function(context) { return context.raw + " units sold"; } 
-                    } 
-                  },
-                  datalabels: {
-                    anchor: 'end',
-                    align: 'end',
-                    color: '#1d3c5a',
-                    font: { weight: 'bold', size: 12 },
-                    formatter: function(value) { return value + " units"; }
-                  }
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Units Sold' }
-                  },
-                  x: {
-                    title: { display: true, text: 'Products' },
-                    ticks: {
-                      autoSkip: false,
-                      maxRotation: 45,
-                      minRotation: 0,
-                      callback: function(value) {
-                        const label = this.getLabelForValue(value);
-                        return label.length > 15 ? label.substring(0, 12) + '…' : label;
+                new Chart(salesCtx, {
+                  type: 'bar',
+                  data: salesChartData,
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: { 
+                        backgroundColor: '#0d6efd',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        cornerRadius: 8,
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: { 
+                          label: function(context) { 
+                            return context.label + ': ' + context.raw + ' units sold'; 
+                          } 
+                        }
+                      },
+                      datalabels: { display: false } 
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                      },
+                      x: {
+                        ticks: {
+                          autoSkip: false,
+                          maxRotation: 45,
+                          minRotation: 0,
+                          callback: function(value) {
+                            const label = this.getLabelForValue(value);
+                            return label.length > 15 ? label.substring(0, 12) + '…' : label;
+                          }
+                        }
                       }
                     }
                   }
-                }
-              },
-              plugins: [ChartDataLabels]
-            };
-
-            new Chart(salesCtx, salesConfig);
-          </script>
+                });
+              </script>
             <% } else { %>
               <div class="text-center text-muted fw-bold mt-3">
                 No sales data for <%= salesMonth %> <%= selectedSalesYear %>.
@@ -970,69 +955,76 @@
 
   </script>
 
-  <script>
-    const trendCtx = document.getElementById("salesTrendChart").getContext("2d");
-    const gradient = trendCtx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, "rgba(13, 110, 253, 0.4)");
-    gradient.addColorStop(1, "rgba(13, 110, 253, 0)");
-    new Chart(trendCtx, {
-      type: "line",
-      data: {
-        labels: <%- JSON.stringify(productTrendData.map(d => d.month)) %>,
-        datasets: [{
-          label: "Sales (₱)",
-          data: <%- JSON.stringify(productTrendData.map(d => d.sales)) %>,
-          borderColor: "#0d6efd",
-          backgroundColor: gradient,
-          borderWidth: 3,
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: "#fff",
-          pointBorderColor: "#0d6efd",
-          pointBorderWidth: 2,
-          pointRadius: 6,
-          pointHoverRadius: 8,
-          pointHoverBackgroundColor: "#0d6efd",
-          pointHoverBorderColor: "#fff"
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          },
-          tooltip: {
-            backgroundColor: "#0d6efd",
-            titleColor: "#fff",
-            bodyColor: "#fff",
-            padding: 10,
-            cornerRadius: 8,
-            displayColors: false,
-            callbacks: {
-              label: function(context) {
-                return "₱ " + context.formattedValue;
-              }
+<script>
+  const trendCtx = document.getElementById("salesTrendChart").getContext("2d");
+  const gradient = trendCtx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, "rgba(13, 110, 253, 0.4)");
+  gradient.addColorStop(1, "rgba(13, 110, 253, 0)");
+
+  const trendData = <%- JSON.stringify(productTrendData.map(d => ({
+    month: d.month,
+    sales: Number(d.sales)
+  }))) %>;
+
+  new Chart(trendCtx, {
+    type: "line",
+    data: {
+      labels: trendData.map(d => d.month),
+      datasets: [{
+        label: "Sales (₱)",
+        data: trendData.map(d => d.sales),
+        borderColor: "#0d6efd",
+        backgroundColor: gradient,
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: "#fff",
+        pointBorderColor: "#0d6efd",
+        pointBorderWidth: 2,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: "#0d6efd",
+        pointHoverBorderColor: "#fff"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#0d6efd",
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: false,
+          callbacks: {
+            title: function(context) {
+              return context[0].label; // Month
+            },
+            label: function(context) {
+              const d = trendData[context.dataIndex];
+              return "Sales: ₱" + d.sales.toLocaleString();
             }
           }
-        },
-        scales: {
-          x: {
-            grid: { display: false }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          ticks: {
+            callback: function(value) {
+              return "₱ " + value.toLocaleString();
+            }
           },
-          y: {
-            ticks: {
-              callback: function(value) {
-                return "₱ " + value.toLocaleString();
-              }
-            },
-            grid: { color: "rgba(0,0,0,0.05)" }
-          }
+          grid: { color: "rgba(0,0,0,0.05)" }
         }
       }
-    });
-  </script>
+    }
+  });
+</script>
+
 <script>
   (function() {
     sessionStorage.setItem("currentPage", "admin");

@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { uploadProof } = require('../middleware/upload');
+const uploadProfile = require('../middleware/uploadProfile');
 const authController = require('../controllers/authController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { authMiddleware } = require('../middleware/authMiddleware');
 
 router.get('/dashboard', authMiddleware, authController.dashboard);
 
 router.get('/cart', authMiddleware, authController.showCart);
 router.post('/cart/add', authMiddleware, authController.addToCart);
-router.post('/cart/update', authMiddleware, authController.updateCartItem);
+router.post('/cart/update/:productId', authMiddleware, authController.updateCartItem);
 router.post('/cart/remove', authMiddleware, authController.removeCartItem);
 router.get('/cart/get/:productId', authController.getCartItem);
 
@@ -20,7 +21,7 @@ router.post('/orders/:id/cancel', authMiddleware, authController.cancelOrder);
 router.get('/order-success/:id', authMiddleware, authController.showOrderSuccess);
 
 router.get('/profile', authMiddleware, authController.showProfile);
-router.post('/profile/edit', authMiddleware, authController.editProfile);
+router.post('/profile/edit', authMiddleware, uploadProfile.single('profilePicture'), authController.editProfile);
 
 router.get('/login', authController.showLogin);
 router.post('/login', authController.login);

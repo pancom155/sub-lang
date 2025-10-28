@@ -7,190 +7,90 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.12.1/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
-    body {
-      background-color: #f1f1f1;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    h2 {
-      color: #1d3c5a;
-      margin-bottom: 30px;
-    }
-
-    .mb-3.d-flex {
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 25px;
-    }
-
+    body { background-color: #f1f1f1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    h2 { color: #1d3c5a; margin-bottom: 30px; }
+    .mb-3.d-flex { justify-content: center; align-items: center; margin-bottom: 25px; }
     .mb-3.d-flex a {
-      font-size: 1.1rem;
-      color: #1d3c5a;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      text-decoration: none;
+      font-size: 1.1rem; color: #1d3c5a; font-weight: 600;
+      display: flex; align-items: center; text-decoration: none;
+      background-color: #e6f0ff; padding: 8px 14px; border-radius: 30px;
       transition: color 0.3s, transform 0.2s;
-      background-color: #e6f0ff;
-      padding: 8px 14px;
-      border-radius: 30px;
     }
-
     .mb-3.d-flex a i {
-      font-size: 1.3rem;
-      margin-right: 8px;
-      background-color: #cce0ff;
-      padding: 6px;
-      border-radius: 50%;
-      transition: transform 0.2s, background-color 0.3s;
+      font-size: 1.3rem; margin-right: 8px; background-color: #cce0ff;
+      padding: 6px; border-radius: 50%; transition: transform 0.2s, background-color 0.3s;
     }
+    .mb-3.d-flex a:hover { color: #fff; background-color: #3a5f7d; }
+    .mb-3.d-flex a:hover i { transform: translateX(-3px); background-color: #1d3c5a; }
 
-    .mb-3.d-flex a:hover {
-      color: #fff;
-      background-color: #3a5f7d;
-    }
+.card {
+  border-radius: 18px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  padding: 10px;
+  transform-origin: center;
+}
+.card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.15);
+}
+.card img {
+  object-fit: cover;
+  border-radius: 15px;
+  width: 100%;
+  height: 200px; /* increased from 150px */
+  transition: transform 0.25s ease;
+}
+.card:hover img {
+  transform: scale(1.05);
+}
 
-    .mb-3.d-flex a:hover i {
-      transform: translateX(-3px);
-      background-color: #1d3c5a;
-    }
-        
-    .card {
-      border-radius: 15px;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
 
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.12);
-    }
+    .btn-primary { background: linear-gradient(145deg, #1d3c5a, #3a5f7d); border: none; transition: background 0.3s; }
+    .btn-primary:hover { background: linear-gradient(145deg, #3a5f7d, #1d3c5a); }
 
-    .card img {
-      object-fit: cover;
-      border-radius: 12px;
-      width: 100%;
-      height: 150px;
-    }
+    .btn-danger { transition: transform 0.2s; }
+    .btn-danger:hover { transform: scale(1.1); }
 
-    .btn-primary {
-      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
-      border: none;
-      transition: background 0.3s;
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(145deg, #3a5f7d, #1d3c5a);
-    }
-
-    .btn-danger {
-      transition: transform 0.2s;
-    }
-
-    .btn-danger:hover {
-      transform: scale(1.1);
-    }
-
-    .card.p-3 {
-      background-color: #fff;
-      border-radius: 15px;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
-    }
-
-    .card.p-3 h5 {
-      color: #1d3c5a;
-    }
-
+    .card.p-3 { background-color: #fff; border-radius: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.08); }
+    .card.p-3 h5 { color: #1d3c5a; }
     .card.p-3 a.btn-success {
-      background: linear-gradient(145deg, #1d3c5a, #3a5f7d);
-      border: none;
-      font-weight: 600;
-      transition: background 0.3s;
+      background: linear-gradient(145deg, #1d3c5a, #3a5f7d); border: none; font-weight: 600; transition: background 0.3s;
     }
+    .card.p-3 a.btn-success:hover { background: linear-gradient(145deg, #3a5f7d, #1d3c5a); }
 
-    .card.p-3 a.btn-success:hover {
-      background: linear-gradient(145deg, #3a5f7d, #1d3c5a);
-    }
-
-    .row.cart-items {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-
-    .row.cart-items .card {
-      flex: 0 0 48%;
-    }
+    .row.cart-items { display: flex; flex-wrap: wrap; gap: 15px; }
+    .row.cart-items .card { flex: 0 0 48%; }
 
     @media (max-width: 768px) {
-      .row.cart-items .card {
-        flex: 0 0 48%;
-      }
-      .card img {
-        height: 140px;
-      }
+      .row.cart-items .card { flex: 0 0 48%; }
+      .card img { height: 140px; }
     }
-
     @media (max-width: 480px) {
-      .row.cart-items .card {
-        flex: 0 0 48%;
-        margin-bottom: 15px;
-      }
-
-      .mb-3.d-flex a {
-        font-size: 1rem;
-        padding: 6px 12px;
-      }
-
-      .mb-3.d-flex a i {
-        font-size: 1.2rem;
-        padding: 5px;
-      }
+      .row.cart-items .card { flex: 0 0 48%; margin-bottom: 15px; }
+      .mb-3.d-flex a { font-size: 1rem; padding: 6px 12px; }
+      .mb-3.d-flex a i { font-size: 1.2rem; padding: 5px; }
     }
 
-      .row.g-0.align-items-center {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
+    .row.g-0.align-items-center { display: flex; flex-direction: column; align-items: center; }
+    .row.g-0.align-items-center .col-md-3 img { width: 100%; height: 120px; margin-bottom: 10px; }
+    .row.g-0.align-items-center .col-md-6 {
+      width: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 10px;
+    }
+    .row.g-0.align-items-center .col-md-3.text-end {
+      width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 10px;
+    }
 
-      .row.g-0.align-items-center .col-md-3 img {
-        width: 100%;
-        height: 120px;
-        margin-bottom: 10px;
-      }
-
-      .row.g-0.align-items-center .col-md-6 {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        margin-bottom: 10px;
-      }
-
-      .row.g-0.align-items-center .col-md-3.text-end {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-
-      .btn-primary, .btn-danger, .btn-success {
-        font-size: 0.9rem;
-        padding: 6px 10px;
-      }
+    .btn-primary, .btn-danger, .btn-success { font-size: 0.9rem; padding: 6px 10px; }
   </style>
 </head>
 <body>
   <div class="container mt-4">
-
-      <div class="mb-3 justify-content-center align-items-center d-flex">
-    <a href="/dashboard" class="text-decoration-none text-primary fw-bold">
-      <i class="bi bi-arrow-left-circle me-1"></i>Back to Menu
-    </a>
-  </div>
+    <div class="mb-3 justify-content-center align-items-center d-flex">
+      <a href="/dashboard" class="text-decoration-none text-primary fw-bold">
+        <i class="bi bi-arrow-left-circle me-1"></i>Back to Menu
+      </a>
+    </div>
 
     <h2 class="text-center mb-4">Your Cart</h2>
 
@@ -209,33 +109,19 @@
                   <div class="col-md-6">
                     <h5><%= item.product_id.productName %></h5>
                     <p>₱<%= item.product_id.price.toFixed(2) %></p>
-                  <form action="/cart/update" method="POST" class="d-inline" data-stock="<%= item.product_id.stock || 0 %>">
-                    <input type="hidden" name="cartItemId" value="<%= item._id %>">
-                    <input type="hidden" name="productId" value="<%= item.product_id._id %>">
 
-                    <!-- Minus -->
-                    <button 
-                      type="submit" 
-                      name="quantity" 
-                      value="<%= item.quantity - 1 %>" 
-                      class="btn btn-sm btn-primary" 
-                      <%= item.quantity <= 1 ? 'disabled' : '' %>>
-                      -
-                    </button>
+                    <div class="d-inline-flex align-items-center" data-stock="<%= item.availableStock || 0 %>">
+                      <button type="button" class="btn btn-sm btn-primary btn-minus"
+                        onclick="updateQuantity('<%= item.product_id._id %>', -1, <%= item.availableStock || 0 %>)">-</button>
 
-                    <span class="mx-2"><%= item.quantity %></span>
+                      <span id="quantity-<%= item.product_id._id %>" class="mx-2"><%= item.quantity %></span>
 
-                    <!-- Plus -->
-                    <button 
-                      type="submit" 
-                      name="quantity" 
-                      value="<%= item.quantity + 1 %>" 
-                      class="btn btn-sm btn-primary" 
-                      <%= item.quantity >= item.product_id.stock ? 'disabled' : '' %>>
-                      +
-                    </button>
-                  </form>
+                      <button type="button" class="btn btn-sm btn-primary btn-plus"
+                        onclick="updateQuantity('<%= item.product_id._id %>', 1, <%= item.availableStock || 0 %>)">+</button>
+                    </div>
+                    <!-- <small class="text-muted">Available: <%= item.availableStock || 0 %></small> -->
                   </div>
+
                   <div class="col-md-3 text-end">
                     <form action="/cart/remove" method="POST">
                       <input type="hidden" name="cartItemId" value="<%= item._id %>">
@@ -258,14 +144,14 @@
                   <img src="<%= item.product_id.productImage || '/images/default.jpg' %>" alt="<%= item.product_id.productName %>" style="width:40px; height:40px; object-fit:cover; border-radius:5px; margin-right:10px;">
                   <span><%= item.product_id.productName %> x <%= item.quantity %></span>
                 </div>
-                <span class="fw-bold text-success">₱<%= (item.product_id.price * item.quantity).toFixed(2) %></span>
+                <span id="total-<%= item.product_id._id %>" class="fw-bold text-success">₱<%= (item.product_id.price * item.quantity).toFixed(2) %></span>
               </div>
               <% total += item.product_id.price * item.quantity; %>
             <% }) %>
             <hr>
             <div class="d-flex justify-content-between fw-bold fs-5 text-dark">
               <span><i class="bi bi-calculator me-1"></i>Total</span>
-              <span>₱<%= total.toFixed(2) %></span>
+              <span id="cart-total">₱<%= total.toFixed(2) %></span>
             </div>
             <a href="/cart/checkout" class="btn w-100 mt-3" style="background: linear-gradient(145deg, #1d3c5a, #3a5f7d); color:#fff; font-weight:600; border:none;">
               <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
@@ -275,42 +161,39 @@
       </div>
     <% } %>
   </div>
-</body>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-function updateQuantity(productId, change, stock) {
-  const quantityEl = document.getElementById(`quantity-${productId}`);
-  let currentQuantity = parseInt(quantityEl.textContent);
+  function updateQuantity(productId, change, stock) {
+    const quantityEl = document.getElementById(`quantity-${productId}`);
+    let currentQuantity = parseInt(quantityEl.textContent);
+    const newQuantity = currentQuantity + change;
 
-  // Calculate new quantity
-  const newQuantity = currentQuantity + change;
+    if (newQuantity < 1) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Minimum Reached',
+        text: 'You must have at least 1 item in your cart.',
+        confirmButtonColor: '#1d3c5a'
+      });
+      return;
+    }
 
-  // Prevent less than 1
-  if (newQuantity < 1) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Minimum Reached',
-      text: 'You must have at least 1 item.',
-    });
-    return;
-  }
+    if (newQuantity > stock) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Stock Limit Reached',
+        text: `Only ${stock} item${stock > 1 ? 's are' : ' is'} available.`,
+        confirmButtonColor: '#1d3c5a'
+      });
+      return;
+    }
 
-  // Prevent exceeding stock
-  if (newQuantity > stock) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Stock Limit Reached',
-      text: `Only ${stock} items available.`,
-    });
-    return;
-  }
-
-  // Send update request to backend
-  fetch(`/cart/update/${productId}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ quantity: newQuantity })
-  })
+      fetch(`/cart/update/${productId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: newQuantity })
+      })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
@@ -320,12 +203,22 @@ function updateQuantity(productId, change, stock) {
       } else {
         Swal.fire({
           icon: 'error',
-          title: 'Error',
-          text: data.message || 'Failed to update quantity.'
+          title: 'Error Updating Quantity',
+          text: data.message || 'An unexpected error occurred.',
+          confirmButtonColor: '#1d3c5a'
         });
       }
     })
-    .catch(err => console.error('Error updating quantity:', err));
-}
+    .catch(err => {
+      console.error('Error updating quantity:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Network Error',
+        text: 'Unable to update quantity. Please try again later.',
+        confirmButtonColor: '#1d3c5a'
+      });
+    });
+  }
 </script>
+</body>
 </html>

@@ -1,23 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const staffProcessController = require('../controllers/staffProcessController');
+const { isStaff } = require('../middleware/authMiddleware');
 
-// Orders page
-router.get('/orders', staffProcessController.staffOrders);
-router.get('/orders/:orderId/process', staffProcessController.processOrder);
-router.get('/orders/:orderId/complete', staffProcessController.completeOrder);
-router.get('/orders/:orderId/cancel', staffProcessController.cancelOrder);
-router.get('/orders/all', staffProcessController.viewAllOrders);
-router.get('/orders/:orderId/details', staffProcessController.viewOrderDetails);
+router.get('/orders', isStaff, staffProcessController.staffOrders);
+router.get('/orders/:orderId/process', isStaff, staffProcessController.processOrder);
+router.get('/orders/:orderId/complete', isStaff, staffProcessController.completeOrder);
+router.get('/orders/:orderId/cancel', isStaff, staffProcessController.cancelOrder);
+router.get('/orders/all', isStaff, staffProcessController.viewAllOrders);
+router.get('/orders/:orderId/details', isStaff, staffProcessController.viewOrderDetails);
 
-// Dashboard
-router.get('/index', staffProcessController.staffDashboard);
+router.get('/index', isStaff, staffProcessController.staffDashboard);
+router.get('/void', isStaff, staffProcessController.viewCancellationRequests);
 
-// **Cancellation requests page (void)**
-router.get('/void', staffProcessController.viewCancellationRequests);
-
-// Approve or reject cancellation requests
-router.post('/cancellations/:orderId/approve', staffProcessController.approveCancelOrder);
-router.post('/cancellations/:orderId/reject-proof', staffProcessController.rejectCancelOrder);
+router.post('/cancellations/:orderId/approve', isStaff, staffProcessController.approveCancelOrder);
+router.post('/cancellations/:orderId/reject-proof', isStaff, staffProcessController.rejectCancelOrder);
 
 module.exports = router;

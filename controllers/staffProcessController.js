@@ -259,15 +259,14 @@ exports.approveCancelOrder = async (req, res) => {
   }
 };
 
-// REJECT CANCELLATION (proof mismatch)
 exports.rejectCancelOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
     const order = await Order.findById(orderId);
-    if (!order) return res.status(404).send('Order not found');
+    if (!order) return res.status(404).json({ message: 'Order not found' });
 
     if (order.status !== 'Pending Cancellation') {
-      return res.status(400).send('No pending cancellation request');
+      return res.status(400).json({ message: 'No pending cancellation request' });
     }
 
     order.status = 'Pending'; // revert back to pending
@@ -278,9 +277,10 @@ exports.rejectCancelOrder = async (req, res) => {
 
     await order.save();
 
-    res.redirect('/staff/void');
+    // ✅ return JSON (not redirect)
+    res.json({ message: 'Cancellation request rejected successfully', orderId: order._id });
   } catch (err) {
     console.error('Error rejecting cancellation:', err);
-    res.status(500).send('Server error while rejecting cancellation');
+    res.status(500).json({ message: 'Server error while rejecting cancellation' });
   }
 };
